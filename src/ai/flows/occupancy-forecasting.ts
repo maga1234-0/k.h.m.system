@@ -15,15 +15,18 @@ const ForecastOccupancyInputSchema = z.object({
   historicalData: z
     .string()
     .describe(
-      'Historical occupancy data in CSV format with columns: date (YYYY-MM-DD), occupancyRate (percentage).
+      `Historical occupancy data in CSV format with columns: date (YYYY-MM-DD), occupancyRate (percentage).
       Example:
-      date,occupancyRate\n      2023-01-01,60\n      2023-01-02,65\n      ...'
+      date,occupancyRate
+      2023-01-01,60
+      2023-01-02,65
+      ...`
     ),
   bookingTrends: z
     .string()
     .describe(
-      'Recent booking trends as a text description, including any notable patterns or changes.
-      Example: Bookings for the next month are 20% higher than the same period last year.  There is a large conference scheduled for the 15th-17th of next month.'
+      `Recent booking trends as a text description, including any notable patterns or changes.
+      Example: Bookings for the next month are 20% higher than the same period last year. There is a large conference scheduled for the 15th-17th of next month.`
     ),
   forecastHorizonDays: z
     .number()
@@ -35,7 +38,7 @@ const ForecastOccupancyOutputSchema = z.object({
   forecast: z
     .string()
     .describe(
-      'A JSON array of forecasted occupancy rates, with date (YYYY-MM-DD) and occupancyRate (percentage) for each day in the forecast horizon. Example: [{\'date\': \'2024-01-01\', \'occupancyRate\': 70}, {\'date\': \'2024-01-02\', \'occupancyRate\': 75}, ...]' // escaped quotes
+      `A JSON array of forecasted occupancy rates, with date (YYYY-MM-DD) and occupancyRate (percentage) for each day in the forecast horizon. Example: [{"date": "2024-01-01", "occupancyRate": 70}, {"date": "2024-01-02", "occupancyRate": 75}, ...]`
     ),
   explanation: z
     .string()
@@ -55,9 +58,11 @@ const prompt = ai.definePrompt({
 
   Analyze the provided historical data and booking trends to predict future occupancy rates.
 
-  Historical Data:\n  {{historicalData}}
+  Historical Data:
+  {{historicalData}}
 
-  Booking Trends:\n  {{bookingTrends}}
+  Booking Trends:
+  {{bookingTrends}}
 
   Forecast Horizon: {{forecastHorizonDays}} days
 
