@@ -16,13 +16,18 @@ import {
   Loader2, 
   Bed, 
   Users as UsersIcon,
-  DollarSign
+  DollarSign,
+  Info,
+  CheckCircle2,
+  CalendarDays
 } from "lucide-react";
 import { 
   useFirestore, 
   useCollection, 
   useMemoFirebase, 
-  setDocumentNonBlocking 
+  setDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  addDocumentNonBlocking
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { 
@@ -31,7 +36,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { 
@@ -41,16 +47,28 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 export default function RoomsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  
   const [newRoom, setNewRoom] = useState({
     roomNumber: "",
     roomType: "Standard",
     capacity: 2,
     pricePerNight: 100,
     floor: 1,
+  });
+
+  const [bookingData, setBookingData] = useState({
+    guestName: "",
+    checkIn: new Date().toISOString().split('T')[0],
+    checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    guests: 1
   });
 
   const firestore = useFirestore();
@@ -81,6 +99,51 @@ export default function RoomsPage() {
       capacity: 2,
       pricePerNight: 100,
       floor: 1,
+    });
+  };
+
+  const handleQuickBook = () => {
+    if (!selectedRoom || !bookingData.guestName) return;
+
+    const resRef = collection(firestore, 'reservations');
+    const reservation = {
+      roomId: selectedRoom.id,
+      roomNumber: selectedRoom.roomNumber,
+      guestName: bookingData.guestName,
+      checkInDate: bookingData.checkIn,
+      checkOutDate: bookingData.checkOut,
+      numberOfGuests: bookingData.guests,
+      totalAmount: selectedRoom.pricePerNight,
+      status: "Confirmed",
+      createdAt: new Date().toISOString()
+    };
+
+    addDocumentNonBlocking(resRef, reservation);
+    
+    // Update room status
+    const roomRef = doc(firestore, 'rooms', selectedRoom.id);
+    updateDocumentNonBlocking(roomRef, { status: "Occupied" });
+
+    setIsBookingOpen(false);
+    setBookingData({
+      guestName: "",
+      checkIn: new Date().toISOString().split('T')[0],
+      checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      guests: 1
+    });
+
+    toast({
+      title: "Booking Confirmed",
+      description: `Room ${selectedRoom.roomNumber} has been reserved for ${bookingData.guestName}.`,
+    });
+  };
+
+  const handleCheckOut = (room: any) => {
+    const roomRef = doc(firestore, 'rooms', room.id);
+    updateDocumentNonBlocking(roomRef, { status: "Available" });
+    toast({
+      title: "Check-out Complete",
+      description: `Room ${room.roomNumber} is now available.`,
     });
   };
 
@@ -244,15 +307,173 @@ export default function RoomsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/50 p-3 flex justify-end gap-2 group-hover:bg-muted transition-colors">
-                    <Button variant="ghost" size="sm">Details</Button>
-                    {room.status === 'Available' && <Button size="sm" className="bg-primary text-primary-foreground">Book Now</Button>}
-                    {room.status === 'Occupied' && <Button variant="secondary" size="sm">Check Out</Button>}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRoom(room);
+                        setIsDetailsOpen(true);
+                      }}
+                    >
+                      Details
+                    </Button>
+                    {room.status === 'Available' && (
+                      <Button 
+                        size="sm" 
+                        className="bg-primary text-primary-foreground"
+                        onClick={() => {
+                          setSelectedRoom(room);
+                          setIsBookingOpen(true);
+                        }}
+                      >
+                        Book Now
+                      </Button>
+                    )}
+                    {room.status === 'Occupied' && (
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
+                        onClick={() => handleCheckOut(room)}
+                      >
+                        Check Out
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
             </div>
           )}
         </main>
+
+        {/* Room Details Dialog */}
+        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-primary" /> Room {selectedRoom?.roomNumber} Specifications
+              </DialogTitle>
+            </DialogHeader>
+            {selectedRoom && (
+              <div className="space-y-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-muted rounded-lg space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Room Type</span>
+                    <p className="font-semibold">{selectedRoom.roomType}</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Nightly Rate</span>
+                    <p className="font-semibold text-primary">${selectedRoom.pricePerNight}</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Capacity</span>
+                    <p className="font-semibold">{selectedRoom.capacity} Guests</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Location</span>
+                    <p className="font-semibold">Floor {selectedRoom.floor}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-bold flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Standard Amenities</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRoom.amenities?.map((amenity: string) => (
+                      <Badge key={amenity} variant="secondary" className="font-normal">{amenity}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Current Status</span>
+                    <Badge variant="outline" className={getStatusColor(selectedRoom.status)}>{selectedRoom.status}</Badge>
+                  </div>
+                  {selectedRoom.status === 'Available' && (
+                    <Button onClick={() => {
+                      setIsDetailsOpen(false);
+                      setIsBookingOpen(true);
+                    }}>Proceed to Booking</Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Quick Booking Dialog */}
+        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Quick Reservation</DialogTitle>
+              <DialogDescription>Book Room {selectedRoom?.roomNumber} instantly for a guest.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="guestName">Guest Name</Label>
+                <Input 
+                  id="guestName" 
+                  placeholder="Full name of primary guest"
+                  value={bookingData.guestName}
+                  onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="checkIn">Check-In</Label>
+                  <div className="relative">
+                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="checkIn" 
+                      type="date" 
+                      className="pl-9"
+                      value={bookingData.checkIn}
+                      onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="checkOut">Check-Out</Label>
+                  <div className="relative">
+                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="checkOut" 
+                      type="date" 
+                      className="pl-9"
+                      value={bookingData.checkOut}
+                      onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numGuests">Number of Guests</Label>
+                <Select 
+                  value={bookingData.guests.toString()} 
+                  onValueChange={(val) => setBookingData({...bookingData, guests: parseInt(val)})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select guests" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...Array(selectedRoom?.capacity || 4)].map((_, i) => (
+                      <SelectItem key={i+1} value={(i+1).toString()}>{i+1} {i === 0 ? 'Guest' : 'Guests'}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 flex justify-between items-center">
+                <span className="text-sm font-medium">Estimated Total</span>
+                <span className="text-lg font-bold text-primary">${selectedRoom?.pricePerNight}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsBookingOpen(false)}>Cancel</Button>
+              <Button onClick={handleQuickBook} disabled={!bookingData.guestName}>Confirm Booking</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </SidebarInset>
     </div>
   );
