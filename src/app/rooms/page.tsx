@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +18,8 @@ import {
   DollarSign,
   Info,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  Edit2
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -51,9 +51,11 @@ import { toast } from "@/hooks/use-toast";
 
 export default function RoomsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [editRoomData, setEditRoomData] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
   const [newRoom, setNewRoom] = useState({
@@ -99,6 +101,24 @@ export default function RoomsPage() {
       capacity: 2,
       pricePerNight: 100,
       floor: 1,
+    });
+  };
+
+  const handleUpdateRoom = () => {
+    if (!editRoomData || !editRoomData.id) return;
+
+    const roomRef = doc(firestore, 'rooms', editRoomData.id);
+    updateDocumentNonBlocking(roomRef, {
+      ...editRoomData,
+      pricePerNight: Number(editRoomData.pricePerNight),
+      capacity: Number(editRoomData.capacity),
+      floor: Number(editRoomData.floor),
+    });
+
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Room Updated",
+      description: `Room ${editRoomData.roomNumber} has been updated successfully.`,
     });
   };
 
@@ -309,6 +329,17 @@ export default function RoomsPage() {
                   <CardFooter className="bg-muted/50 p-3 flex justify-end gap-2 group-hover:bg-muted transition-colors">
                     <Button 
                       variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setEditRoomData({...room});
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
                       size="sm"
                       onClick={() => {
                         setSelectedRoom(room);
@@ -344,6 +375,103 @@ export default function RoomsPage() {
             </div>
           )}
         </main>
+
+        {/* Edit Room Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Room Details</DialogTitle>
+              <DialogDescription>Update specifications for Room {editRoomData?.roomNumber}</DialogDescription>
+            </DialogHeader>
+            {editRoomData && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editRoomNumber" className="text-right text-xs">Number</Label>
+                  <Input 
+                    id="editRoomNumber" 
+                    value={editRoomData.roomNumber} 
+                    onChange={(e) => setEditRoomData({...editRoomData, roomNumber: e.target.value})} 
+                    className="col-span-3" 
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editType" className="text-right text-xs">Type</Label>
+                  <Select 
+                    value={editRoomData.roomType} 
+                    onValueChange={(val) => setEditRoomData({...editRoomData, roomType: val})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Deluxe">Deluxe</SelectItem>
+                      <SelectItem value="Suite">Suite</SelectItem>
+                      <SelectItem value="Penthouse">Penthouse</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editFloor" className="text-right text-xs">Floor</Label>
+                  <Input 
+                    id="editFloor" 
+                    type="number" 
+                    value={editRoomData.floor} 
+                    onChange={(e) => setEditRoomData({...editRoomData, floor: parseInt(e.target.value) || 0})} 
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editPrice" className="text-right text-xs">Price</Label>
+                  <div className="col-span-3 relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="editPrice" 
+                      type="number" 
+                      value={editRoomData.pricePerNight} 
+                      onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: parseInt(e.target.value) || 0})} 
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editCapacity" className="text-right text-xs">Capacity</Label>
+                  <div className="col-span-3 relative">
+                    <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="editCapacity" 
+                      type="number" 
+                      value={editRoomData.capacity} 
+                      onChange={(e) => setEditRoomData({...editRoomData, capacity: parseInt(e.target.value) || 1})} 
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editStatus" className="text-right text-xs">Status</Label>
+                  <Select 
+                    value={editRoomData.status} 
+                    onValueChange={(val) => setEditRoomData({...editRoomData, status: val})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Available">Available</SelectItem>
+                      <SelectItem value="Occupied">Occupied</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Cleaning">Cleaning</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateRoom}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Room Details Dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -388,12 +516,19 @@ export default function RoomsPage() {
                     <span className="text-xs text-muted-foreground">Current Status</span>
                     <Badge variant="outline" className={getStatusColor(selectedRoom.status)}>{selectedRoom.status}</Badge>
                   </div>
-                  {selectedRoom.status === 'Available' && (
-                    <Button onClick={() => {
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => {
+                      setEditRoomData({...selectedRoom});
                       setIsDetailsOpen(false);
-                      setIsBookingOpen(true);
-                    }}>Proceed to Booking</Button>
-                  )}
+                      setIsEditDialogOpen(true);
+                    }}>Edit Room</Button>
+                    {selectedRoom.status === 'Available' && (
+                      <Button onClick={() => {
+                        setIsDetailsOpen(false);
+                        setIsBookingOpen(true);
+                      }}>Proceed to Booking</Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
