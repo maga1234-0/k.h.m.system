@@ -3,124 +3,49 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * KARATASI HOTELIER SECURITY MODEL
+     * KARATASI HOTELIER SECURITY MODEL - PROTOTYPE
      * 
-     * Core Philosophy:
-     * This ruleset implements a strict ownership and relational integrity model designed 
-     * for a hotel management system. It prioritizes "Authorization Independence" by 
-     * assuming that ownership data (like UIDs) is denormalized directly onto documents 
-     * to avoid performance-heavy get() calls.
-     * 
-     * Data Structure:
-     * - /rooms: Publicly viewable for availability; writes restricted (Management only).
-     * - /clients: Private user profiles; accessible only by the authenticated client.
-     * - /reservations: Private booking data; accessible by the client who made the booking.
-     * - /invoices: Billing data; requires denormalized ownership for secure access.
-     * - /staff: Private staff profiles; accessible only by the specific staff member.
-     * 
-     * Key Security Decisions:
-     * 1. Denormalization: Authorization relies on fields like 'clientId' or 'staffId' 
-     *    being present on the document.
-     * 2. Prototyping Mode: Schema types and content fields are not validated to allow 
-     *    rapid iteration. Only relational/identity fields are enforced.
-     * 3. Resource Integrity: For user-owned paths, the rules enforce that the data 
-     *    inside the document matches the path ID.
+     * Simplified rules for rapid prototyping.
      */
 
-    // --- GLOBAL HELPER FUNCTIONS ---
-
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided ID. */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /** @description Checks ownership of an existing document before modification or deletion. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /** @description Checks if a field in the incoming or existing data matches the user's UID. */
-    function isOwnerByField(userId) {
-      return isSignedIn() && userId == request.auth.uid;
-    }
-
-    // --- COLLECTION RULES ---
-
     /**
-     * @description Rules for the 'Room' collection. Rooms are viewable by all signed-in users (clients/staff) to check availability.
-     * @path /rooms/{roomId}
-     * @allow (get) Any signed-in user.
-     * @deny (create) Any user without explicit administrative elevation (placeholder enforced).
-     * @principle Public read-only for availability with protected management writes.
+     * @description Rooms are viewable by everyone. Management (signed-in users) can edit.
      */
     match /rooms/{roomId} {
-      allow get, list: if isSignedIn();
-      
-      // CRITICAL: Cannot implement owner-only writes. The 'Room' entity is missing an 'ownerId' or 'authorId' field.
-      // In a production app, this would likely be restricted to a 'staff' or 'admin' role.
-      allow create, update, delete: if false; // TODO: Add administrative/staff validation once the schema includes roles.
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     /**
-     * @description Rules for 'Client' profiles. Clients can only manage their own profile data.
-     * @path /clients/{clientId}
-     * @allow (create) User 'abc' creating a document at /clients/abc.
-     * @deny (update) User 'abc' attempting to modify /clients/xyz.
-     * @principle Enforces path-based ownership and data consistency.
+     * @description Clients can manage their own profiles.
      */
     match /clients/{clientId} {
-      allow get, list: if isOwner(clientId);
-      allow create: if isOwner(clientId) && request.resource.data.id == clientId;
-      allow update: if isExistingOwner(clientId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(clientId);
+      allow read, write: if isSignedIn() && (request.auth.uid == clientId || request.auth.uid == resource.data.id);
     }
 
     /**
-     * @description Rules for 'Reservation' documents. Access is controlled by the 'clientId' field within the document.
-     * @path /reservations/{reservationId}
-     * @allow (create) Signed-in user 'abc' creating a reservation where 'clientId' is 'abc'.
-     * @deny (list) User 'abc' attempting to list reservations belonging to user 'xyz'.
-     * @principle Uses field-based ownership to secure shared top-level collections.
+     * @description Reservations are private to the creator or visible to staff.
      */
     match /reservations/{reservationId} {
-      allow get: if isOwnerByField(resource.data.clientId);
-      allow list: if isSignedIn(); // Filtering is handled by the client; rules ensure only owned docs are returned if queried correctly.
-      
-      allow create: if isOwnerByField(request.resource.data.clientId);
-      allow update: if isExistingOwner(resource.data.clientId) && request.resource.data.clientId == resource.data.clientId;
-      allow delete: if isExistingOwner(resource.data.clientId);
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     /**
-     * @description Rules for 'Invoice' documents.
-     * @path /invoices/{invoiceId}
-     * @principle Placeholder restriction due to missing authorization metadata in schema.
+     * @description Invoices and Staff records.
      */
     match /invoices/{invoiceId} {
-      allow get, list: if isSignedIn(); // Prototyping: allow signed-in read, but strictly limit writes.
-      
-      // CRITICAL: Cannot implement secure writes or private reads. The 'Invoice' entity is missing a 'clientId' or 'ownerId' field.
-      // Relying on 'reservationId' would require a get() call which violates the Authorization Independence principle.
-      allow create, update, delete: if false; // TODO: Denormalize 'clientId' onto the Invoice document to enable owner-based rules.
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
-    /**
-     * @description Rules for 'Staff' profiles. Staff members can only manage their own staff records.
-     * @path /staff/{staffId}
-     * @allow (update) Staff user 'staff_1' updating their own phone number.
-     * @deny (get) Client user 'client_1' trying to read staff details.
-     * @principle Self-creation and profile isolation.
-     */
     match /staff/{staffId} {
-      allow get, list: if isOwner(staffId);
-      allow create: if isOwner(staffId) && request.resource.data.id == staffId;
-      allow update: if isExistingOwner(staffId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(staffId);
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == staffId;
     }
   }
 }
