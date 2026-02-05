@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-lobby",
+      "description": "Luxurious hotel lobby",
+      "imageUrl": "https://picsum.photos/seed/karatasi1/1200/600",
+      "imageHint": "hotel lobby"
+    },
+    {
+      "id": "room-deluxe",
+      "description": "Deluxe hotel room interior",
+      "imageUrl": "https://picsum.photos/seed/karatasi2/800/600",
+      "imageHint": "hotel room"
+    },
+    {
+      "id": "avatar-staff-1",
+      "description": "Hotel staff member",
+      "imageUrl": "https://picsum.photos/seed/staff1/200/200",
+      "imageHint": "person portrait"
+    }
+  ]
+}
