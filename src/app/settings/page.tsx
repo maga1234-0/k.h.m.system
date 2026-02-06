@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { 
   Save, 
   Loader2, 
-  Hotel, 
+  Building2, 
   Clock, 
   Bell, 
   Shield, 
@@ -73,7 +73,7 @@ export default function SettingsPage() {
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="general" className="gap-2">
-                <Hotel className="h-4 w-4" /> General
+                <Building2 className="h-4 w-4" /> General
               </TabsTrigger>
               <TabsTrigger value="reservations" className="gap-2">
                 <Clock className="h-4 w-4" /> Policies
@@ -93,7 +93,7 @@ export default function SettingsPage() {
                   <div className="grid gap-2">
                     <Label htmlFor="hotelName">Hotel Name</Label>
                     <div className="relative">
-                      <Hotel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         id="hotelName" 
                         className="pl-9"
