@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react";
@@ -20,7 +19,10 @@ import {
   Clock,
   XCircle,
   LogOut,
-  Loader2
+  Loader2,
+  CalendarDays,
+  Users as UsersIcon,
+  DollarSign
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -28,15 +30,45 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { collection, doc } from "firebase/firestore";
+import { toast } from "@/hooks/use-toast";
 
 export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newBooking, setNewBooking] = useState({
+    guestName: "",
+    roomId: "",
+    checkInDate: new Date().toISOString().split('T')[0],
+    checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    numberOfGuests: 1,
+    totalAmount: 0
+  });
 
   const firestore = useFirestore();
   const resCollection = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
-  const { data: reservations, isLoading } = useCollection(resCollection);
+  const roomsCollection = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
+  
+  const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
+  const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsCollection);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -49,11 +81,48 @@ export default function ReservationsPage() {
     }
   };
 
+  const handleCreateBooking = () => {
+    if (!newBooking.guestName || !newBooking.roomId) return;
+
+    const selectedRoom = rooms?.find(r => r.id === newBooking.roomId);
+    if (!selectedRoom) return;
+
+    const reservationData = {
+      ...newBooking,
+      roomNumber: selectedRoom.roomNumber,
+      status: "Confirmed",
+      createdAt: new Date().toISOString()
+    };
+
+    addDocumentNonBlocking(resCollection, reservationData);
+    
+    // Update room status
+    const roomRef = doc(firestore, 'rooms', selectedRoom.id);
+    updateDocumentNonBlocking(roomRef, { status: "Occupied" });
+
+    setIsAddDialogOpen(false);
+    setNewBooking({
+      guestName: "",
+      roomId: "",
+      checkInDate: new Date().toISOString().split('T')[0],
+      checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      numberOfGuests: 1,
+      totalAmount: 0
+    });
+
+    toast({
+      title: "Reservation Created",
+      description: `New booking confirmed for ${reservationData.guestName} in Room ${selectedRoom.roomNumber}.`,
+    });
+  };
+
   const filteredReservations = reservations?.filter(res => 
     res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     res.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     res.roomNumber?.includes(searchTerm)
   );
+
+  const availableRooms = rooms?.filter(r => r.status === 'Available') || [];
 
   return (
     <div className="flex h-screen w-full">
@@ -65,9 +134,119 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Reservations</h1>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-            <Plus className="h-4 w-4" /> New Booking
-          </Button>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                <Plus className="h-4 w-4" /> New Booking
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>New Reservation</DialogTitle>
+                <DialogDescription>Enter guest details and assign a room to create a new booking.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newGuestName">Guest Name</Label>
+                  <Input 
+                    id="newGuestName" 
+                    placeholder="Full name of primary guest"
+                    value={newBooking.guestName}
+                    onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="roomSelect">Assign Room</Label>
+                  <Select 
+                    value={newBooking.roomId} 
+                    onValueChange={(val) => {
+                      const room = rooms?.find(r => r.id === val);
+                      setNewBooking({
+                        ...newBooking, 
+                        roomId: val, 
+                        totalAmount: room ? room.pricePerNight : 0 
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={isRoomsLoading ? "Loading rooms..." : "Select an available room"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRooms.map((room) => (
+                        <SelectItem key={room.id} value={room.id}>
+                          Room {room.roomNumber} - {room.roomType} (${room.pricePerNight})
+                        </SelectItem>
+                      ))}
+                      {availableRooms.length === 0 && !isRoomsLoading && (
+                        <div className="p-2 text-xs text-muted-foreground text-center">No rooms available</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newCheckIn">Check-In</Label>
+                    <div className="relative">
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newCheckIn" 
+                        type="date" 
+                        className="pl-9 text-xs"
+                        value={newBooking.checkInDate}
+                        onChange={(e) => setNewBooking({...newBooking, checkInDate: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newCheckOut">Check-Out</Label>
+                    <div className="relative">
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newCheckOut" 
+                        type="date" 
+                        className="pl-9 text-xs"
+                        value={newBooking.checkOutDate}
+                        onChange={(e) => setNewBooking({...newBooking, checkOutDate: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newNumGuests">Guests</Label>
+                    <div className="relative">
+                      <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newNumGuests" 
+                        type="number" 
+                        className="pl-9"
+                        value={newBooking.numberOfGuests}
+                        onChange={(e) => setNewBooking({...newBooking, numberOfGuests: parseInt(e.target.value) || 1})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newAmount">Total Amount</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newAmount" 
+                        type="number" 
+                        className="pl-9"
+                        value={newBooking.totalAmount}
+                        onChange={(e) => setNewBooking({...newBooking, totalAmount: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId}>Confirm Booking</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </header>
 
         <main className="p-6">
@@ -76,7 +255,7 @@ export default function ReservationsPage() {
               <div className="relative w-full md:w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search reservations..." 
+                  placeholder="Search reservations by guest, room, or ID..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -106,11 +285,11 @@ export default function ReservationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {isResLoading ? (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Fetching reservations...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Fetching live data...
                       </div>
                     </TableCell>
                   </TableRow>
@@ -153,7 +332,7 @@ export default function ReservationsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                      No reservations found.
+                      {searchTerm ? "No reservations match your search." : "No reservations found in the system."}
                     </TableCell>
                   </TableRow>
                 )}
