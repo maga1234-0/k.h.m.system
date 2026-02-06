@@ -48,5 +48,12 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == staffId;
     }
+
+    /**
+     * @description System settings.
+     */
+    match /settings/{settingId} {
+      allow read, write: if isSignedIn();
+    }
   }
 }
