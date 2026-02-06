@@ -11,7 +11,7 @@ import {
   TrendingUp, 
   ShieldCheck,
   Settings,
-  Building2
+  Hotel
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -46,7 +46,7 @@ export function AppSidebar() {
     <Sidebar className="border-r">
       <SidebarHeader className="p-4 flex flex-row items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground shadow-sm shadow-primary/20">
-          <Building2 className="h-6 w-6" />
+          <Hotel className="h-6 w-6" />
         </div>
         <div className="flex flex-col">
           <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">Karatasi</span>
