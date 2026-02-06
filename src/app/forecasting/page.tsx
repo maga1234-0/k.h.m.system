@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -12,21 +13,31 @@ import { Input } from "@/components/ui/input";
 import { Brain, Sparkles, Loader2, Calendar, TrendingUp } from "lucide-react";
 import { forecastOccupancy, ForecastOccupancyOutput } from "@/ai/flows/occupancy-forecasting";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 
 export default function ForecastingPage() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ForecastOccupancyOutput | null>(null);
   const [bookingTrends, setBookingTrends] = useState("We have a major tech conference nearby from June 15-20. Previous years showed a 30% spike in demand during this window.");
   const [horizon, setHorizon] = useState(7);
 
   const firestore = useFirestore();
-  const roomsRef = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
-  const resRef = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
+  
+  // Guard references with user check to prevent permission errors before redirect
+  const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
+  const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   
   const { data: rooms } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
   const historicalCSV = useMemo(() => {
     if (!rooms || !reservations) return "";
@@ -67,6 +78,14 @@ export default function ForecastingPage() {
       setLoading(false);
     }
   };
+
+  if (isAuthLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const chartData = useMemo(() => {
     if (!result) return [];

@@ -1,6 +1,8 @@
+
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -19,7 +21,8 @@ import {
   MapPin, 
   Heart,
   Trash2,
-  Edit2
+  Edit2,
+  Calendar
 } from "lucide-react";
 import { 
   Dialog, 
@@ -38,11 +41,13 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
 export default function ClientsPage() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newClient, setNewClient] = useState({
@@ -56,8 +61,16 @@ export default function ClientsPage() {
   });
 
   const firestore = useFirestore();
-  const clientsCollection = useMemoFirebase(() => collection(firestore, 'clients'), [firestore]);
+  
+  // Guard references with user check to prevent permission errors before redirect
+  const clientsCollection = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
   const { data: clients, isLoading } = useCollection(clientsCollection);
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
   const getLoyaltyColor = (status: string) => {
     switch (status) {
@@ -69,7 +82,7 @@ export default function ClientsPage() {
   };
 
   const handleRegisterClient = () => {
-    if (!newClient.firstName || !newClient.lastName || !newClient.email) return;
+    if (!newClient.firstName || !newClient.lastName || !newClient.email || !clientsCollection) return;
 
     const clientData = {
       ...newClient,
@@ -105,6 +118,14 @@ export default function ClientsPage() {
       description: `Registry record for ${client.firstName} ${client.lastName} has been deleted.`,
     });
   };
+
+  if (isAuthLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const filteredClients = clients?.filter(client => 
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 

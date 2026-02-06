@@ -28,9 +28,11 @@ export default function DashboardPage() {
   const router = useRouter();
   
   const firestore = useFirestore();
-  const roomsRef = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
-  const resRef = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
-  const clientsRef = useMemoFirebase(() => collection(firestore, 'clients'), [firestore]);
+  
+  // Guard references with user check to prevent permission errors before redirect
+  const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
+  const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
+  const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
 
   const { data: rooms } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);

@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -22,13 +23,17 @@ import {
   Mail,
   Phone
 } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
-  const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'general'), [firestore]);
+  
+  // Guard references with user check to prevent permission errors before redirect
+  const settingsRef = useMemoFirebase(() => user ? doc(firestore, 'settings', 'general') : null, [firestore, user]);
   const { data: settings, isLoading } = useDoc(settingsRef);
 
   const [formData, setFormData] = useState({
@@ -41,6 +46,12 @@ export default function SettingsPage() {
     notificationsEnabled: true,
     currency: "USD",
   });
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
   useEffect(() => {
     if (settings) {
@@ -58,6 +69,14 @@ export default function SettingsPage() {
       description: "Your hotel configuration has been updated successfully.",
     });
   };
+
+  if (isAuthLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full">

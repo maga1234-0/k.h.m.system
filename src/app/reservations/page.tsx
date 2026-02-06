@@ -1,6 +1,8 @@
+
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -49,11 +51,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, useUser } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
 export default function ReservationsPage() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newBooking, setNewBooking] = useState({
@@ -66,11 +70,19 @@ export default function ReservationsPage() {
   });
 
   const firestore = useFirestore();
-  const resCollection = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
-  const roomsCollection = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
+  
+  // Guard references with user check to prevent permission errors before redirect
+  const resCollection = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
+  const roomsCollection = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsCollection);
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -84,7 +96,7 @@ export default function ReservationsPage() {
   };
 
   const handleCreateBooking = () => {
-    if (!newBooking.guestName || !newBooking.roomId) return;
+    if (!newBooking.guestName || !newBooking.roomId || !resCollection) return;
 
     const selectedRoom = rooms?.find(r => r.id === newBooking.roomId);
     if (!selectedRoom) return;
@@ -158,6 +170,14 @@ export default function ReservationsPage() {
       description: `${reservation.guestName} has checked out. Room ${reservation.roomNumber} is now available.`,
     });
   };
+
+  if (isAuthLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const filteredReservations = reservations?.filter(res => 
     res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
