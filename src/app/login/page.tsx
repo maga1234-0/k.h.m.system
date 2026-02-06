@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Sparkles } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Sparkles, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -78,7 +79,15 @@ export default function LoginPage() {
             <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Management Suite</CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <Alert className="bg-primary/5 border-primary/20">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Demo Credentials</AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground">
+              Pass: <code className="font-mono font-bold text-primary">kkk1234@#</code>
+            </AlertDescription>
+          </Alert>
+
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Work Email</Label>
@@ -102,6 +111,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="kkk1234@#"
                   className="pl-9"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
