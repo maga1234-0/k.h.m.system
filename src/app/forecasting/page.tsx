@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -12,15 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Brain, Sparkles, Loader2, Calendar, TrendingUp } from "lucide-react";
 import { forecastOccupancy, ForecastOccupancyOutput } from "@/ai/flows/occupancy-forecasting";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
-
-const MOCK_HISTORICAL = `date,occupancyRate
-2024-05-01,65
-2024-05-02,70
-2024-05-03,85
-2024-05-04,90
-2024-05-05,75
-2024-05-06,60
-2024-05-07,65`;
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 export default function ForecastingPage() {
   const [loading, setLoading] = useState(false);
@@ -28,11 +21,42 @@ export default function ForecastingPage() {
   const [bookingTrends, setBookingTrends] = useState("We have a major tech conference nearby from June 15-20. Previous years showed a 30% spike in demand during this window.");
   const [horizon, setHorizon] = useState(7);
 
+  const firestore = useFirestore();
+  const roomsRef = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
+  const resRef = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
+  
+  const { data: rooms } = useCollection(roomsRef);
+  const { data: reservations } = useCollection(resRef);
+
+  const historicalCSV = useMemo(() => {
+    if (!rooms || !reservations) return "";
+    
+    const days = 14; // Analyze last 2 weeks for better context
+    const lines = ["date,occupancyRate"];
+    const today = new Date();
+    
+    for (let i = days; i >= 1; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      
+      const occupiedCount = reservations.filter(r => {
+        return r.checkInDate <= dateStr && r.checkOutDate >= dateStr && r.status !== 'Cancelled';
+      }).length;
+      
+      const rate = rooms.length > 0 ? Math.round((occupiedCount / rooms.length) * 100) : 0;
+      lines.push(`${dateStr},${rate}`);
+    }
+    
+    return lines.join('\n');
+  }, [rooms, reservations]);
+
   const handleForecast = async () => {
+    if (!historicalCSV) return;
     setLoading(true);
     try {
       const output = await forecastOccupancy({
-        historicalData: MOCK_HISTORICAL,
+        historicalData: historicalCSV,
         bookingTrends,
         forecastHorizonDays: horizon
       });
@@ -44,7 +68,14 @@ export default function ForecastingPage() {
     }
   };
 
-  const chartData = result ? JSON.parse(result.forecast) : [];
+  const chartData = useMemo(() => {
+    if (!result) return [];
+    try {
+      return JSON.parse(result.forecast);
+    } catch (e) {
+      return [];
+    }
+  }, [result]);
 
   return (
     <div className="flex h-screen w-full">
@@ -61,7 +92,7 @@ export default function ForecastingPage() {
             <h2 className="text-2xl font-bold font-headline flex items-center gap-2">
               <Brain className="h-6 w-6 text-primary" /> AI Insights
             </h2>
-            <p className="text-muted-foreground">Predict future occupancy rates using historical data and upcoming events to optimize your pricing strategy.</p>
+            <p className="text-muted-foreground">Predict future occupancy rates using live historical data and upcoming events.</p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
@@ -87,13 +118,13 @@ export default function ForecastingPage() {
                       min="1" 
                       max="30" 
                       value={horizon}
-                      onChange={(e) => setHorizon(parseInt(e.target.value))}
+                      onChange={(e) => setHorizon(parseInt(e.target.value) || 7)}
                     />
                   </div>
                   <Button 
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2" 
                     onClick={handleForecast}
-                    disabled={loading}
+                    disabled={loading || !historicalCSV}
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     Generate Forecast
@@ -104,7 +135,7 @@ export default function ForecastingPage() {
               <Card className="bg-secondary/30 border-none">
                 <CardContent className="p-4 flex items-center gap-3">
                   <TrendingUp className="h-5 w-5 text-accent" />
-                  <p className="text-xs">Historically, your occupancy spikes on Fridays. AI accounts for these patterns automatically.</p>
+                  <p className="text-xs">The AI is currently analyzing data for {rooms?.length || 0} active rooms.</p>
                 </CardContent>
               </Card>
             </div>
@@ -167,7 +198,7 @@ export default function ForecastingPage() {
                   <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold">No Forecast Data</h3>
+                  <h3 className="text-lg font-semibold">Ready for Analysis</h3>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">Click generate to let the AI analyze your hotel trends and provide predictions.</p>
                 </div>
               )}

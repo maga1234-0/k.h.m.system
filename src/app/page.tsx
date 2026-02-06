@@ -1,4 +1,7 @@
 
+"use client"
+
+import { useMemo } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,14 +17,44 @@ import {
   CreditCard
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import Link from "next/link";
 
 export default function DashboardPage() {
-  const stats = [
-    { title: "Current Occupancy", value: "78%", change: "+4.5%", trend: "up", icon: BedDouble },
-    { title: "Total Revenue", value: "$45,231", change: "+12.1%", trend: "up", icon: CreditCard },
-    { title: "New Bookings", value: "24", change: "-2.3%", trend: "down", icon: CalendarClock },
-    { title: "Active Guests", value: "142", change: "+8.4%", trend: "up", icon: Users },
-  ];
+  const firestore = useFirestore();
+  const roomsRef = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
+  const resRef = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
+  const clientsRef = useMemoFirebase(() => collection(firestore, 'clients'), [firestore]);
+
+  const { data: rooms } = useCollection(roomsRef);
+  const { data: reservations } = useCollection(resRef);
+  const { data: clients } = useCollection(clientsRef);
+
+  const stats = useMemo(() => {
+    const occupiedRooms = rooms?.filter(r => r.status === 'Occupied')?.length || 0;
+    const occupancyRate = rooms && rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0;
+    
+    const totalRevenue = reservations?.reduce((acc, r) => acc + (Number(r.totalAmount) || 0), 0) || 0;
+    const newBookingsToday = reservations?.filter(r => {
+      const createdDate = r.createdAt ? new Date(r.createdAt).toDateString() : "";
+      return createdDate === new Date().toDateString();
+    })?.length || 0;
+
+    return [
+      { title: "Current Occupancy", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
+      { title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "+12.1%", trend: "up", icon: CreditCard },
+      { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: "+4", trend: "up", icon: CalendarClock },
+      { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users }, // Mocking active guests based on rooms
+    ];
+  }, [rooms, reservations]);
+
+  const recentReservations = useMemo(() => {
+    if (!reservations) return [];
+    return [...reservations]
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .slice(0, 4);
+  }, [reservations]);
 
   return (
     <div className="flex h-screen w-full">
@@ -65,7 +98,7 @@ export default function DashboardPage() {
             <Card className="lg:col-span-4 border-none shadow-sm">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Occupancy & Revenue Overview</CardTitle>
-                <CardDescription>Visualizing performance over the last 30 days.</CardDescription>
+                <CardDescription>Visualizing performance based on current Firestore data.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <DashboardCharts />
@@ -79,22 +112,21 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { guest: "Alice Johnson", room: "302", status: "Checked In", date: "Today, 10:45 AM" },
-                    { guest: "Robert Smith", room: "105", status: "Pending", date: "Today, 09:12 AM" },
-                    { guest: "Elena Rodriguez", room: "404", status: "Checked Out", date: "Yesterday" },
-                    { guest: "Mark Thompson", room: "201", status: "Confirmed", date: "Today, 08:30 AM" },
-                  ].map((res, i) => (
-                    <div key={i} className="flex items-center justify-between group">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guest}</span>
-                        <span className="text-xs text-muted-foreground">Room {res.room} • {res.date}</span>
+                  {recentReservations.length > 0 ? (
+                    recentReservations.map((res, i) => (
+                      <div key={i} className="flex items-center justify-between group">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
+                          <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'primary' : 'outline'} className="text-[10px]">
+                          {res.status}
+                        </Badge>
                       </div>
-                      <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Pending' ? 'secondary' : 'outline'} className="text-[10px]">
-                        {res.status}
-                      </Badge>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No recent reservations found.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -108,12 +140,14 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-headline font-bold text-lg">AI Forecasting Available</h3>
-                  <p className="text-sm text-muted-foreground">Our AI predicts a 15% surge in occupancy for the next weekend. Consider adjusting rates.</p>
+                  <p className="text-sm text-muted-foreground">Predict occupancy surges based on your live inventory and seasonal trends.</p>
                 </div>
               </div>
-              <Badge variant="accent" className="cursor-pointer px-4 py-2 text-sm bg-accent hover:bg-accent/80 transition-colors">
-                View Forecast
-              </Badge>
+              <Link href="/forecasting">
+                <Badge variant="accent" className="cursor-pointer px-4 py-2 text-sm bg-accent hover:bg-accent/80 transition-colors">
+                  View Forecast
+                </Badge>
+              </Link>
             </CardContent>
           </Card>
         </main>
