@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
-import { signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInAnonymously, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Sparkles, Info, Eye, EyeOff } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Sparkles, Info, Eye, EyeOff, UserPlus, LogIn } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
@@ -27,17 +28,25 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast({
+          title: 'Account Created',
+          description: 'Welcome to K.K.S Management Suite.',
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
       router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'Invalid credentials.',
+        title: isSignUp ? 'Registration Failed' : 'Login Failed',
+        description: error.message || 'Check your credentials.',
       });
     } finally {
       setIsLoading(false);
@@ -83,15 +92,17 @@ export default function LoginPage() {
         <CardContent className="space-y-6">
           <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Demo Credentials</AlertTitle>
+            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Instructions</AlertTitle>
             <AlertDescription className="text-xs text-muted-foreground">
-              Pass: <code className="font-mono font-bold text-primary">kkk1234@#</code>
+              {isSignUp 
+                ? "Create your account below. Use any email and a secure password." 
+                : "Enter your credentials or toggle to Sign Up to create an account."}
             </AlertDescription>
           </Alert>
 
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Work Email</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -127,18 +138,28 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-semibold" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Sign In
+            <Button type="submit" className="w-full font-semibold gap-2" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (isSignUp ? <UserPlus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />)}
+              {isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="flex items-center justify-center text-sm">
+            <button 
+              type="button" 
+              className="text-primary hover:underline font-medium"
+              onClick={() => setIsSignUp(!isSignUp)}
+            >
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            </button>
+          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Demo Access</span>
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
             </div>
           </div>
 
