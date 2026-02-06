@@ -21,28 +21,29 @@ service cloud.firestore {
     }
 
     /**
-     * @description Clients can manage their own profiles.
+     * @description Clients information. Management (signed-in users) can read/write.
      */
     match /clients/{clientId} {
-      allow read, write: if isSignedIn() && (request.auth.uid == clientId || request.auth.uid == resource.data.id);
+      allow read, write: if isSignedIn();
     }
 
     /**
-     * @description Reservations are private to the creator or visible to staff.
+     * @description Reservations are viewable and manageable by signed-in staff.
      */
     match /reservations/{reservationId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     /**
-     * @description Invoices and Staff records.
+     * @description Invoices are viewable and manageable by signed-in staff.
      */
     match /invoices/{invoiceId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
+    /**
+     * @description Staff records.
+     */
     match /staff/{staffId} {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == staffId;
