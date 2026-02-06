@@ -22,7 +22,9 @@ import {
   Loader2,
   CalendarDays,
   Users as UsersIcon,
-  DollarSign
+  DollarSign,
+  UserCheck,
+  Ban
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -113,6 +115,47 @@ export default function ReservationsPage() {
     toast({
       title: "Reservation Created",
       description: `New booking confirmed for ${reservationData.guestName} in Room ${selectedRoom.roomNumber}.`,
+    });
+  };
+
+  const handleCancelReservation = (reservation: any) => {
+    const resRef = doc(firestore, 'reservations', reservation.id);
+    updateDocumentNonBlocking(resRef, { status: "Cancelled" });
+    
+    // Make room available again
+    if (reservation.roomId) {
+      const roomRef = doc(firestore, 'rooms', reservation.roomId);
+      updateDocumentNonBlocking(roomRef, { status: "Available" });
+    }
+
+    toast({
+      title: "Reservation Cancelled",
+      description: `Booking for ${reservation.guestName} has been cancelled and Room ${reservation.roomNumber} is now available.`,
+    });
+  };
+
+  const handleCheckIn = (reservation: any) => {
+    const resRef = doc(firestore, 'reservations', reservation.id);
+    updateDocumentNonBlocking(resRef, { status: "Checked In" });
+    
+    toast({
+      title: "Guest Checked In",
+      description: `${reservation.guestName} has successfully checked in to Room ${reservation.roomNumber}.`,
+    });
+  };
+
+  const handleCheckOut = (reservation: any) => {
+    const resRef = doc(firestore, 'reservations', reservation.id);
+    updateDocumentNonBlocking(resRef, { status: "Checked Out" });
+    
+    if (reservation.roomId) {
+      const roomRef = doc(firestore, 'rooms', reservation.roomId);
+      updateDocumentNonBlocking(roomRef, { status: "Available" });
+    }
+
+    toast({
+      title: "Guest Checked Out",
+      description: `${reservation.guestName} has checked out. Room ${reservation.roomNumber} is now available.`,
     });
   };
 
@@ -320,10 +363,23 @@ export default function ReservationsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Modify Booking</DropdownMenuItem>
+                            {res.status === 'Confirmed' && (
+                              <DropdownMenuItem onClick={() => handleCheckIn(res)} className="text-emerald-600">
+                                <UserCheck className="mr-2 h-4 w-4" /> Check In
+                              </DropdownMenuItem>
+                            )}
+                            {res.status === 'Checked In' && (
+                              <DropdownMenuItem onClick={() => handleCheckOut(res)} className="text-blue-600">
+                                <LogOut className="mr-2 h-4 w-4" /> Check Out
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem>Send Confirmation</DropdownMenuItem>
                             <Separator className="my-1" />
-                            <DropdownMenuItem className="text-destructive">Cancel Reservation</DropdownMenuItem>
+                            {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
+                              <DropdownMenuItem onClick={() => handleCancelReservation(res)} className="text-destructive">
+                                <Ban className="mr-2 h-4 w-4" /> Cancel Reservation
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
