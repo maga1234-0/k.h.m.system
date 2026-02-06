@@ -1,5 +1,5 @@
 
-"use client"
+'use client';
 
 import * as React from "react"
 import { 
@@ -11,10 +11,14 @@ import {
   TrendingUp, 
   ShieldCheck,
   Settings,
-  Hotel
+  Hotel,
+  LogOut,
+  User
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useAuth, useUser } from "@/firebase"
+import { signOut } from "firebase/auth"
 
 import {
   Sidebar,
@@ -28,6 +32,13 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
@@ -41,6 +52,18 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const auth = useAuth()
+  const { user } = useUser()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      router.push('/login')
+    } catch (error) {
+      console.error("Sign out failed", error)
+    }
+  }
 
   return (
     <Sidebar className="border-r">
@@ -81,6 +104,31 @@ export function AppSidebar() {
                 <span>Settings</span>
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={`https://picsum.photos/seed/${user?.uid}/200`} />
+                    <AvatarFallback className="rounded-lg">AD</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{user?.isAnonymous ? 'Guest Admin' : (user?.displayName || 'Administrator')}</span>
+                    <span className="truncate text-xs">{user?.email || 'karatasi-system'}</span>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
+                <DropdownMenuItem className="gap-2">
+                  <User className="h-4 w-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

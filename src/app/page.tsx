@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,14 +15,18 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   TrendingUp,
-  CreditCard
+  CreditCard,
+  Loader2
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  
   const firestore = useFirestore();
   const roomsRef = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
   const resRef = useMemoFirebase(() => collection(firestore, 'reservations'), [firestore]);
@@ -30,6 +35,12 @@ export default function DashboardPage() {
   const { data: rooms } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
   const { data: clients } = useCollection(clientsRef);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   const stats = useMemo(() => {
     const occupiedRooms = rooms?.filter(r => r.status === 'Occupied')?.length || 0;
@@ -45,7 +56,7 @@ export default function DashboardPage() {
       { title: "Current Occupancy", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
       { title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "+12.1%", trend: "up", icon: CreditCard },
       { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: "+4", trend: "up", icon: CalendarClock },
-      { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users }, // Mocking active guests based on rooms
+      { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users },
     ];
   }, [rooms, reservations]);
 
@@ -55,6 +66,14 @@ export default function DashboardPage() {
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
       .slice(0, 4);
   }, [reservations]);
+
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full">
@@ -117,7 +136,7 @@ export default function DashboardPage() {
                       <div key={i} className="flex items-center justify-between group">
                         <div className="flex flex-col">
                           <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
-                          <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                         </div>
                         <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'primary' : 'outline'} className="text-[10px]">
                           {res.status}
