@@ -18,21 +18,17 @@
           "type": "string",
           "description": "The type of room (e.g., Single, Double, Suite)."
         },
-        "capacity": {
-          "type": "number",
-          "description": "The maximum occupancy of the room."
-        },
-        "status": {
+        "availability": {
           "type": "string",
-          "description": "The current status of the room (e.g., Available, Occupied, Maintenance)."
+          "description": "The availability status of the room (e.g., Available, Occupied, Maintenance)."
         },
-        "pricePerNight": {
+        "price": {
           "type": "number",
-          "description": "The price per night for the room."
+          "description": "The price of the room per night."
         },
         "amenities": {
           "type": "array",
-          "description": "A list of amenities offered in the room.",
+          "description": "A list of amenities available in the room.",
           "items": {
             "type": "string"
           }
@@ -42,9 +38,8 @@
         "id",
         "roomNumber",
         "roomType",
-        "capacity",
-        "status",
-        "pricePerNight"
+        "availability",
+        "price"
       ]
     },
     "Reservation": {
@@ -67,12 +62,12 @@
         },
         "checkInDate": {
           "type": "string",
-          "description": "The date the reservation starts.",
+          "description": "The check-in date of the reservation.",
           "format": "date-time"
         },
         "checkOutDate": {
           "type": "string",
-          "description": "The date the reservation ends.",
+          "description": "The check-out date of the reservation.",
           "format": "date-time"
         },
         "numberOfGuests": {
@@ -85,7 +80,11 @@
         },
         "status": {
           "type": "string",
-          "description": "The current status of the reservation (e.g., Confirmed, Cancelled, CheckedIn, CheckedOut)."
+          "description": "The status of the reservation (e.g., Confirmed, Cancelled, CheckedIn, CheckedOut)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any notes for this reservation."
         }
       },
       "required": [
@@ -103,7 +102,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Client",
       "type": "object",
-      "description": "Represents a client.",
+      "description": "Represents a client of the hotel.",
       "properties": {
         "id": {
           "type": "string",
@@ -132,7 +131,7 @@
         },
         "preferences": {
           "type": "string",
-          "description": "Any specific preferences of the client."
+          "description": "The client's preferences."
         }
       },
       "required": [
@@ -159,7 +158,7 @@
         },
         "invoiceDate": {
           "type": "string",
-          "description": "The date the invoice was generated.",
+          "description": "The date the invoice was issued.",
           "format": "date-time"
         },
         "dueDate": {
@@ -169,20 +168,20 @@
         },
         "amountDue": {
           "type": "number",
-          "description": "The total amount due on the invoice."
+          "description": "The amount due on the invoice."
         },
         "amountPaid": {
           "type": "number",
-          "description": "The amount that has been paid on the invoice."
+          "description": "The amount paid on the invoice."
         },
         "paymentDate": {
           "type": "string",
-          "description": "The date the payment was received.",
+          "description": "The date the invoice was paid.",
           "format": "date-time"
         },
         "status": {
           "type": "string",
-          "description": "The current status of the invoice (e.g., Paid, Unpaid, Overdue)."
+          "description": "The status of the invoice (e.g., Paid, Unpaid, Overdue)."
         }
       },
       "required": [
@@ -190,14 +189,16 @@
         "reservationId",
         "invoiceDate",
         "dueDate",
-        "amountDue"
+        "amountDue",
+        "amountPaid",
+        "status"
       ]
     },
     "Staff": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Staff",
       "type": "object",
-      "description": "Represents a staff member.",
+      "description": "Represents a staff member of the hotel.",
       "properties": {
         "id": {
           "type": "string",
@@ -225,8 +226,11 @@
           "description": "The role of the staff member (e.g., Manager, Receptionist)."
         },
         "permissions": {
-          "type": "string",
-          "description": "The permissions assigned to the staff member."
+          "type": "array",
+          "description": "A list of permissions assigned to the staff member.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -236,6 +240,40 @@
         "email",
         "phoneNumber",
         "role"
+      ]
+    },
+    "OccupancyForecast": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OccupancyForecast",
+      "type": "object",
+      "description": "Represents an occupancy forecast based on AI predictions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the occupancy forecast."
+        },
+        "forecastDate": {
+          "type": "string",
+          "description": "The date for which the occupancy is being forecast.",
+          "format": "date-time"
+        },
+        "predictedOccupancyRate": {
+          "type": "number",
+          "description": "The predicted occupancy rate for the forecast date."
+        },
+        "historicalDataUsed": {
+          "type": "string",
+          "description": "Reference to the historical booking and occupancy data for the forecast."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any notes or additional information regarding the forecast."
+        }
+      },
+      "required": [
+        "id",
+        "forecastDate",
+        "predictedOccupancyRate"
       ]
     }
   },
@@ -248,17 +286,37 @@
   "firestore": {
     "structure": [
       {
+        "path": "/users/{userId}/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Stores client data with path-based ownership for user privacy.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns this client data."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique ID of the client."
+            }
+          ]
+        }
+      },
+      {
         "path": "/rooms/{roomId}",
         "definition": {
           "entityName": "Room",
           "schema": {
             "$ref": "#/backend/entities/Room"
           },
-          "description": "Stores room information. The 'roomId' is a unique identifier for each room.",
+          "description": "Stores room data.",
           "params": [
             {
               "name": "roomId",
-              "description": "Unique identifier for the room."
+              "description": "The unique ID of the room."
             }
           ]
         }
@@ -270,27 +328,11 @@
           "schema": {
             "$ref": "#/backend/entities/Reservation"
           },
-          "description": "Stores reservation details. The 'reservationId' is a unique identifier for each reservation.",
+          "description": "Stores reservation data, including clientId and roomId for easy querying.",
           "params": [
             {
               "name": "reservationId",
-              "description": "Unique identifier for the reservation."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/clients/{clientId}",
-        "definition": {
-          "entityName": "Client",
-          "schema": {
-            "$ref": "#/backend/entities/Client"
-          },
-          "description": "Stores client information. The 'clientId' is a unique identifier for each client.",
-          "params": [
-            {
-              "name": "clientId",
-              "description": "Unique identifier for the client."
+              "description": "The unique ID of the reservation."
             }
           ]
         }
@@ -302,11 +344,11 @@
           "schema": {
             "$ref": "#/backend/entities/Invoice"
           },
-          "description": "Stores invoice details. The 'invoiceId' is a unique identifier for each invoice.",
+          "description": "Stores invoice data, including reservationId for traceability.",
           "params": [
             {
               "name": "invoiceId",
-              "description": "Unique identifier for the invoice."
+              "description": "The unique ID of the invoice."
             }
           ]
         }
@@ -318,16 +360,48 @@
           "schema": {
             "$ref": "#/backend/entities/Staff"
           },
-          "description": "Stores staff member information. The 'staffId' is a unique identifier for each staff member.",
+          "description": "Stores staff data, including role information.",
           "params": [
             {
               "name": "staffId",
-              "description": "Unique identifier for the staff member."
+              "description": "The unique ID of the staff member."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{staffId}",
+        "definition": {
+          "entityName": "Staff",
+          "schema": {
+            "$ref": "#/backend/entities/Staff"
+          },
+          "description": "Admin role assignment based on document existence.  StaffId here is the same as the Firebase Auth UID.  Authorization relies solely on `request.auth.uid`.",
+          "params": [
+            {
+              "name": "staffId",
+              "description": "The UID of the staff member (from Firebase Auth)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/occupancyForecasts/{forecastId}",
+        "definition": {
+          "entityName": "OccupancyForecast",
+          "schema": {
+            "$ref": "#/backend/entities/OccupancyForecast"
+          },
+          "description": "Stores occupancy forecast data.",
+          "params": [
+            {
+              "name": "forecastId",
+              "description": "The unique ID of the occupancy forecast."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the core features of the Karatasi Hotelier application, focusing on room management, reservation management, client management, automated billing, and staff management. The design prioritizes Authorization Independence and QAPs (Rules are not Filters). Each entity is stored in its own top-level collection to maintain clarity and simplify security rules.\n\nRooms are stored in the `/rooms` collection. Reservations, Clients, Invoices and Staff are stored in respective collections (`/reservations`, `/clients`, `/invoices`, `/staff`). This structure allows for easy querying and management of each entity type. The Room entity is central to the app, and its collection is named accordingly.\n\nAuthorization Independence:\nAll entities are designed to operate without requiring hierarchical authorization dependencies, eliminating the need for `get()` calls in security rules. For collaborative data or data that depends on the state of another document, relevant authorization information is denormalized. This applies particularly to scenarios where access to reservations or invoices might depend on client or room attributes.\n\nQAPs Support:\nThe structure supports secure `list` operations by ensuring that each collection maintains a consistent security posture. Data segregation by entity type allows for targeted security rules that do not act as filters. This is particularly important for listing rooms, reservations, or clients, where access control must be enforced without exposing unauthorized data."
+    "reasoning": "The Firestore data structure is designed to manage hotel operations, including room, client, reservation, invoice, and staff data. It prioritizes Authorization Independence by storing all necessary authorization data within the relevant documents, eliminating the need for `get()` calls in security rules. It also provides separation of concerns for QAPS. Private data resides in path-based ownership collections. Collaborative or role-based data are in segregated collections.\n\nClients' private data is stored under `/users/{userId}/clients/{clientId}` to take advantage of path-based security rules.\n\nRooms are stored in a top-level `/rooms/{roomId}` collection. This allows all staff to easily list all rooms without requiring complex rule structures.\n\nReservations are stored under `/reservations/{reservationId}`, including the `clientId` and `roomId` to simplify queries and management. Invoices are stored under `/invoices/{invoiceId}`, and they include the `reservationId` for traceability.\n\nStaff data is stored under `/staff/{staffId}` and includes a `role` field.  A separate `/roles_admin/{staffId}` collection is used to denote admin status based on the staff member's `uid` existence.  This existence-based check provides a simple and efficient way to manage admin privileges.\n\nOccupancy Forecasts are stored in the `/occupancyForecasts/{forecastId}` collection for reporting and analytical purposes."
   }
 }
