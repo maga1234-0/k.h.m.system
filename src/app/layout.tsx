@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -6,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'Karatasi Hotelier - Modern Hotel Management',
+  title: 'K.K.S - Modern Hotel Management',
   description: 'Manage your hotel operations with ease and AI-powered forecasting.',
 };
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -72,7 +71,7 @@ export function AppSidebar() {
           <Hotel className="h-6 w-6" />
         </div>
         <div className="flex flex-col">
-          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">Karatasi</span>
+          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.K.S</span>
           <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Management</span>
         </div>
       </SidebarHeader>
@@ -116,7 +115,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.isAnonymous ? 'Guest Admin' : (user?.displayName || 'Administrator')}</span>
-                    <span className="truncate text-xs">{user?.email || 'karatasi-system'}</span>
+                    <span className="truncate text-xs">{user?.email || 'kks-system'}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

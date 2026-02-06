@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -37,8 +36,8 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useDoc(settingsRef);
 
   const [formData, setFormData] = useState({
-    hotelName: "Karatasi Hotelier",
-    email: "contact@karatasi.com",
+    hotelName: "K.K.S",
+    email: "contact@kks.com",
     phone: "+1 234 567 890",
     checkInTime: "14:00",
     checkOutTime: "11:00",

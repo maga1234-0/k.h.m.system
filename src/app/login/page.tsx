@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -75,7 +74,7 @@ export default function LoginPage() {
             <Hotel className="h-8 w-8" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="font-headline text-3xl font-bold tracking-tight">Karatasi</CardTitle>
+            <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.K.S</CardTitle>
             <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Management Suite</CardDescription>
           </div>
         </CardHeader>
@@ -88,7 +87,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@karatasi.com"
+                  placeholder="admin@kks.com"
                   className="pl-9"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -132,7 +131,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Proprietary system of Karatasi Hotels Group. Authorized access only.
+            Proprietary system of K.K.S Group. Authorized access only.
           </p>
         </CardFooter>
       </Card>
