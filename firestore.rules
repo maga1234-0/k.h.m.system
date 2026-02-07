@@ -4,7 +4,7 @@ service cloud.firestore {
 
     /**
      * Core Philosophy:
-     * Restricted access for K.K.S Hotelier.
+     * Restricted access for K.H.M.System Hotelier.
      * Only authenticated admin accounts are permitted to view or manage data.
      */
 

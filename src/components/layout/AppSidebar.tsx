@@ -95,7 +95,7 @@ export function AppSidebar() {
           <Hotel className="h-6 w-6" />
         </div>
         <div className="flex flex-col">
-          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.K.S</span>
+          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.H.M.System</span>
           <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Management</span>
         </div>
       </SidebarHeader>
@@ -135,7 +135,12 @@ export function AppSidebar() {
                 <SidebarMenuButton tooltip="Change Appearance">
                   <div className="flex items-center gap-2">
                     <div className="flex h-5 w-5 items-center justify-center rounded-md border bg-background">
-                      {renderThemeIcon()}
+                      {mounted && (
+                        <>
+                          {theme === 'dark' ? <Moon className="h-3 w-3" /> : theme === 'light' ? <Sun className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                        </>
+                      )}
+                      {!mounted && <Monitor className="h-3 w-3" />}
                     </div>
                     <span>Appearance</span>
                   </div>

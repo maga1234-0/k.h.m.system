@@ -108,7 +108,7 @@ export default function LoginPage() {
             <Hotel className="h-8 w-8" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.K.S</CardTitle>
+            <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
             <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Secure Admin Login</CardDescription>
           </div>
         </CardHeader>
@@ -190,7 +190,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="text-center pt-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full">
-            Proprietary system of K.K.S Group
+            Proprietary system of K.H.M.System Group
           </p>
         </CardFooter>
       </Card>

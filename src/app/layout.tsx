@@ -6,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'K.K.S - Modern Hotel Management',
+  title: 'K.H.M.System - Modern Hotel Management',
   description: 'Manage your hotel operations with ease and real-time insights.',
 };
 
