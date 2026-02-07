@@ -30,7 +30,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter,
-  DialogDescription
+  DialogDescription,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,8 +42,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useUser, setDocumentNonBlocking } from "@/firebase";
+import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
 export default function StaffPage() {
@@ -52,10 +53,21 @@ export default function StaffPage() {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
   const [messageText, setMessageText] = useState("");
   const [scheduleData, setScheduleData] = useState({
     date: new Date().toISOString().split('T')[0],
     shift: "Morning"
+  });
+
+  const [newStaff, setNewStaff] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    role: "Receptionist",
+    status: "On Duty"
   });
 
   const firestore = useFirestore();
@@ -67,6 +79,37 @@ export default function StaffPage() {
       router.push('/login');
     }
   }, [user, isAuthLoading, router]);
+
+  const handleAddStaff = () => {
+    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) return;
+
+    const staffId = doc(staffCollection).id;
+    const staffRef = doc(firestore, 'staff', staffId);
+
+    const staffData = {
+      ...newStaff,
+      id: staffId,
+      avatar: staffId,
+      createdAt: new Date().toISOString()
+    };
+
+    setDocumentNonBlocking(staffRef, staffData, { merge: true });
+    
+    setIsAddDialogOpen(false);
+    setNewStaff({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      role: "Receptionist",
+      status: "On Duty"
+    });
+
+    toast({
+      title: "Staff Member Added",
+      description: `${staffData.firstName} ${staffData.lastName} has been added to the team.`,
+    });
+  };
 
   const handleSendMessage = () => {
     if (!messageText || !selectedStaff) return;
@@ -115,9 +158,79 @@ export default function StaffPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Staff Management</h1>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-            <UserPlus className="h-4 w-4" /> Add Member
-          </Button>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                <UserPlus className="h-4 w-4" /> Add Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add Staff Member</DialogTitle>
+                <DialogDescription>Create a new profile for a hotel staff member.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input 
+                      id="firstName" 
+                      value={newStaff.firstName}
+                      onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input 
+                      id="lastName" 
+                      value={newStaff.lastName}
+                      onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email"
+                    value={newStaff.email}
+                    onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input 
+                    id="phone" 
+                    value={newStaff.phoneNumber}
+                    onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select 
+                    value={newStaff.role} 
+                    onValueChange={(val) => setNewStaff({...newStaff, role: val})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="Receptionist">Receptionist</SelectItem>
+                      <SelectItem value="Housekeeping">Housekeeping</SelectItem>
+                      <SelectItem value="Concierge">Concierge</SelectItem>
+                      <SelectItem value="Security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.lastName || !newStaff.email}>Add Member</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </header>
 
         <main className="p-6 space-y-6">
