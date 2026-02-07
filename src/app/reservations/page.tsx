@@ -73,6 +73,7 @@ import {
   addDocumentNonBlocking, 
   updateDocumentNonBlocking, 
   deleteDocumentNonBlocking,
+  setDocumentNonBlocking,
   useUser 
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
@@ -168,7 +169,6 @@ export default function ReservationsPage() {
   const handleSendConfirmation = (reservation: any, method: 'whatsapp' | 'email') => {
     let message = "";
     
-    // Contextual messaging logic based on booking status
     if (reservation.status === 'Checked Out') {
       message = `Hello ${reservation.guestName}, thank you for staying with us at K.H.M.System. We hope you enjoyed your stay in Room ${reservation.roomNumber}. Your final total was $${reservation.totalAmount}. We hope to see you again soon!`;
     } else if (reservation.status === 'Cancelled') {
@@ -189,10 +189,6 @@ export default function ReservationsPage() {
       const phone = reservation.guestPhone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
-      toast({
-        title: "WhatsApp Redirect",
-        description: `Sending message to ${reservation.guestName} via WhatsApp...`,
-      });
     } else {
       if (!reservation.guestEmail) {
         toast({
@@ -204,19 +200,29 @@ export default function ReservationsPage() {
       }
       const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Reservation Update - K.H.M.System&body=${encodeURIComponent(message)}`;
       window.open(mailtoUrl, '_blank');
-      toast({
-        title: "Email Client Opened",
-        description: `Preparing message for ${reservation.guestName}...`,
-      });
     }
   };
 
   const handleCheckIn = (reservation: any) => {
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Checked In" });
+    
+    // Auto-generate invoice in Firestore
+    const invoiceRef = doc(collection(firestore, 'invoices'));
+    setDocumentNonBlocking(invoiceRef, {
+      id: invoiceRef.id,
+      reservationId: reservation.id,
+      guestName: reservation.guestName,
+      invoiceDate: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      amountDue: Number(reservation.totalAmount) || 0,
+      amountPaid: 0,
+      status: "Unpaid"
+    }, { merge: true });
+
     toast({
       title: "Guest Checked In",
-      description: `${reservation.guestName} has successfully checked in.`,
+      description: `${reservation.guestName} has checked in. Invoice generated.`,
     });
   };
 
@@ -323,30 +329,22 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="newGuestEmail">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newGuestEmail" 
-                        type="email"
-                        className="pl-9"
-                        placeholder="guest@example.com"
-                        value={newBooking.guestEmail}
-                        onChange={(e) => setNewBooking({...newBooking, guestEmail: e.target.value})}
-                      />
-                    </div>
+                    <Input 
+                      id="newGuestEmail" 
+                      type="email"
+                      placeholder="guest@example.com"
+                      value={newBooking.guestEmail}
+                      onChange={(e) => setNewBooking({...newBooking, guestEmail: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newGuestPhone">Phone (International)</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newGuestPhone" 
-                        className="pl-9"
-                        placeholder="e.g. 15551234567"
-                        value={newBooking.guestPhone}
-                        onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})}
-                      />
-                    </div>
+                    <Input 
+                      id="newGuestPhone" 
+                      placeholder="e.g. 15551234567"
+                      value={newBooking.guestPhone}
+                      onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -377,29 +375,21 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="newCheckIn">Check-In</Label>
-                    <div className="relative">
-                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newCheckIn" 
-                        type="date" 
-                        className="pl-9 text-xs"
-                        value={newBooking.checkInDate}
-                        onChange={(e) => setNewBooking({...newBooking, checkInDate: e.target.value})}
-                      />
-                    </div>
+                    <Input 
+                      id="newCheckIn" 
+                      type="date" 
+                      value={newBooking.checkInDate}
+                      onChange={(e) => setNewBooking({...newBooking, checkInDate: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newCheckOut">Check-Out</Label>
-                    <div className="relative">
-                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newCheckOut" 
-                        type="date" 
-                        className="pl-9 text-xs"
-                        value={newBooking.checkOutDate}
-                        onChange={(e) => setNewBooking({...newBooking, checkOutDate: e.target.value})}
-                      />
-                    </div>
+                    <Input 
+                      id="newCheckOut" 
+                      type="date" 
+                      value={newBooking.checkOutDate}
+                      onChange={(e) => setNewBooking({...newBooking, checkOutDate: e.target.value})}
+                    />
                   </div>
                 </div>
               </div>
@@ -455,8 +445,8 @@ export default function ReservationsPage() {
               <TableBody>
                 {isResLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      <div className="flex items-center justify-center gap-2">
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...
                       </div>
                     </TableCell>
