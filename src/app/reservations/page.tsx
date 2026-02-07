@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -56,10 +56,11 @@ import { toast } from "@/hooks/use-toast";
 export default function ReservationsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [selectedRes, setSelectedRes] = useState<any>(null);
+  const [selectedResId, setSelectedResId] = useState<string | null>(null);
   
   const [newBooking, setNewBooking] = useState({
     guestName: "",
@@ -78,8 +79,14 @@ export default function ReservationsPage() {
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsCollection);
 
-  // Fix hydration mismatch by setting initial dates on client mount
+  // Find the selected reservation from the data to ensure reactivity
+  const selectedRes = useMemo(() => {
+    if (!selectedResId || !reservations) return null;
+    return reservations.find(r => r.id === selectedResId) || null;
+  }, [selectedResId, reservations]);
+
   useEffect(() => {
+    setMounted(true);
     setNewBooking(prev => ({
       ...prev,
       checkInDate: new Date().toISOString().split('T')[0],
@@ -95,12 +102,12 @@ export default function ReservationsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Checked In": return <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1"><CheckCircle2 className="h-3 w-3" /> In</Badge>;
-      case "Checked Out": return <Badge variant="outline" className="text-muted-foreground gap-1"><LogOut className="h-3 w-3" /> Out</Badge>;
-      case "Confirmed": return <Badge className="bg-primary hover:bg-primary/90 gap-1"><Calendar className="h-3 w-3" /> Confirmed</Badge>;
-      case "Pending": return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
-      case "Cancelled": return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" /> Cancelled</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      case "Checked In": return <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" /> In</Badge>;
+      case "Checked Out": return <Badge variant="outline" className="text-muted-foreground gap-1 text-[10px]"><LogOut className="h-3 w-3" /> Out</Badge>;
+      case "Confirmed": return <Badge className="bg-primary hover:bg-primary/90 gap-1 text-[10px]"><Calendar className="h-3 w-3" /> Confirmed</Badge>;
+      case "Pending": return <Badge variant="secondary" className="gap-1 text-[10px]"><Clock className="h-3 w-3" /> Pending</Badge>;
+      case "Cancelled": return <Badge variant="destructive" className="gap-1 text-[10px]"><XCircle className="h-3 w-3" /> Cancelled</Badge>;
+      default: return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
     }
   };
 
@@ -123,15 +130,6 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(roomRef, { status: "Occupied" });
 
     setIsAddDialogOpen(false);
-    setNewBooking({
-      guestName: "",
-      roomId: "",
-      checkInDate: new Date().toISOString().split('T')[0],
-      checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-      numberOfGuests: 1,
-      totalAmount: 0
-    });
-
     toast({
       title: "Reservation Created",
       description: `New booking confirmed for ${reservationData.guestName} in Room ${selectedRoom.roomNumber}.`,
@@ -185,7 +183,7 @@ export default function ReservationsPage() {
     });
   };
 
-  if (isAuthLoading || !user) {
+  if (!mounted || isAuthLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -335,12 +333,12 @@ export default function ReservationsPage() {
                   filteredReservations.map((res) => (
                     <TableRow key={res.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-mono text-[10px] font-semibold">{res.id.slice(0, 8)}...</TableCell>
-                      <TableCell className="font-medium">{res.guestName}</TableCell>
-                      <TableCell>Room {res.roomNumber}</TableCell>
-                      <TableCell className="text-sm">{res.checkInDate}</TableCell>
-                      <TableCell className="text-sm">{res.checkOutDate}</TableCell>
+                      <TableCell className="font-medium text-sm">{res.guestName}</TableCell>
+                      <TableCell className="text-sm">Room {res.roomNumber}</TableCell>
+                      <TableCell className="text-xs">{res.checkInDate}</TableCell>
+                      <TableCell className="text-xs">{res.checkOutDate}</TableCell>
                       <TableCell>{getStatusBadge(res.status)}</TableCell>
-                      <TableCell className="text-xs font-medium text-emerald-600">${res.totalAmount}</TableCell>
+                      <TableCell className="text-xs font-bold text-emerald-600">${res.totalAmount}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -348,11 +346,12 @@ export default function ReservationsPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem onSelect={(e) => {
                               e.preventDefault();
-                              setSelectedRes(res);
-                              setTimeout(() => setIsDetailsDialogOpen(true), 50);
+                              setSelectedResId(res.id);
+                              // Using a slightly longer timeout to ensure dropdown closes and focus is handled correctly
+                              setTimeout(() => setIsDetailsDialogOpen(true), 100);
                             }}>
                               <Info className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
@@ -392,13 +391,19 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <Dialog open={isDetailsDialogOpen} onOpenChange={(open) => {
+          setIsDetailsDialogOpen(open);
+          if (!open) {
+            // Clean up selection after closing
+            setTimeout(() => setSelectedResId(null), 200);
+          }
+        }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Reservation Details</DialogTitle>
               <DialogDescription>Full summary of the guest's booking.</DialogDescription>
             </DialogHeader>
-            {selectedRes && (
+            {selectedRes ? (
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -436,6 +441,10 @@ export default function ReservationsPage() {
                   <span className="text-sm font-semibold">Total Amount Due</span>
                   <span className="text-lg font-bold text-emerald-600">${selectedRes.totalAmount}</span>
                 </div>
+              </div>
+            ) : (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
             <DialogFooter>

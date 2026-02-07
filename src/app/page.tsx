@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -23,10 +24,10 @@ import { collection } from "firebase/firestore";
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   
   const firestore = useFirestore();
   
-  // Guard references with user check to prevent permission errors before redirect
   const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
@@ -36,19 +37,25 @@ export default function DashboardPage() {
   const { data: clients } = useCollection(clientsRef);
 
   useEffect(() => {
+    setMounted(true);
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
   const stats = useMemo(() => {
+    // Only calculate stats after mounting to avoid hydration mismatch with dates
+    if (!mounted) return [];
+
     const occupiedRooms = rooms?.filter(r => r.status === 'Occupied')?.length || 0;
     const occupancyRate = rooms && rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0;
     
     const totalRevenue = reservations?.reduce((acc, r) => acc + (Number(r.totalAmount) || 0), 0) || 0;
+    
+    const todayStr = new Date().toDateString();
     const newBookingsToday = reservations?.filter(r => {
       const createdDate = r.createdAt ? new Date(r.createdAt).toDateString() : "";
-      return createdDate === new Date().toDateString();
+      return createdDate === todayStr;
     })?.length || 0;
 
     return [
@@ -57,7 +64,7 @@ export default function DashboardPage() {
       { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: "+4", trend: "up", icon: CalendarClock },
       { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users },
     ];
-  }, [rooms, reservations]);
+  }, [rooms, reservations, mounted]);
 
   const recentReservations = useMemo(() => {
     if (!reservations) return [];
@@ -66,7 +73,7 @@ export default function DashboardPage() {
       .slice(0, 4);
   }, [reservations]);
 
-  if (isUserLoading || !user) {
+  if (!mounted || isUserLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -137,7 +144,7 @@ export default function DashboardPage() {
                           <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
                           <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                         </div>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'primary' : 'outline'} className="text-[10px]">
+                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px]">
                           {res.status}
                         </Badge>
                       </div>
