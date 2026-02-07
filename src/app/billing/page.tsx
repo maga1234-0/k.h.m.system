@@ -8,8 +8,8 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Receipt, Printer, Loader2, CreditCard, MessageCircle, Hotel, X } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser } from "@/firebase"
+import { Receipt, Printer, Loader2, CreditCard, MessageCircle, Hotel, Trash2, AlertCircle } from "lucide-react"
+import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import {
@@ -20,6 +20,17 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function BillingPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -27,6 +38,7 @@ export default function BillingPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   
   const firestore = useFirestore();
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
@@ -59,6 +71,22 @@ export default function BillingPage() {
     toast({
       title: "Invoice Updated",
       description: `Invoice for ${invoice.guestName} marked as Paid.`,
+    });
+  };
+
+  const handleClearRegistry = () => {
+    if (!invoices) return;
+    
+    invoices.forEach((inv) => {
+      const invRef = doc(firestore, 'invoices', inv.id);
+      deleteDocumentNonBlocking(invRef);
+    });
+    
+    setIsClearDialogOpen(false);
+    toast({
+      variant: "destructive",
+      title: "Registry Cleared",
+      description: "All invoice records have been permanently removed.",
     });
   };
 
@@ -144,6 +172,33 @@ export default function BillingPage() {
                 <CardTitle className="font-headline">Invoices Registry</CardTitle>
                 <CardDescription>Manage guest payments and generated bills.</CardDescription>
               </div>
+              {invoices && invoices.length > 0 && (
+                <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground gap-2">
+                      <Trash2 className="h-4 w-4" /> Clear All
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                        Wipe Invoices Registry?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all {invoices.length} invoice records from the system. 
+                        This action is irreversible and will reset your revenue tracking metrics.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Registry</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Yes, Clear All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </CardHeader>
             <CardContent>
               {isInvoicesLoading ? (
