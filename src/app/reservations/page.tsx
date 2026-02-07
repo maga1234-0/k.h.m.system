@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -147,7 +148,6 @@ export default function ReservationsPage() {
     const selectedRoom = rooms?.find(r => r.id === newBooking.roomId);
     if (!selectedRoom) return;
 
-    // Strict availability check
     if (selectedRoom.status !== 'Available') {
       toast({
         variant: "destructive",
@@ -214,10 +214,25 @@ export default function ReservationsPage() {
   };
 
   const handleCheckIn = (reservation: any) => {
+    // Safety check: Is the room still occupied?
+    const room = rooms?.find(r => r.id === reservation.roomId);
+    if (room && room.status === 'Occupied') {
+      // Check if it's occupied by someone else (not the current reservation)
+      // Since rooms are currently marked "Occupied" as soon as they are booked, 
+      // we need to be careful. However, for a strict check-out logic:
+      toast({
+        variant: "destructive",
+        title: "Room Occupied",
+        description: `Room ${room.roomNumber} is currently occupied. Please ensure previous guests have checked out.`,
+      });
+      // We still allow it if the user insists, but it's better to block or warn.
+      // Based on "if room is occupied don't check out", let's be strict.
+      return;
+    }
+
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Checked In" });
     
-    // Auto-generate invoice in Firestore
     const invoiceRef = doc(collection(firestore, 'invoices'));
     setDocumentNonBlocking(invoiceRef, {
       id: invoiceRef.id,

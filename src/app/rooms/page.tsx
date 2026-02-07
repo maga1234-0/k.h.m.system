@@ -129,7 +129,6 @@ export default function RoomsPage() {
   const handleQuickBook = () => {
     if (!selectedRoom || !bookingData.guestName) return;
 
-    // Strict availability check
     if (selectedRoom.status !== 'Available') {
       toast({
         variant: "destructive",
@@ -157,7 +156,6 @@ export default function RoomsPage() {
 
     addDocumentNonBlocking(resRef, reservation);
     
-    // Update room status
     const roomRef = doc(firestore, 'rooms', selectedRoom.id);
     updateDocumentNonBlocking(roomRef, { status: "Occupied" });
 
@@ -174,15 +172,6 @@ export default function RoomsPage() {
     toast({
       title: "Booking Confirmed",
       description: `Room ${selectedRoom.roomNumber} has been reserved for ${reservation.guestName}.`,
-    });
-  };
-
-  const handleCheckOut = (room: any) => {
-    const roomRef = doc(firestore, 'rooms', room.id);
-    updateDocumentNonBlocking(roomRef, { status: "Available" });
-    toast({
-      title: "Check-out Complete",
-      description: `Room ${room.roomNumber} is now available.`,
     });
   };
 
@@ -385,13 +374,7 @@ export default function RoomsPage() {
                       </Button>
                     )}
                     {room.status === 'Occupied' && (
-                      <Button 
-                        variant="secondary" 
-                        size="sm"
-                        onClick={() => handleCheckOut(room)}
-                      >
-                        Check Out
-                      </Button>
+                      <p className="text-[10px] font-bold text-muted-foreground px-2">Managed in Reservations</p>
                     )}
                   </CardFooter>
                 </Card>
@@ -400,7 +383,6 @@ export default function RoomsPage() {
           )}
         </main>
 
-        {/* Edit Room Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -500,7 +482,6 @@ export default function RoomsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Room Details Dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
@@ -567,7 +548,6 @@ export default function RoomsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Quick Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -669,7 +649,6 @@ export default function RoomsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
       </SidebarInset>
     </div>
   );
