@@ -114,10 +114,27 @@ export default function StaffPage() {
   const handleSendMessage = () => {
     if (!messageText || !selectedStaff) return;
     
-    toast({
-      title: "Message Sent",
-      description: `Your message has been delivered to ${selectedStaff.firstName}.`,
-    });
+    // Format phone number for WhatsApp (remove non-digits)
+    const phone = selectedStaff.phoneNumber?.replace(/\D/g, '');
+
+    if (phone) {
+      const encodedMessage = encodeURIComponent(messageText);
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+      
+      // Open WhatsApp in a new tab
+      window.open(whatsappUrl, '_blank');
+
+      toast({
+        title: "WhatsApp Redirect",
+        description: `Opening chat with ${selectedStaff.firstName}...`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "No Phone Registered",
+        description: `Could not find a valid phone number for ${selectedStaff.firstName}.`,
+      });
+    }
     
     setIsMessageOpen(false);
     setMessageText("");
@@ -199,9 +216,10 @@ export default function StaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number (International format)</Label>
                   <Input 
                     id="phone" 
+                    placeholder="e.g. 15551234567"
                     value={newStaff.phoneNumber}
                     onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
                   />
@@ -306,7 +324,7 @@ export default function StaffPage() {
                           setIsMessageOpen(true);
                         }}
                       >
-                        <MessageSquare className="h-3 w-3" /> Message
+                        <MessageSquare className="h-3 w-3" /> WhatsApp
                       </Button>
                       <Button 
                         variant="secondary" 
@@ -333,15 +351,15 @@ export default function StaffPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-primary" /> 
-                Message {selectedStaff?.firstName}
+                WhatsApp {selectedStaff?.firstName}
               </DialogTitle>
               <DialogDescription>
-                Send a direct notification to this staff member's internal terminal.
+                Send a direct message to this staff member's WhatsApp account.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <Textarea 
-                placeholder="Type your message here..." 
+                placeholder="Type your WhatsApp message here..." 
                 className="min-h-[120px]"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -350,7 +368,7 @@ export default function StaffPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsMessageOpen(false)}>Cancel</Button>
               <Button onClick={handleSendMessage} disabled={!messageText} className="gap-2">
-                <Send className="h-4 w-4" /> Send Message
+                <Send className="h-4 w-4" /> Send via WhatsApp
               </Button>
             </DialogFooter>
           </DialogContent>
