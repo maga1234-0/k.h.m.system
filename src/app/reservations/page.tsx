@@ -24,7 +24,9 @@ import {
   UserCheck,
   Ban,
   Info,
-  Mail
+  Mail,
+  Phone,
+  MessageSquare
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -64,6 +66,8 @@ export default function ReservationsPage() {
   
   const [newBooking, setNewBooking] = useState({
     guestName: "",
+    guestEmail: "",
+    guestPhone: "",
     roomId: "",
     checkInDate: "",
     checkOutDate: "",
@@ -79,7 +83,6 @@ export default function ReservationsPage() {
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsCollection);
 
-  // Find the selected reservation from the data to ensure reactivity
   const selectedRes = useMemo(() => {
     if (!selectedResId || !reservations) return null;
     return reservations.find(r => r.id === selectedResId) || null;
@@ -136,25 +139,36 @@ export default function ReservationsPage() {
     });
   };
 
-  const handleCancelReservation = (reservation: any) => {
-    const resRef = doc(firestore, 'reservations', reservation.id);
-    updateDocumentNonBlocking(resRef, { status: "Cancelled" });
+  const handleSendConfirmation = (reservation: any) => {
+    const message = `Hello ${reservation.guestName}, your reservation at K.H.M.System for Room ${reservation.roomNumber} is confirmed from ${reservation.checkInDate} to ${reservation.checkOutDate}. Total amount: $${reservation.totalAmount}. We look forward to seeing you!`;
     
-    if (reservation.roomId) {
-      const roomRef = doc(firestore, 'rooms', reservation.roomId);
-      updateDocumentNonBlocking(roomRef, { status: "Available" });
+    if (reservation.guestPhone) {
+      const phone = reservation.guestPhone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      toast({
+        title: "WhatsApp Redirect",
+        description: `Sending confirmation to ${reservation.guestName} via WhatsApp...`,
+      });
+    } else if (reservation.guestEmail) {
+      const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Booking Confirmation - K.H.M.System&body=${encodeURIComponent(message)}`;
+      window.open(mailtoUrl, '_blank');
+      toast({
+        title: "Email Client Opened",
+        description: `Preparing confirmation email for ${reservation.guestName}...`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Contact Missing",
+        description: "This guest has no email or phone number saved for confirmation.",
+      });
     }
-
-    toast({
-      title: "Reservation Cancelled",
-      description: `Booking for ${reservation.guestName} has been cancelled.`,
-    });
   };
 
   const handleCheckIn = (reservation: any) => {
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Checked In" });
-    
     toast({
       title: "Guest Checked In",
       description: `${reservation.guestName} has successfully checked in.`,
@@ -164,22 +178,26 @@ export default function ReservationsPage() {
   const handleCheckOut = (reservation: any) => {
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Checked Out" });
-    
     if (reservation.roomId) {
       const roomRef = doc(firestore, 'rooms', reservation.roomId);
       updateDocumentNonBlocking(roomRef, { status: "Available" });
     }
-
     toast({
       title: "Guest Checked Out",
       description: `${reservation.guestName} has checked out.`,
     });
   };
 
-  const handleSendConfirmation = (reservation: any) => {
+  const handleCancelReservation = (reservation: any) => {
+    const resRef = doc(firestore, 'reservations', reservation.id);
+    updateDocumentNonBlocking(resRef, { status: "Cancelled" });
+    if (reservation.roomId) {
+      const roomRef = doc(firestore, 'rooms', reservation.roomId);
+      updateDocumentNonBlocking(roomRef, { status: "Available" });
+    }
     toast({
-      title: "Confirmation Sent",
-      description: `Booking confirmation has been sent to ${reservation.guestName}.`,
+      title: "Reservation Cancelled",
+      description: `Booking for ${reservation.guestName} has been cancelled.`,
     });
   };
 
@@ -216,7 +234,7 @@ export default function ReservationsPage() {
                 <Plus className="h-4 w-4" /> New Booking
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>New Reservation</DialogTitle>
                 <DialogDescription>Enter guest details and assign a room to create a new booking.</DialogDescription>
@@ -230,6 +248,35 @@ export default function ReservationsPage() {
                     value={newBooking.guestName}
                     onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newGuestEmail">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newGuestEmail" 
+                        type="email"
+                        className="pl-9"
+                        placeholder="guest@example.com"
+                        value={newBooking.guestEmail}
+                        onChange={(e) => setNewBooking({...newBooking, guestEmail: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newGuestPhone">Phone (International)</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="newGuestPhone" 
+                        className="pl-9"
+                        placeholder="e.g. 15551234567"
+                        value={newBooking.guestPhone}
+                        onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="roomSelect">Assign Room</Label>
@@ -313,8 +360,7 @@ export default function ReservationsPage() {
                   <TableHead className="w-[120px]">ID</TableHead>
                   <TableHead>Guest</TableHead>
                   <TableHead>Room</TableHead>
-                  <TableHead>Check In</TableHead>
-                  <TableHead>Check Out</TableHead>
+                  <TableHead>Dates</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -323,9 +369,9 @@ export default function ReservationsPage() {
               <TableBody>
                 {isResLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Fetching live data...
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...
                       </div>
                     </TableCell>
                   </TableRow>
@@ -333,10 +379,19 @@ export default function ReservationsPage() {
                   filteredReservations.map((res) => (
                     <TableRow key={res.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-mono text-[10px] font-semibold">{res.id.slice(0, 8)}...</TableCell>
-                      <TableCell className="font-medium text-sm">{res.guestName}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        <div className="flex flex-col">
+                          <span>{res.guestName}</span>
+                          <span className="text-[10px] text-muted-foreground">{res.guestEmail || res.guestPhone || 'No contact info'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">Room {res.roomNumber}</TableCell>
-                      <TableCell className="text-xs">{res.checkInDate}</TableCell>
-                      <TableCell className="text-xs">{res.checkOutDate}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex flex-col">
+                          <span>{res.checkInDate}</span>
+                          <span className="text-muted-foreground">to {res.checkOutDate}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{getStatusBadge(res.status)}</TableCell>
                       <TableCell className="text-xs font-bold text-emerald-600">${res.totalAmount}</TableCell>
                       <TableCell className="text-right">
@@ -347,14 +402,16 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onSelect={(e) => {
-                              e.preventDefault();
+                            <DropdownMenuItem onSelect={() => {
                               setSelectedResId(res.id);
-                              // Using a slightly longer timeout to ensure dropdown closes and focus is handled correctly
-                              setTimeout(() => setIsDetailsDialogOpen(true), 100);
+                              setTimeout(() => setIsDetailsDialogOpen(true), 150);
                             }}>
                               <Info className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleSendConfirmation(res)}>
+                              <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
+                            </DropdownMenuItem>
+                            <Separator className="my-1" />
                             {res.status === 'Confirmed' && (
                               <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
                                 <UserCheck className="mr-2 h-4 w-4" /> Check In
@@ -365,13 +422,9 @@ export default function ReservationsPage() {
                                 <LogOut className="mr-2 h-4 w-4" /> Check Out
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onSelect={() => handleSendConfirmation(res)}>
-                              <Mail className="mr-2 h-4 w-4" /> Send Confirmation
-                            </DropdownMenuItem>
-                            <Separator className="my-1" />
                             {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
                               <DropdownMenuItem onSelect={() => handleCancelReservation(res)} className="text-destructive">
-                                <Ban className="mr-2 h-4 w-4" /> Cancel Reservation
+                                <Ban className="mr-2 h-4 w-4" /> Cancel Booking
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -381,8 +434,8 @@ export default function ReservationsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                      {searchTerm ? "No reservations match your search." : "No reservations found."}
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No records found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -393,22 +446,21 @@ export default function ReservationsPage() {
 
         <Dialog open={isDetailsDialogOpen} onOpenChange={(open) => {
           setIsDetailsDialogOpen(open);
-          if (!open) {
-            // Clean up selection after closing
-            setTimeout(() => setSelectedResId(null), 200);
-          }
+          if (!open) setTimeout(() => setSelectedResId(null), 200);
         }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Reservation Details</DialogTitle>
-              <DialogDescription>Full summary of the guest's booking.</DialogDescription>
+              <DialogTitle>Reservation Summary</DialogTitle>
+              <DialogDescription>Overview of the guest's booking details.</DialogDescription>
             </DialogHeader>
             {selectedRes ? (
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guest Name</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guest</span>
                     <p className="text-sm font-semibold">{selectedRes.guestName}</p>
+                    <p className="text-[10px] text-muted-foreground">{selectedRes.guestEmail}</p>
+                    <p className="text-[10px] text-muted-foreground">{selectedRes.guestPhone}</p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Status</span>
@@ -428,7 +480,7 @@ export default function ReservationsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Room Assigned</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Room</span>
                     <p className="text-sm font-medium">Room {selectedRes.roomNumber}</p>
                   </div>
                   <div className="space-y-1">
@@ -438,7 +490,7 @@ export default function ReservationsPage() {
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
-                  <span className="text-sm font-semibold">Total Amount Due</span>
+                  <span className="text-sm font-semibold">Total Amount</span>
                   <span className="text-lg font-bold text-emerald-600">${selectedRes.totalAmount}</span>
                 </div>
               </div>
