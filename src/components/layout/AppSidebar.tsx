@@ -114,20 +114,24 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton tooltip="Appearance">
-                  {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
-                  <span>Appearance</span>
+                <SidebarMenuButton tooltip="Change Appearance">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-md border bg-background">
+                      {theme === 'dark' ? <Moon className="h-3 w-3" /> : theme === 'light' ? <Sun className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                    </div>
+                    <span>Appearance</span>
+                  </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="end">
+              <DropdownMenuContent side="right" align="end" className="w-32">
                 <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
-                  <Sun className="h-4 w-4" /> Light
+                  <Sun className="h-4 w-4 text-amber-500" /> Light
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
-                  <Moon className="h-4 w-4" /> Dark
+                  <Moon className="h-4 w-4 text-blue-400" /> Dark
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
-                  <Monitor className="h-4 w-4" /> System
+                  <Monitor className="h-4 w-4 text-muted-foreground" /> System
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -142,8 +146,8 @@ export function AppSidebar() {
                     <AvatarFallback className="rounded-lg">AD</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.isAnonymous ? 'Guest Admin' : (user?.displayName || 'Administrator')}</span>
-                    <span className="truncate text-xs">{user?.email || 'kks-system'}</span>
+                    <span className="truncate font-semibold">{user?.displayName || 'Administrator'}</span>
+                    <span className="truncate text-xs">{user?.email || 'admin@kks.com'}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
