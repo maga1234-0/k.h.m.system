@@ -14,17 +14,13 @@ import {
   Search, 
   Calendar, 
   Plus, 
-  Filter, 
   MoreHorizontal,
-  ArrowUpDown,
   CheckCircle2,
   Clock,
   XCircle,
   LogOut,
   Loader2,
   CalendarDays,
-  Users as UsersIcon,
-  DollarSign,
   UserCheck,
   Ban,
   Info,
@@ -68,8 +64,8 @@ export default function ReservationsPage() {
   const [newBooking, setNewBooking] = useState({
     guestName: "",
     roomId: "",
-    checkInDate: new Date().toISOString().split('T')[0],
-    checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    checkInDate: "",
+    checkOutDate: "",
     numberOfGuests: 1,
     totalAmount: 0
   });
@@ -81,6 +77,15 @@ export default function ReservationsPage() {
   
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsCollection);
+
+  // Fix hydration mismatch by setting initial dates on client mount
+  useEffect(() => {
+    setNewBooking(prev => ({
+      ...prev,
+      checkInDate: new Date().toISOString().split('T')[0],
+      checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0]
+    }));
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -344,28 +349,29 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem onSelect={(e) => {
+                              e.preventDefault();
                               setSelectedRes(res);
-                              setIsDetailsDialogOpen(true);
+                              setTimeout(() => setIsDetailsDialogOpen(true), 50);
                             }}>
                               <Info className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
                             {res.status === 'Confirmed' && (
-                              <DropdownMenuItem onClick={() => handleCheckIn(res)} className="text-emerald-600">
+                              <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
                                 <UserCheck className="mr-2 h-4 w-4" /> Check In
                               </DropdownMenuItem>
                             )}
                             {res.status === 'Checked In' && (
-                              <DropdownMenuItem onClick={() => handleCheckOut(res)} className="text-blue-600">
+                              <DropdownMenuItem onSelect={() => handleCheckOut(res)} className="text-blue-600">
                                 <LogOut className="mr-2 h-4 w-4" /> Check Out
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onClick={() => handleSendConfirmation(res)}>
+                            <DropdownMenuItem onSelect={() => handleSendConfirmation(res)}>
                               <Mail className="mr-2 h-4 w-4" /> Send Confirmation
                             </DropdownMenuItem>
                             <Separator className="my-1" />
                             {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
-                              <DropdownMenuItem onClick={() => handleCancelReservation(res)} className="text-destructive">
+                              <DropdownMenuItem onSelect={() => handleCancelReservation(res)} className="text-destructive">
                                 <Ban className="mr-2 h-4 w-4" /> Cancel Reservation
                               </DropdownMenuItem>
                             )}
