@@ -18,7 +18,9 @@ import {
   Info,
   CheckCircle2,
   CalendarDays,
-  Edit2
+  Edit2,
+  Mail,
+  Phone
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -67,6 +69,8 @@ export default function RoomsPage() {
 
   const [bookingData, setBookingData] = useState({
     guestName: "",
+    guestEmail: "",
+    guestPhone: "",
     checkIn: new Date().toISOString().split('T')[0],
     checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     guests: 1
@@ -129,6 +133,8 @@ export default function RoomsPage() {
       roomId: selectedRoom.id,
       roomNumber: selectedRoom.roomNumber,
       guestName: bookingData.guestName,
+      guestEmail: bookingData.guestEmail,
+      guestPhone: bookingData.guestPhone,
       checkInDate: bookingData.checkIn,
       checkOutDate: bookingData.checkOut,
       numberOfGuests: bookingData.guests,
@@ -146,6 +152,8 @@ export default function RoomsPage() {
     setIsBookingOpen(false);
     setBookingData({
       guestName: "",
+      guestEmail: "",
+      guestPhone: "",
       checkIn: new Date().toISOString().split('T')[0],
       checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       guests: 1
@@ -153,7 +161,7 @@ export default function RoomsPage() {
 
     toast({
       title: "Booking Confirmed",
-      description: `Room ${selectedRoom.roomNumber} has been reserved for ${bookingData.guestName}.`,
+      description: `Room ${selectedRoom.roomNumber} has been reserved for ${reservation.guestName}.`,
     });
   };
 
@@ -563,6 +571,35 @@ export default function RoomsPage() {
                   value={bookingData.guestName}
                   onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})}
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guestEmail">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="guestEmail" 
+                      type="email"
+                      className="pl-9"
+                      placeholder="guest@example.com"
+                      value={bookingData.guestEmail}
+                      onChange={(e) => setBookingData({...bookingData, guestEmail: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guestPhone">WhatsApp / Phone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="guestPhone" 
+                      className="pl-9"
+                      placeholder="e.g. 243980453935"
+                      value={bookingData.guestPhone}
+                      onChange={(e) => setBookingData({...bookingData, guestPhone: e.target.value})}
+                    />
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
