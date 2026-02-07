@@ -66,6 +66,8 @@ import { toast } from "@/hooks/use-toast";
 export default function StaffPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
@@ -90,7 +92,7 @@ export default function StaffPage() {
 
   const [editStaffData, setEditStaffData] = useState<any>(null);
 
-  const firestore = useFirestore();
+  // Sync with Firestore
   const staffCollection = useMemoFirebase(() => user ? collection(firestore, 'staff') : null, [firestore, user]);
   const { data: staff, isLoading } = useCollection(staffCollection);
 
@@ -100,12 +102,10 @@ export default function StaffPage() {
     }
   }, [user, isAuthLoading, router]);
 
-  // Fix hydration mismatch by setting initial date on client mount
+  // Fix hydration mismatch for the date field
   useEffect(() => {
-    setScheduleData(prev => ({
-      ...prev,
-      date: new Date().toISOString().split('T')[0]
-    }));
+    const today = new Date().toISOString().split('T')[0];
+    setScheduleData(prev => ({ ...prev, date: today }));
   }, []);
 
   const handleAddStaff = () => {
@@ -258,44 +258,46 @@ export default function StaffPage() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredStaff?.map((member) => (
                 <Card key={member.id} className="border-none shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-20">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem onClick={() => {
-                        setEditStaffData({...member});
-                        setIsEditDialogOpen(true);
-                      }}>
-                        <Edit2 className="h-4 w-4 mr-2" /> Edit Member
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        const newStatus = member.status === 'On Duty' ? 'On Break' : 'On Duty';
-                        const staffRef = doc(firestore, 'staff', member.id);
-                        updateDocumentNonBlocking(staffRef, { status: newStatus });
-                        toast({
-                          title: "Status Changed",
-                          description: `${member.firstName} is now ${newStatus}.`,
-                        });
-                      }}>
-                        <RefreshCw className="h-4 w-4 mr-2" /> Toggle Status
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteStaff(member)}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Remove Member
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="absolute top-2 right-2 z-20">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onSelect={() => {
+                          setEditStaffData({...member});
+                          setIsEditDialogOpen(true);
+                        }}>
+                          <Edit2 className="h-4 w-4 mr-2" /> Edit Member
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => {
+                          const newStatus = member.status === 'On Duty' ? 'On Break' : 'On Duty';
+                          const staffRef = doc(firestore, 'staff', member.id);
+                          updateDocumentNonBlocking(staffRef, { status: newStatus });
+                          toast({
+                            title: "Status Changed",
+                            description: `${member.firstName} is now ${newStatus}.`,
+                          });
+                        }}>
+                          <RefreshCw className="h-4 w-4 mr-2" /> Toggle Status
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onSelect={() => handleDeleteStaff(member)}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Remove Member
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
                   <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
                       <AvatarImage src={`https://picsum.photos/seed/${member.id}/200`} />
                       <AvatarFallback>{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                      <CardTitle className="text-lg font-headline">{member.firstName} {member.lastName}</CardTitle>
+                    <div className="flex flex-col pr-8">
+                      <CardTitle className="text-lg font-headline truncate">{member.firstName} {member.lastName}</CardTitle>
                       <CardDescription className="flex items-center gap-1 font-medium text-primary">
                         <Shield className="h-3 w-3" /> {member.role || 'Staff'}
                       </CardDescription>
@@ -312,11 +314,11 @@ export default function StaffPage() {
                     </div>
                     
                     <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" /> {member.email}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground overflow-hidden">
+                        <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{member.email}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" /> {member.phoneNumber || 'N/A'}
+                        <Phone className="h-3 w-3 shrink-0" /> {member.phoneNumber || 'N/A'}
                       </div>
                     </div>
 
