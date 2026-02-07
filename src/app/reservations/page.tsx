@@ -168,6 +168,7 @@ export default function ReservationsPage() {
   const handleSendConfirmation = (reservation: any, method: 'whatsapp' | 'email') => {
     let message = "";
     
+    // Contextual messaging logic based on booking status
     if (reservation.status === 'Checked Out') {
       message = `Hello ${reservation.guestName}, thank you for staying with us at K.H.M.System. We hope you enjoyed your stay in Room ${reservation.roomNumber}. Your final total was $${reservation.totalAmount}. We hope to see you again soon!`;
     } else if (reservation.status === 'Cancelled') {
@@ -496,7 +497,7 @@ export default function ReservationsPage() {
                             
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
-                                <MessageSquare className="mr-2 h-4 w-4" /> Send Message
+                                <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
                                 <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
