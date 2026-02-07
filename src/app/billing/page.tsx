@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Receipt, Printer, Loader2, CreditCard } from "lucide-react"
+import { Receipt, Printer, Loader2, CreditCard, MessageCircle } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
@@ -50,6 +50,29 @@ export default function BillingPage() {
     toast({
       title: "Invoice Updated",
       description: `Invoice for ${invoice.guestName} marked as Paid.`,
+    });
+  };
+
+  const handleSendWhatsApp = (invoice: any) => {
+    if (!invoice.guestPhone) {
+      toast({
+        variant: "destructive",
+        title: "Phone Missing",
+        description: "No phone number associated with this invoice record.",
+      });
+      return;
+    }
+    
+    const phone = invoice.guestPhone.replace(/\D/g, '');
+    const invoiceId = invoice.id.slice(0, 8).toUpperCase();
+    const message = `Hello ${invoice.guestName}, here is your invoice summary from K.H.M.System.\n\nInvoice: INV-${invoiceId}\nAmount Due: $${invoice.amountDue}\nDue Date: ${new Date(invoice.dueDate).toLocaleDateString()}\nStatus: ${invoice.status}\n\nPlease let us know if you have any questions. Thank you for choosing us!`;
+    
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+
+    toast({
+      title: "WhatsApp Opened",
+      description: `Sending invoice summary to ${invoice.guestName}...`,
     });
   };
 
@@ -117,9 +140,9 @@ export default function BillingPage() {
               ) : invoices && invoices.length > 0 ? (
                 <div className="space-y-4">
                   {invoices.map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/10 transition-colors">
+                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border hover:bg-muted/10 transition-colors gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary">
+                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary shrink-0">
                           <Receipt className="h-5 w-5" />
                         </div>
                         <div className="flex flex-col">
@@ -127,7 +150,7 @@ export default function BillingPage() {
                           <span className="text-xs text-muted-foreground">{inv.guestName || 'Guest'} • Issued {new Date(inv.invoiceDate).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-4 ml-auto md:ml-0">
                         <div className="flex flex-col items-end">
                           <span className="font-bold text-lg">${Number(inv.amountDue).toFixed(2)}</span>
                           <span className="text-[10px] text-muted-foreground">Due: {new Date(inv.dueDate).toLocaleDateString()}</span>
@@ -141,6 +164,9 @@ export default function BillingPage() {
                               <CreditCard className="h-3 w-3" /> Mark Paid
                             </Button>
                           )}
+                          <Button variant="secondary" size="sm" className="gap-2 h-8" onClick={() => handleSendWhatsApp(inv)}>
+                            <MessageCircle className="h-3 w-3" /> WhatsApp
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8" title="Print Invoice">
                             <Printer className="h-4 w-4" />
                           </Button>

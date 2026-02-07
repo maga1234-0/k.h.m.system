@@ -213,6 +213,7 @@ export default function ReservationsPage() {
       id: invoiceRef.id,
       reservationId: reservation.id,
       guestName: reservation.guestName,
+      guestPhone: reservation.guestPhone || "",
       invoiceDate: new Date().toISOString(),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       amountDue: Number(reservation.totalAmount) || 0,
