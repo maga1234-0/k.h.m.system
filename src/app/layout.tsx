@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -8,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'K.K.S - Modern Hotel Management',
-  description: 'Manage your hotel operations with ease and AI-powered forecasting.',
+  description: 'Manage your hotel operations with ease and real-time insights.',
 };
 
 export default function RootLayout({

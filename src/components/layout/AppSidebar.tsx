@@ -7,7 +7,6 @@ import {
   CalendarCheck, 
   Users, 
   Receipt, 
-  TrendingUp, 
   ShieldCheck,
   Settings,
   Hotel,
@@ -49,7 +48,6 @@ const menuItems = [
   { title: "Reservations", icon: CalendarCheck, url: "/reservations" },
   { title: "Clients", icon: Users, url: "/clients" },
   { title: "Billing", icon: Receipt, url: "/billing" },
-  { title: "Forecasting", icon: TrendingUp, url: "/forecasting" },
   { title: "Staff", icon: ShieldCheck, url: "/staff" },
 ]
 

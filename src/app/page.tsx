@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect } from "react";
@@ -14,14 +13,12 @@ import {
   CalendarClock, 
   ArrowUpRight, 
   ArrowDownRight, 
-  TrendingUp,
   CreditCard,
   Loader2
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
-import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -152,25 +149,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-
-          <Card className="border-none shadow-sm bg-primary/5">
-            <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-headline font-bold text-lg">AI Forecasting Available</h3>
-                  <p className="text-sm text-muted-foreground">Predict occupancy surges based on your live inventory and seasonal trends.</p>
-                </div>
-              </div>
-              <Link href="/forecasting">
-                <Badge variant="accent" className="cursor-pointer px-4 py-2 text-sm bg-accent hover:bg-accent/80 transition-colors">
-                  View Forecast
-                </Badge>
-              </Link>
-            </CardContent>
-          </Card>
         </main>
       </SidebarInset>
     </div>

@@ -241,40 +241,6 @@
         "phoneNumber",
         "role"
       ]
-    },
-    "OccupancyForecast": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "OccupancyForecast",
-      "type": "object",
-      "description": "Represents an occupancy forecast based on AI predictions.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the occupancy forecast."
-        },
-        "forecastDate": {
-          "type": "string",
-          "description": "The date for which the occupancy is being forecast.",
-          "format": "date-time"
-        },
-        "predictedOccupancyRate": {
-          "type": "number",
-          "description": "The predicted occupancy rate for the forecast date."
-        },
-        "historicalDataUsed": {
-          "type": "string",
-          "description": "Reference to the historical booking and occupancy data for the forecast."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Any notes or additional information regarding the forecast."
-        }
-      },
-      "required": [
-        "id",
-        "forecastDate",
-        "predictedOccupancyRate"
-      ]
     }
   },
   "auth": {
@@ -384,24 +350,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/occupancyForecasts/{forecastId}",
-        "definition": {
-          "entityName": "OccupancyForecast",
-          "schema": {
-            "$ref": "#/backend/entities/OccupancyForecast"
-          },
-          "description": "Stores occupancy forecast data.",
-          "params": [
-            {
-              "name": "forecastId",
-              "description": "The unique ID of the occupancy forecast."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to manage hotel operations, including room, client, reservation, invoice, and staff data. It prioritizes Authorization Independence by storing all necessary authorization data within the relevant documents, eliminating the need for `get()` calls in security rules. It also provides separation of concerns for QAPS. Private data resides in path-based ownership collections. Collaborative or role-based data are in segregated collections.\n\nClients' private data is stored under `/users/{userId}/clients/{clientId}` to take advantage of path-based security rules.\n\nRooms are stored in a top-level `/rooms/{roomId}` collection. This allows all staff to easily list all rooms without requiring complex rule structures.\n\nReservations are stored under `/reservations/{reservationId}`, including the `clientId` and `roomId` to simplify queries and management. Invoices are stored under `/invoices/{invoiceId}`, and they include the `reservationId` for traceability.\n\nStaff data is stored under `/staff/{staffId}` and includes a `role` field.  A separate `/roles_admin/{staffId}` collection is used to denote admin status based on the staff member's `uid` existence.  This existence-based check provides a simple and efficient way to manage admin privileges.\n\nOccupancy Forecasts are stored in the `/occupancyForecasts/{forecastId}` collection for reporting and analytical purposes."
+    "reasoning": "The Firestore data structure is designed to manage hotel operations, including room, client, reservation, invoice, and staff data. It prioritizes Authorization Independence by storing all necessary authorization data within the relevant documents, eliminating the need for `get()` calls in security rules."
   }
 }
