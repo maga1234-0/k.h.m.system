@@ -166,7 +166,15 @@ export default function ReservationsPage() {
   };
 
   const handleSendConfirmation = (reservation: any, method: 'whatsapp' | 'email') => {
-    const message = `Hello ${reservation.guestName}, your reservation at K.H.M.System for Room ${reservation.roomNumber} is confirmed from ${reservation.checkInDate} to ${reservation.checkOutDate}. Total amount: $${reservation.totalAmount}. We look forward to seeing you!`;
+    let message = "";
+    
+    if (reservation.status === 'Checked Out') {
+      message = `Hello ${reservation.guestName}, thank you for staying with us at K.H.M.System. We hope you enjoyed your stay in Room ${reservation.roomNumber}. Your final total was $${reservation.totalAmount}. We hope to see you again soon!`;
+    } else if (reservation.status === 'Cancelled') {
+      message = `Hello ${reservation.guestName}, this is a confirmation that your reservation at K.H.M.System for Room ${reservation.roomNumber} has been cancelled. If you have any questions, please contact our support desk.`;
+    } else {
+      message = `Hello ${reservation.guestName}, your reservation at K.H.M.System for Room ${reservation.roomNumber} is confirmed from ${reservation.checkInDate} to ${reservation.checkOutDate}. Total amount: $${reservation.totalAmount}. We look forward to seeing you!`;
+    }
     
     if (method === 'whatsapp') {
       if (!reservation.guestPhone) {
@@ -182,7 +190,7 @@ export default function ReservationsPage() {
       window.open(whatsappUrl, '_blank');
       toast({
         title: "WhatsApp Redirect",
-        description: `Sending confirmation to ${reservation.guestName} via WhatsApp...`,
+        description: `Sending message to ${reservation.guestName} via WhatsApp...`,
       });
     } else {
       if (!reservation.guestEmail) {
@@ -193,11 +201,11 @@ export default function ReservationsPage() {
         });
         return;
       }
-      const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Booking Confirmation - K.H.M.System&body=${encodeURIComponent(message)}`;
+      const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Reservation Update - K.H.M.System&body=${encodeURIComponent(message)}`;
       window.open(mailtoUrl, '_blank');
       toast({
         title: "Email Client Opened",
-        description: `Preparing confirmation email for ${reservation.guestName}...`,
+        description: `Preparing message for ${reservation.guestName}...`,
       });
     }
   };
@@ -488,7 +496,7 @@ export default function ReservationsPage() {
                             
                             <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
-                                <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
+                                <MessageSquare className="mr-2 h-4 w-4" /> Send Message
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
                                 <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
