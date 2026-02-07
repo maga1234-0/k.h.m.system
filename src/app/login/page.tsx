@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { signInWithEmailAndPassword, signInAnonymously, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Sparkles, Info, Eye, EyeOff, UserPlus, LogIn } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, UserPlus, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,6 +24,8 @@ export default function LoginPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  const ADMIN_EMAIL = 'admin@kks.com';
+
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push('/');
@@ -32,26 +34,44 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Strict admin-only check
+    if (email.toLowerCase() !== ADMIN_EMAIL) {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'Only the system administrator is authorized to log in.',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
-        // Create staff record automatically for new users in this prototype
+        // Register as Staff
         const staffRef = doc(firestore, 'staff', userCredential.user.uid);
         setDocumentNonBlocking(staffRef, {
           id: userCredential.user.uid,
-          firstName: email.split('@')[0],
-          lastName: "Admin",
+          firstName: "System",
+          lastName: "Administrator",
           email: email,
-          role: "General Manager",
+          role: "Administrator",
           status: "On Duty",
-          avatar: `staff${Math.floor(Math.random() * 6) + 1}`
+          avatar: "admin"
+        }, { merge: true });
+
+        // Register as Admin Role
+        const adminRoleRef = doc(firestore, 'roles_admin', userCredential.user.uid);
+        setDocumentNonBlocking(adminRoleRef, {
+          uid: userCredential.user.uid,
+          assignedAt: new Date().toISOString()
         }, { merge: true });
 
         toast({
-          title: 'Account Created',
-          description: 'Welcome to K.K.S Management Suite.',
+          title: 'Admin Registered',
+          description: 'Welcome, Administrator.',
         });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -62,22 +82,6 @@ export default function LoginPage() {
         variant: 'destructive',
         title: isSignUp ? 'Registration Failed' : 'Login Failed',
         description: error.message || 'Check your credentials.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAnonymousLogin = async () => {
-    setIsLoading(true);
-    try {
-      await signInAnonymously(auth);
-      router.push('/');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Access Failed',
-        description: error.message,
       });
     } finally {
       setIsLoading(false);
@@ -101,24 +105,22 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.K.S</CardTitle>
-            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Management Suite</CardDescription>
+            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Secure Admin Login</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert className="bg-primary/5 border-primary/20">
-            <Info className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Instructions</AlertTitle>
-            <AlertDescription className="text-xs text-muted-foreground">
-              {isSignUp 
-                ? "Create your account below. Use any email and a secure password." 
-                : "Enter your credentials or toggle to Sign Up to create an account."}
-              {!isSignUp && <div className="mt-1 font-bold">Demo: admin@kks.com / kkk1234@#</div>}
+          <Alert className="bg-amber-50 border-amber-200">
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
+            <AlertDescription className="text-xs text-amber-700">
+              This system is restricted to the administrator.
+              <div className="mt-1 font-bold">Required: {ADMIN_EMAIL}</div>
             </AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Administrator Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -139,7 +141,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="kkk1234@#"
+                  placeholder="••••••••"
                   className="pl-9 pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -156,7 +158,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full font-semibold gap-2" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (isSignUp ? <UserPlus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />)}
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {isSignUp ? 'Create Admin Account' : 'Secure Sign In'}
             </Button>
           </form>
 
@@ -166,27 +168,13 @@ export default function LoginPage() {
               className="text-primary hover:underline font-medium"
               onClick={() => setIsSignUp(!isSignUp)}
             >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              {isSignUp ? 'Back to Sign In' : "First time? Setup Administrator Account"}
             </button>
           </div>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full gap-2 border-primary/20 hover:bg-primary/5" onClick={handleAnonymousLogin} disabled={isLoading}>
-            <Sparkles className="h-4 w-4 text-primary" />
-            Continue as Guest Admin
-          </Button>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            Proprietary system of K.K.S Group. Authorized access only.
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+            Proprietary system of K.K.S Group
           </p>
         </CardFooter>
       </Card>

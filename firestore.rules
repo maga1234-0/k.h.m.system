@@ -4,8 +4,8 @@ service cloud.firestore {
 
     /**
      * Core Philosophy:
-     * This ruleset implements a robust hotel management security model. 
-     * In this prototype, we prioritize operational efficiency for hotel staff.
+     * Restricted access for K.K.S Hotelier.
+     * Only authenticated admin accounts are permitted to view or manage data.
      */
 
     // --- Helper Functions ---
@@ -14,97 +14,30 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Checks if the user is registered as a staff member
-    function isStaff() {
-      return isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
-    }
-
-    // Checks if the user has global admin privileges via the roles_admin collection
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && 
+             (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
+              request.auth.token.email == 'admin@kks.com');
     }
 
     // --- Rules ---
 
     /**
-     * @description Rules for private client profiles.
+     * @description Everything is restricted to the Administrator for maximum security.
      */
-    match /users/{userId}/clients/{clientId} {
-      allow get, list: if isOwner(userId) || isStaff();
-      allow create: if isOwner(userId) && request.resource.data.id == clientId;
-      allow update, delete: if isOwner(userId) || isStaff();
+    match /{document=**} {
+      allow read, write: if isAdmin();
     }
 
     /**
-     * @description Rules for the general clients collection (if used directly).
-     */
-    match /clients/{clientId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Rules for room inventory.
-     */
-    match /rooms/{roomId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Rules for hotel reservations.
-     */
-    match /reservations/{reservationId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isStaff() || isAdmin();
-    }
-
-    /**
-     * @description Rules for invoices.
-     */
-    match /invoices/{invoiceId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isStaff() || isAdmin();
-    }
-
-    /**
-     * @description Rules for staff member profiles.
-     */
-    match /staff/{staffId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isOwner(staffId) || isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    /**
-     * @description Administrative role assignments.
+     * @description Allow the first admin to create their own role record during signup.
      */
     match /roles_admin/{staffId} {
-      allow get: if isSignedIn();
-      allow list, create, update, delete: if isAdmin() || isSignedIn(); // Relaxed for prototyping
+      allow create: if isSignedIn() && request.auth.token.email == 'admin@kks.com';
     }
 
-    /**
-     * @description Analytical occupancy forecasts.
-     */
-    match /occupancyForecasts/{forecastId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isStaff() || isAdmin();
-    }
-
-    /**
-     * @description General settings.
-     */
-    match /settings/{settingId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+    match /staff/{staffId} {
+      allow create: if isSignedIn() && request.auth.token.email == 'admin@kks.com';
     }
   }
 }
