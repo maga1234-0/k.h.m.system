@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { signInWithEmailAndPassword, signInAnonymously, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
 
   useEffect(() => {
@@ -33,7 +35,20 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Create staff record automatically for new users in this prototype
+        const staffRef = doc(firestore, 'staff', userCredential.user.uid);
+        setDocumentNonBlocking(staffRef, {
+          id: userCredential.user.uid,
+          firstName: email.split('@')[0],
+          lastName: "Admin",
+          email: email,
+          role: "General Manager",
+          status: "On Duty",
+          avatar: `staff${Math.floor(Math.random() * 6) + 1}`
+        }, { merge: true });
+
         toast({
           title: 'Account Created',
           description: 'Welcome to K.K.S Management Suite.',
@@ -97,6 +112,7 @@ export default function LoginPage() {
               {isSignUp 
                 ? "Create your account below. Use any email and a secure password." 
                 : "Enter your credentials or toggle to Sign Up to create an account."}
+              {!isSignUp && <div className="mt-1 font-bold">Demo: admin@kks.com / kkk1234@#</div>}
             </AlertDescription>
           </Alert>
 
