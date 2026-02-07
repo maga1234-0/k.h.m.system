@@ -19,7 +19,6 @@ import {
   Shield, 
   Calendar,
   MessageSquare,
-  MoreVertical,
   Loader2,
   Send,
   Clock,
@@ -262,7 +261,7 @@ export default function StaffPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
