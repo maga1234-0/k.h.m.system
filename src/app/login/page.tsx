@@ -9,13 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, UserPlus, LogIn, ShieldAlert } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, UserPlus, LogIn, ShieldAlert, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@kks.com');
+  const [password, setPassword] = useState('kkk1234@#');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -78,10 +78,14 @@ export default function LoginPage() {
       }
       router.push('/');
     } catch (error: any) {
+      const message = error.code === 'auth/invalid-credential' 
+        ? "Incorrect credentials. If this is your first time, please use 'Setup Administrator Account' below."
+        : error.message || 'Check your credentials.';
+        
       toast({
         variant: 'destructive',
         title: isSignUp ? 'Registration Failed' : 'Login Failed',
-        description: error.message || 'Check your credentials.',
+        description: message,
       });
     } finally {
       setIsLoading(false);
@@ -109,14 +113,23 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert className="bg-amber-50 border-amber-200">
-            <ShieldAlert className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
-            <AlertDescription className="text-xs text-amber-700">
-              This system is restricted to the administrator.
-              <div className="mt-1 font-bold">Required: {ADMIN_EMAIL}</div>
-            </AlertDescription>
-          </Alert>
+          {isSignUp ? (
+             <Alert className="bg-blue-50 border-blue-200">
+             <Info className="h-4 w-4 text-blue-600" />
+             <AlertTitle className="text-xs font-bold uppercase tracking-wider text-blue-800">First-Time Setup</AlertTitle>
+             <AlertDescription className="text-xs text-blue-700">
+               Enter the admin credentials below to create your permanent system account.
+             </AlertDescription>
+           </Alert>
+          ) : (
+            <Alert className="bg-amber-50 border-amber-200">
+              <ShieldAlert className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
+              <AlertDescription className="text-xs text-amber-700">
+                Authorized access only for: <span className="font-bold">{ADMIN_EMAIL}</span>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
@@ -156,24 +169,27 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-semibold gap-2" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (isSignUp ? <UserPlus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />)}
-              {isSignUp ? 'Create Admin Account' : 'Secure Sign In'}
+            <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSignUp ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />)}
+              {isSignUp ? 'Initialize Admin Account' : 'Secure Sign In'}
             </Button>
           </form>
 
-          <div className="flex items-center justify-center text-sm">
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <div className="h-px w-full bg-border relative">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-[10px] text-muted-foreground uppercase tracking-widest">or</span>
+            </div>
             <button 
               type="button" 
-              className="text-primary hover:underline font-medium"
+              className="text-sm text-primary hover:underline font-bold"
               onClick={() => setIsSignUp(!isSignUp)}
             >
-              {isSignUp ? 'Back to Sign In' : "First time? Setup Administrator Account"}
+              {isSignUp ? 'Already have an account? Sign In' : "First time? Setup Administrator Account"}
             </button>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+        <CardFooter className="text-center pt-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full">
             Proprietary system of K.K.S Group
           </p>
         </CardFooter>
