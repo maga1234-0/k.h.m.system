@@ -102,7 +102,8 @@ export default function BillingPage() {
     
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
-    const message = `Hello ${invoice.guestName}, here is your invoice summary from K.H.M.System.\n\nInvoice: INV-${invoiceId}\nAmount Due: $${invoice.amountDue}\nDue Date: ${new Date(invoice.dueDate).toLocaleDateString()}\nStatus: ${invoice.status}\n\nPlease let us know if you have any questions. Thank you for choosing us!`;
+    
+    const message = `*INVOICE SUMMARY - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${invoice.guestName}\n*Invoice:* #INV-${invoiceId}\n*Amount Due:* $${Number(invoice.amountDue).toFixed(2)}\n*Due Date:* ${new Date(invoice.dueDate).toLocaleDateString()}\n*Status:* ${invoice.status}\n-----------------------------\nThank you for choosing K.H.M.System. Please let us know if you have any questions!`;
     
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');

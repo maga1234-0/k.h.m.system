@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -181,11 +180,11 @@ export default function ReservationsPage() {
     let message = "";
     
     if (reservation.status === 'Checked Out') {
-      message = `Hello ${reservation.guestName}, thank you for staying with us at K.H.M.System. We hope you enjoyed your stay in Room ${reservation.roomNumber}. Your final total was $${reservation.totalAmount}. We hope to see you again soon!`;
+      message = `*THANK YOU FOR YOUR STAY - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* Checked Out\n*Room:* ${reservation.roomNumber}\n*Total Charges:* $${reservation.totalAmount}\n-----------------------------\nWe hope you enjoyed your time with us. See you again soon!`;
     } else if (reservation.status === 'Cancelled') {
-      message = `Hello ${reservation.guestName}, this is a confirmation that your reservation at K.H.M.System for Room ${reservation.roomNumber} has been cancelled. If you have any questions, please contact our support desk.`;
+      message = `*RESERVATION CANCELLED - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* Cancelled\n*Room:* ${reservation.roomNumber}\n-----------------------------\nThis is a confirmation that your booking has been cancelled. If you have questions, please reach out.`;
     } else {
-      message = `Hello ${reservation.guestName}, your reservation at K.H.M.System for Room ${reservation.roomNumber} is confirmed from ${reservation.checkInDate} to ${reservation.checkOutDate}. Total amount: $${reservation.totalAmount}. We look forward to seeing you!`;
+      message = `*BOOKING CONFIRMATION - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* ${reservation.status}\n*Room:* ${reservation.roomNumber}\n*Check-In:* ${reservation.checkInDate}\n*Check-Out:* ${reservation.checkOutDate}\n*Amount:* $${reservation.totalAmount}\n-----------------------------\nWe look forward to welcoming you!`;
     }
     
     if (method === 'whatsapp') {
