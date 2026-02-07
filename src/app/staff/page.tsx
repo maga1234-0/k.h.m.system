@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -19,15 +20,43 @@ import {
   Calendar,
   MessageSquare,
   MoreVertical,
-  Loader2
+  Loader2,
+  Send,
+  Clock
 } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
+import { toast } from "@/hooks/use-toast";
 
 export default function StaffPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStaff, setSelectedStaff] = useState<any>(null);
+  const [isMessageOpen, setIsMessageOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [scheduleData, setScheduleData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    shift: "Morning"
+  });
 
   const firestore = useFirestore();
   const staffCollection = useMemoFirebase(() => user ? collection(firestore, 'staff') : null, [firestore, user]);
@@ -38,6 +67,29 @@ export default function StaffPage() {
       router.push('/login');
     }
   }, [user, isAuthLoading, router]);
+
+  const handleSendMessage = () => {
+    if (!messageText || !selectedStaff) return;
+    
+    toast({
+      title: "Message Sent",
+      description: `Your message has been delivered to ${selectedStaff.firstName}.`,
+    });
+    
+    setIsMessageOpen(false);
+    setMessageText("");
+  };
+
+  const handleUpdateSchedule = () => {
+    if (!selectedStaff) return;
+    
+    toast({
+      title: "Schedule Updated",
+      description: `${selectedStaff.firstName} has been assigned the ${scheduleData.shift} shift for ${scheduleData.date}.`,
+    });
+    
+    setIsScheduleOpen(false);
+  };
 
   if (isAuthLoading || !user) {
     return (
@@ -132,10 +184,28 @@ export default function StaffPage() {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" size="sm" className="flex-1 gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 gap-2"
+                        onClick={() => {
+                          setSelectedStaff(member);
+                          setIsMessageOpen(true);
+                        }}
+                      >
                         <MessageSquare className="h-3 w-3" /> Message
                       </Button>
-                      <Button variant="secondary" size="sm" className="flex-1">Schedule</Button>
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedStaff(member);
+                          setIsScheduleOpen(true);
+                        }}
+                      >
+                        Schedule
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -143,6 +213,81 @@ export default function StaffPage() {
             </div>
           )}
         </main>
+
+        {/* Message Dialog */}
+        <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" /> 
+                Message {selectedStaff?.firstName}
+              </DialogTitle>
+              <DialogDescription>
+                Send a direct notification to this staff member's internal terminal.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Textarea 
+                placeholder="Type your message here..." 
+                className="min-h-[120px]"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsMessageOpen(false)}>Cancel</Button>
+              <Button onClick={handleSendMessage} disabled={!messageText} className="gap-2">
+                <Send className="h-4 w-4" /> Send Message
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Schedule Dialog */}
+        <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" /> 
+                Assign Shift: {selectedStaff?.firstName}
+              </DialogTitle>
+              <DialogDescription>
+                Assign or modify the work schedule for this employee.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="shiftDate">Date</Label>
+                <Input 
+                  id="shiftDate" 
+                  type="date" 
+                  value={scheduleData.date}
+                  onChange={(e) => setScheduleData({...scheduleData, date: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shiftType">Shift Type</Label>
+                <Select 
+                  value={scheduleData.shift} 
+                  onValueChange={(val) => setScheduleData({...scheduleData, shift: val})}
+                >
+                  <SelectTrigger id="shiftType">
+                    <SelectValue placeholder="Select shift" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Morning">Morning (08:00 - 16:00)</SelectItem>
+                    <SelectItem value="Afternoon">Afternoon (16:00 - 00:00)</SelectItem>
+                    <SelectItem value="Night">Night (00:00 - 08:00)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsScheduleOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateSchedule}>Confirm Assignment</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SidebarInset>
     </div>
   );
