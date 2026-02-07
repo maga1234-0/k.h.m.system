@@ -62,6 +62,15 @@ export default function ForecastingPage() {
     return lines.join('\n');
   }, [rooms, reservations]);
 
+  const chartData = useMemo(() => {
+    if (!result) return [];
+    try {
+      return JSON.parse(result.forecast);
+    } catch (e) {
+      return [];
+    }
+  }, [result]);
+
   const handleForecast = async () => {
     if (!historicalCSV) return;
     setLoading(true);
@@ -86,15 +95,6 @@ export default function ForecastingPage() {
       </div>
     );
   }
-
-  const chartData = useMemo(() => {
-    if (!result) return [];
-    try {
-      return JSON.parse(result.forecast);
-    } catch (e) {
-      return [];
-    }
-  }, [result]);
 
   return (
     <div className="flex h-screen w-full">
