@@ -26,13 +26,17 @@ import {
   Info,
   Mail,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Send
 } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger
 } from "@/components/ui/dropdown-menu";
 import { 
   Dialog, 
@@ -139,10 +143,18 @@ export default function ReservationsPage() {
     });
   };
 
-  const handleSendConfirmation = (reservation: any) => {
+  const handleSendConfirmation = (reservation: any, method: 'whatsapp' | 'email') => {
     const message = `Hello ${reservation.guestName}, your reservation at K.H.M.System for Room ${reservation.roomNumber} is confirmed from ${reservation.checkInDate} to ${reservation.checkOutDate}. Total amount: $${reservation.totalAmount}. We look forward to seeing you!`;
     
-    if (reservation.guestPhone) {
+    if (method === 'whatsapp') {
+      if (!reservation.guestPhone) {
+        toast({
+          variant: "destructive",
+          title: "Phone Missing",
+          description: "This guest has no phone number saved for WhatsApp.",
+        });
+        return;
+      }
       const phone = reservation.guestPhone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
@@ -150,18 +162,20 @@ export default function ReservationsPage() {
         title: "WhatsApp Redirect",
         description: `Sending confirmation to ${reservation.guestName} via WhatsApp...`,
       });
-    } else if (reservation.guestEmail) {
+    } else {
+      if (!reservation.guestEmail) {
+        toast({
+          variant: "destructive",
+          title: "Email Missing",
+          description: "This guest has no email address saved for confirmation.",
+        });
+        return;
+      }
       const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Booking Confirmation - K.H.M.System&body=${encodeURIComponent(message)}`;
       window.open(mailtoUrl, '_blank');
       toast({
         title: "Email Client Opened",
         description: `Preparing confirmation email for ${reservation.guestName}...`,
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Contact Missing",
-        description: "This guest has no email or phone number saved for confirmation.",
       });
     }
   };
@@ -408,9 +422,21 @@ export default function ReservationsPage() {
                             }}>
                               <Info className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleSendConfirmation(res)}>
-                              <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
-                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
+                                  <Phone className="mr-2 h-4 w-4" /> via WhatsApp
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'email')}>
+                                  <Mail className="mr-2 h-4 w-4" /> via Email
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
                             <Separator className="my-1" />
                             {res.status === 'Confirmed' && (
                               <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
