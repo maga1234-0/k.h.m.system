@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react"
@@ -12,12 +13,16 @@ import {
   Settings,
   Hotel,
   LogOut,
-  User
+  User,
+  Sun,
+  Moon,
+  Monitor
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth, useUser } from "@/firebase"
 import { signOut } from "firebase/auth"
+import { useTheme } from "next-themes"
 
 import {
   Sidebar,
@@ -54,6 +59,7 @@ export function AppSidebar() {
   const router = useRouter()
   const auth = useAuth()
   const { user } = useUser()
+  const { theme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
     try {
@@ -103,6 +109,28 @@ export function AppSidebar() {
                 <span>Settings</span>
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton tooltip="Appearance">
+                  {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+                  <span>Appearance</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end">
+                <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
+                  <Sun className="h-4 w-4" /> Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
+                  <Moon className="h-4 w-4" /> Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
+                  <Monitor className="h-4 w-4" /> System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
