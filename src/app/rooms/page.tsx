@@ -58,12 +58,12 @@ export default function RoomsPage() {
   const [editRoomData, setEditRoomData] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
-  const [newRoom, setNewRoom] = useState({
+  const [newRoom, setNewRoom] = useState<any>({
     roomNumber: "",
     roomType: "Standard",
-    capacity: 2,
-    pricePerNight: 100,
-    floor: 1,
+    capacity: "",
+    pricePerNight: "",
+    floor: "",
   });
 
   const [bookingData, setBookingData] = useState({
@@ -88,9 +88,9 @@ export default function RoomsPage() {
       id: roomId,
       status: "Available",
       amenities: ["Wi-Fi", "TV", "Air Conditioning"],
-      pricePerNight: Number(newRoom.pricePerNight),
-      capacity: Number(newRoom.capacity),
-      floor: Number(newRoom.floor),
+      pricePerNight: Number(newRoom.pricePerNight) || 0,
+      capacity: Number(newRoom.capacity) || 1,
+      floor: Number(newRoom.floor) || 0,
     };
 
     setDocumentNonBlocking(roomRef, roomData, { merge: true });
@@ -98,9 +98,9 @@ export default function RoomsPage() {
     setNewRoom({
       roomNumber: "",
       roomType: "Standard",
-      capacity: 2,
-      pricePerNight: 100,
-      floor: 1,
+      capacity: "",
+      pricePerNight: "",
+      floor: "",
     });
   };
 
@@ -110,9 +110,9 @@ export default function RoomsPage() {
     const roomRef = doc(firestore, 'rooms', editRoomData.id);
     updateDocumentNonBlocking(roomRef, {
       ...editRoomData,
-      pricePerNight: Number(editRoomData.pricePerNight),
-      capacity: Number(editRoomData.capacity),
-      floor: Number(editRoomData.floor),
+      pricePerNight: Number(editRoomData.pricePerNight) || 0,
+      capacity: Number(editRoomData.capacity) || 1,
+      floor: Number(editRoomData.floor) || 0,
     });
 
     setIsEditDialogOpen(false);
@@ -237,7 +237,7 @@ export default function RoomsPage() {
                     id="floor" 
                     type="number" 
                     value={newRoom.floor} 
-                    onChange={(e) => setNewRoom({...newRoom, floor: parseInt(e.target.value) || 1})} 
+                    onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} 
                     className="col-span-3"
                   />
                 </div>
@@ -249,7 +249,7 @@ export default function RoomsPage() {
                       id="price" 
                       type="number" 
                       value={newRoom.pricePerNight} 
-                      onChange={(e) => setNewRoom({...newRoom, pricePerNight: parseInt(e.target.value) || 0})} 
+                      onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} 
                       className="pl-9"
                     />
                   </div>
@@ -262,7 +262,7 @@ export default function RoomsPage() {
                       id="capacity" 
                       type="number" 
                       value={newRoom.capacity} 
-                      onChange={(e) => setNewRoom({...newRoom, capacity: parseInt(e.target.value) || 1})} 
+                      onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} 
                       className="pl-9"
                     />
                   </div>
@@ -417,7 +417,7 @@ export default function RoomsPage() {
                     id="editFloor" 
                     type="number" 
                     value={editRoomData.floor} 
-                    onChange={(e) => setEditRoomData({...editRoomData, floor: parseInt(e.target.value) || 0})} 
+                    onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} 
                     className="col-span-3"
                   />
                 </div>
@@ -429,7 +429,7 @@ export default function RoomsPage() {
                       id="editPrice" 
                       type="number" 
                       value={editRoomData.pricePerNight} 
-                      onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: parseInt(e.target.value) || 0})} 
+                      onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: e.target.value})} 
                       className="pl-9"
                     />
                   </div>
@@ -442,7 +442,7 @@ export default function RoomsPage() {
                       id="editCapacity" 
                       type="number" 
                       value={editRoomData.capacity} 
-                      onChange={(e) => setEditRoomData({...editRoomData, capacity: parseInt(e.target.value) || 1})} 
+                      onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} 
                       className="pl-9"
                     />
                   </div>
