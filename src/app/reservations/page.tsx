@@ -27,7 +27,7 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Send
+  Trash2
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -47,6 +47,16 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -55,7 +65,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, useUser } from "@/firebase";
+import { 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase, 
+  addDocumentNonBlocking, 
+  updateDocumentNonBlocking, 
+  deleteDocumentNonBlocking,
+  useUser 
+} from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
@@ -66,7 +84,9 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedResId, setSelectedResId] = useState<string | null>(null);
+  const [resToDelete, setResToDelete] = useState<any>(null);
   
   const [newBooking, setNewBooking] = useState({
     guestName: "",
@@ -213,6 +233,28 @@ export default function ReservationsPage() {
       title: "Reservation Cancelled",
       description: `Booking for ${reservation.guestName} has been cancelled.`,
     });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!resToDelete) return;
+    
+    // If the reservation was active or checked in, we should release the room
+    if (resToDelete.roomId && (resToDelete.status === 'Confirmed' || resToDelete.status === 'Checked In')) {
+      const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
+      updateDocumentNonBlocking(roomRef, { status: "Available" });
+    }
+
+    const resRef = doc(firestore, 'reservations', resToDelete.id);
+    deleteDocumentNonBlocking(resRef);
+    
+    toast({
+      variant: "destructive",
+      title: "Reservation Deleted",
+      description: `Record for ${resToDelete.guestName} has been permanently removed.`,
+    });
+    
+    setResToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
   if (!mounted || isAuthLoading || !user) {
@@ -453,6 +495,15 @@ export default function ReservationsPage() {
                                 <Ban className="mr-2 h-4 w-4" /> Cancel Booking
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem 
+                              onSelect={() => {
+                                setResToDelete(res);
+                                setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                              }} 
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete Record
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -530,6 +581,24 @@ export default function ReservationsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Reservation Record?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the booking record for <strong>{resToDelete?.guestName}</strong>. 
+                If the guest is currently checked in, the room will be marked as available. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setResToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete Record
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
