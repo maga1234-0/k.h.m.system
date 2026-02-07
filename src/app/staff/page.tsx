@@ -22,7 +22,10 @@ import {
   MoreVertical,
   Loader2,
   Send,
-  Clock
+  Clock,
+  Edit2,
+  Trash2,
+  RefreshCw
 } from "lucide-react";
 import { 
   Dialog, 
@@ -42,7 +45,22 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useFirestore, useCollection, useMemoFirebase, useUser, setDocumentNonBlocking } from "@/firebase";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase, 
+  useUser, 
+  setDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking
+} from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
@@ -54,6 +72,7 @@ export default function StaffPage() {
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const [messageText, setMessageText] = useState("");
   const [scheduleData, setScheduleData] = useState({
@@ -69,6 +88,8 @@ export default function StaffPage() {
     role: "Receptionist",
     status: "On Duty"
   });
+
+  const [editStaffData, setEditStaffData] = useState<any>(null);
 
   const firestore = useFirestore();
   const staffCollection = useMemoFirebase(() => user ? collection(firestore, 'staff') : null, [firestore, user]);
@@ -111,17 +132,37 @@ export default function StaffPage() {
     });
   };
 
+  const handleUpdateStaff = () => {
+    if (!editStaffData || !editStaffData.id) return;
+
+    const staffRef = doc(firestore, 'staff', editStaffData.id);
+    updateDocumentNonBlocking(staffRef, editStaffData);
+    
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Profile Updated",
+      description: `Details for ${editStaffData.firstName} have been saved.`,
+    });
+  };
+
+  const handleDeleteStaff = (member: any) => {
+    const staffRef = doc(firestore, 'staff', member.id);
+    deleteDocumentNonBlocking(staffRef);
+    toast({
+      variant: "destructive",
+      title: "Member Removed",
+      description: `${member.firstName} ${member.lastName} has been removed from the directory.`,
+    });
+  };
+
   const handleSendMessage = () => {
     if (!messageText || !selectedStaff) return;
     
-    // Format phone number for WhatsApp (remove non-digits)
     const phone = selectedStaff.phoneNumber?.replace(/\D/g, '');
 
     if (phone) {
       const encodedMessage = encodeURIComponent(messageText);
       const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-      
-      // Open WhatsApp in a new tab
       window.open(whatsappUrl, '_blank');
 
       toast({
@@ -219,7 +260,7 @@ export default function StaffPage() {
                   <Label htmlFor="phone">Phone Number (International format)</Label>
                   <Input 
                     id="phone" 
-                    placeholder="e.g. 15551234567"
+                    placeholder="e.g. 243980453935"
                     value={newStaff.phoneNumber}
                     onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
                   />
@@ -279,10 +320,38 @@ export default function StaffPage() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredStaff?.map((member) => (
-                <Card key={member.id} className="border-none shadow-sm hover:shadow-md transition-shadow group relative">
-                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                <Card key={member.id} className="border-none shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-20">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={() => {
+                        setEditStaffData({...member});
+                        setIsEditDialogOpen(true);
+                      }}>
+                        <Edit2 className="h-4 w-4 mr-2" /> Edit Member
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        const newStatus = member.status === 'On Duty' ? 'On Break' : 'On Duty';
+                        const staffRef = doc(firestore, 'staff', member.id);
+                        updateDocumentNonBlocking(staffRef, { status: newStatus });
+                        toast({
+                          title: "Status Changed",
+                          description: `${member.firstName} is now ${newStatus}.`,
+                        });
+                      }}>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Toggle Status
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteStaff(member)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Remove Member
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
                       <AvatarImage src={`https://picsum.photos/seed/${member.avatar || member.id}/200`} />
@@ -344,6 +413,77 @@ export default function StaffPage() {
             </div>
           )}
         </main>
+
+        {/* Edit Staff Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Member Details</DialogTitle>
+              <DialogDescription>Update profile information for your employee.</DialogDescription>
+            </DialogHeader>
+            {editStaffData && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editFirstName">First Name</Label>
+                    <Input 
+                      id="editFirstName" 
+                      value={editStaffData.firstName}
+                      onChange={(e) => setEditStaffData({...editStaffData, firstName: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editLastName">Last Name</Label>
+                    <Input 
+                      id="editLastName" 
+                      value={editStaffData.lastName}
+                      onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editEmail">Email Address</Label>
+                  <Input 
+                    id="editEmail" 
+                    type="email"
+                    value={editStaffData.email}
+                    onChange={(e) => setEditStaffData({...editStaffData, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editPhone">Phone Number</Label>
+                  <Input 
+                    id="editPhone" 
+                    value={editStaffData.phoneNumber}
+                    onChange={(e) => setEditStaffData({...editStaffData, phoneNumber: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editRole">Role</Label>
+                  <Select 
+                    value={editStaffData.role} 
+                    onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="Receptionist">Receptionist</SelectItem>
+                      <SelectItem value="Housekeeping">Housekeeping</SelectItem>
+                      <SelectItem value="Concierge">Concierge</SelectItem>
+                      <SelectItem value="Security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateStaff}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Message Dialog */}
         <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
