@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +90,6 @@ export default function StaffPage() {
 
   const [editStaffData, setEditStaffData] = useState<any>(null);
 
-  // Sync with Firestore
   const staffCollection = useMemoFirebase(() => user ? collection(firestore, 'staff') : null, [firestore, user]);
   const { data: staff, isLoading } = useCollection(staffCollection);
 
@@ -101,7 +99,6 @@ export default function StaffPage() {
     }
   }, [user, isAuthLoading, router]);
 
-  // Fix hydration mismatch for the date field
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     setScheduleData(prev => ({ ...prev, date: today }));
@@ -116,7 +113,6 @@ export default function StaffPage() {
     const staffData = {
       ...newStaff,
       id: staffId,
-      avatar: staffId,
       createdAt: new Date().toISOString()
     };
 
@@ -292,7 +288,6 @@ export default function StaffPage() {
 
                   <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
-                      <AvatarImage src={`https://picsum.photos/seed/${member.id}/200`} />
                       <AvatarFallback>{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col pr-8">
@@ -352,7 +347,6 @@ export default function StaffPage() {
           )}
         </main>
 
-        {/* Add Staff Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -422,7 +416,6 @@ export default function StaffPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Edit Staff Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -493,7 +486,6 @@ export default function StaffPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Message Dialog */}
         <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -522,7 +514,6 @@ export default function StaffPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Schedule Dialog */}
         <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>

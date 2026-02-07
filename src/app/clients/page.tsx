@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +61,6 @@ export default function ClientsPage() {
 
   const firestore = useFirestore();
   
-  // Guard references with user check to prevent permission errors before redirect
   const clientsCollection = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
   const { data: clients, isLoading } = useCollection(clientsCollection);
 
@@ -153,7 +151,7 @@ export default function ClientsPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Guest Registration</DialogTitle>
-                <DialogDescription>Create a new profile for a returning or new guest.</DialogDescription>
+                <DialogDescription>Create a new profile for a new or returning guest.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -275,7 +273,6 @@ export default function ClientsPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
-                            <AvatarImage src={`https://picsum.photos/seed/${client.id}/100`} />
                             <AvatarFallback>{client.firstName?.charAt(0)}{client.lastName?.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{client.firstName} {client.lastName}</span>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -42,7 +41,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
@@ -62,7 +61,6 @@ export function AppSidebar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
-  // Avoid hydration mismatch by waiting for mount
   React.useEffect(() => {
     setMounted(true)
   }, [])
@@ -82,6 +80,15 @@ export function AppSidebar() {
     if (theme === 'light') return <Sun className="h-3 w-3" />
     return <Monitor className="h-3 w-3" />
   }
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "AD";
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <Sidebar className="border-r">
@@ -155,8 +162,7 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={`https://picsum.photos/seed/${user?.uid}/200`} />
-                    <AvatarFallback className="rounded-lg">AD</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{getInitials(user?.displayName)}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.displayName || 'Administrator'}</span>
