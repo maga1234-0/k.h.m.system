@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Plus, 
-  Filter, 
   Search, 
   Loader2, 
   Bed, 
@@ -88,9 +87,9 @@ export default function RoomsPage() {
       id: roomId,
       status: "Available",
       amenities: ["Wi-Fi", "TV", "Air Conditioning"],
-      pricePerNight: Number(newRoom.pricePerNight) || 0,
-      capacity: Number(newRoom.capacity) || 1,
-      floor: Number(newRoom.floor) || 0,
+      pricePerNight: Number(newRoom.pricePerNight) || null,
+      capacity: Number(newRoom.capacity) || null,
+      floor: Number(newRoom.floor) || null,
     };
 
     setDocumentNonBlocking(roomRef, roomData, { merge: true });
@@ -110,9 +109,9 @@ export default function RoomsPage() {
     const roomRef = doc(firestore, 'rooms', editRoomData.id);
     updateDocumentNonBlocking(roomRef, {
       ...editRoomData,
-      pricePerNight: Number(editRoomData.pricePerNight) || 0,
-      capacity: Number(editRoomData.capacity) || 1,
-      floor: Number(editRoomData.floor) || 0,
+      pricePerNight: editRoomData.pricePerNight === "" ? null : Number(editRoomData.pricePerNight),
+      capacity: editRoomData.capacity === "" ? null : Number(editRoomData.capacity),
+      floor: editRoomData.floor === "" ? null : Number(editRoomData.floor),
     });
 
     setIsEditDialogOpen(false);
@@ -239,6 +238,7 @@ export default function RoomsPage() {
                     value={newRoom.floor} 
                     onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} 
                     className="col-span-3"
+                    placeholder=""
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -251,6 +251,7 @@ export default function RoomsPage() {
                       value={newRoom.pricePerNight} 
                       onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} 
                       className="pl-9"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -264,6 +265,7 @@ export default function RoomsPage() {
                       value={newRoom.capacity} 
                       onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} 
                       className="pl-9"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -288,10 +290,7 @@ export default function RoomsPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
-                <Filter className="h-4 w-4" /> Filters
-              </Button>
-              <Button variant="ghost" onClick={() => setSearchTerm("")}>Reset</Button>
+              <Button variant="ghost" onClick={() => setSearchTerm("")}>Reset Search</Button>
             </div>
           </div>
 
@@ -318,11 +317,11 @@ export default function RoomsPage() {
                         {room.status}
                       </Badge>
                     </div>
-                    <span className="text-sm text-muted-foreground">{room.roomType} • Floor {room.floor}</span>
+                    <span className="text-sm text-muted-foreground">{room.roomType} • Floor {room.floor ?? 'N/A'}</span>
                   </CardHeader>
                   <CardContent className="pb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-primary">${room.pricePerNight}</span>
+                      <span className="text-2xl font-bold text-primary">${room.pricePerNight ?? 0}</span>
                       <span className="text-xs text-muted-foreground">/ night</span>
                     </div>
                   </CardContent>
@@ -332,7 +331,12 @@ export default function RoomsPage() {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => {
-                        setEditRoomData({...room});
+                        setEditRoomData({
+                          ...room,
+                          pricePerNight: room.pricePerNight ?? "",
+                          capacity: room.capacity ?? "",
+                          floor: room.floor ?? ""
+                        });
                         setIsEditDialogOpen(true);
                       }}
                     >
@@ -419,6 +423,7 @@ export default function RoomsPage() {
                     value={editRoomData.floor} 
                     onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} 
                     className="col-span-3"
+                    placeholder=""
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -431,6 +436,7 @@ export default function RoomsPage() {
                       value={editRoomData.pricePerNight} 
                       onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: e.target.value})} 
                       className="pl-9"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -444,6 +450,7 @@ export default function RoomsPage() {
                       value={editRoomData.capacity} 
                       onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} 
                       className="pl-9"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -490,15 +497,15 @@ export default function RoomsPage() {
                   </div>
                   <div className="p-3 bg-muted rounded-lg space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Nightly Rate</span>
-                    <p className="font-semibold text-primary">${selectedRoom.pricePerNight}</p>
+                    <p className="font-semibold text-primary">${selectedRoom.pricePerNight ?? 0}</p>
                   </div>
                   <div className="p-3 bg-muted rounded-lg space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Capacity</span>
-                    <p className="font-semibold">{selectedRoom.capacity} Guests</p>
+                    <p className="font-semibold">{selectedRoom.capacity ?? 'N/A'} Guests</p>
                   </div>
                   <div className="p-3 bg-muted rounded-lg space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Location</span>
-                    <p className="font-semibold">Floor {selectedRoom.floor}</p>
+                    <p className="font-semibold">Floor {selectedRoom.floor ?? 'N/A'}</p>
                   </div>
                 </div>
                 
@@ -518,7 +525,12 @@ export default function RoomsPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => {
-                      setEditRoomData({...selectedRoom});
+                      setEditRoomData({
+                        ...selectedRoom,
+                        pricePerNight: selectedRoom.pricePerNight ?? "",
+                        capacity: selectedRoom.capacity ?? "",
+                        floor: selectedRoom.floor ?? ""
+                      });
                       setIsDetailsOpen(false);
                       setIsEditDialogOpen(true);
                     }}>Edit Room</Button>
@@ -599,7 +611,7 @@ export default function RoomsPage() {
               
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 flex justify-between items-center">
                 <span className="text-sm font-medium">Estimated Total</span>
-                <span className="text-lg font-bold text-primary">${selectedRoom?.pricePerNight}</span>
+                <span className="text-lg font-bold text-primary">${selectedRoom?.pricePerNight ?? 0}</span>
               </div>
             </div>
             <DialogFooter>
