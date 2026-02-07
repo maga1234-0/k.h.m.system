@@ -60,6 +60,12 @@ export function AppSidebar() {
   const auth = useAuth()
   const { user } = useUser()
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  // Avoid hydration mismatch by waiting for mount
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +74,13 @@ export function AppSidebar() {
     } catch (error) {
       console.error("Sign out failed", error)
     }
+  }
+
+  const renderThemeIcon = () => {
+    if (!mounted) return <Monitor className="h-3 w-3" />
+    if (theme === 'dark') return <Moon className="h-3 w-3" />
+    if (theme === 'light') return <Sun className="h-3 w-3" />
+    return <Monitor className="h-3 w-3" />
   }
 
   return (
@@ -117,7 +130,7 @@ export function AppSidebar() {
                 <SidebarMenuButton tooltip="Change Appearance">
                   <div className="flex items-center gap-2">
                     <div className="flex h-5 w-5 items-center justify-center rounded-md border bg-background">
-                      {theme === 'dark' ? <Moon className="h-3 w-3" /> : theme === 'light' ? <Sun className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                      {renderThemeIcon()}
                     </div>
                     <span>Appearance</span>
                   </div>
