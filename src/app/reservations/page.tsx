@@ -27,7 +27,8 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Trash2
+  Trash2,
+  Filter
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -82,6 +83,7 @@ export default function ReservationsPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -238,7 +240,6 @@ export default function ReservationsPage() {
   const handleDeleteConfirm = () => {
     if (!resToDelete) return;
     
-    // If the reservation was active or checked in, we should release the room
     if (resToDelete.roomId && (resToDelete.status === 'Confirmed' || resToDelete.status === 'Checked In')) {
       const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
       updateDocumentNonBlocking(roomRef, { status: "Available" });
@@ -265,11 +266,16 @@ export default function ReservationsPage() {
     );
   }
 
-  const filteredReservations = reservations?.filter(res => 
-    res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    res.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    res.roomNumber?.includes(searchTerm)
-  );
+  const filteredReservations = reservations?.filter(res => {
+    const matchesSearch = 
+      res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      res.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      res.roomNumber?.includes(searchTerm);
+    
+    const matchesStatus = statusFilter === "All" || res.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const availableRooms = rooms?.filter(r => r.status === 'Available') || [];
 
@@ -408,6 +414,21 @@ export default function ReservationsPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px] bg-background">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Confirmed">Confirmed</SelectItem>
+                    <SelectItem value="Checked In">Checked In</SelectItem>
+                    <SelectItem value="Checked Out">Checked Out</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <Table>
@@ -512,7 +533,7 @@ export default function ReservationsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      No records found.
+                      No records found for this filter.
                     </TableCell>
                   </TableRow>
                 )}
