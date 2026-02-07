@@ -151,7 +151,7 @@ export default function BillingPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 ml-auto md:ml-0">
-                        <div className="flex flex-col items-end">
+                        <div className="flex items-center flex-col items-end">
                           <span className="font-bold text-lg">${Number(inv.amountDue).toFixed(2)}</span>
                           <span className="text-[10px] text-muted-foreground">Due: {new Date(inv.dueDate).toLocaleDateString()}</span>
                         </div>
