@@ -32,6 +32,16 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -47,8 +57,11 @@ import { toast } from "@/hooks/use-toast";
 export default function ClientsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newClient, setNewClient] = useState({
     firstName: "",
     lastName: "",
@@ -63,6 +76,10 @@ export default function ClientsPage() {
   
   const clientsCollection = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
   const { data: clients, isLoading } = useCollection(clientsCollection);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -108,16 +125,23 @@ export default function ClientsPage() {
     });
   };
 
-  const handleDeleteClient = (client: any) => {
-    const clientRef = doc(firestore, 'clients', client.id);
+  const handleDeleteConfirm = () => {
+    if (!clientToDelete) return;
+    
+    const clientRef = doc(firestore, 'clients', clientToDelete.id);
     deleteDocumentNonBlocking(clientRef);
+    
     toast({
+      variant: "destructive",
       title: "Guest Removed",
-      description: `Registry record for ${client.firstName} ${client.lastName} has been deleted.`,
+      description: `Registry record for ${clientToDelete.firstName} ${clientToDelete.lastName} has been deleted.`,
     });
+    
+    setClientToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
-  if (isAuthLoading || !user) {
+  if (!mounted || isAuthLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -268,7 +292,7 @@ export default function ClientsPage() {
                     </TableCell>
                   </TableRow>
                 ) : filteredClients && filteredClients.length > 0 ? (
-                  filteredClients.map((client, i) => (
+                  filteredClients.map((client) => (
                     <TableRow key={client.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -310,7 +334,13 @@ export default function ClientsPage() {
                               <Calendar className="mr-2 h-4 w-4" /> Booking History
                             </DropdownMenuItem>
                             <Separator className="my-1" />
-                            <DropdownMenuItem onClick={() => handleDeleteClient(client)} className="text-destructive">
+                            <DropdownMenuItem 
+                              onSelect={() => {
+                                setClientToDelete(client);
+                                setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                              }} 
+                              className="text-destructive"
+                            >
                               <Trash2 className="mr-2 h-4 w-4" /> Remove Profile
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -329,6 +359,24 @@ export default function ClientsPage() {
             </Table>
           </div>
         </main>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the guest profile for <strong>{clientToDelete?.firstName} {clientToDelete?.lastName}</strong>. 
+                This action cannot be undone and will remove all associated registry data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setClientToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete Profile
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
