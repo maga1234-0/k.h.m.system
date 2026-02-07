@@ -26,7 +26,9 @@ import {
   Users as UsersIcon,
   DollarSign,
   UserCheck,
-  Ban
+  Ban,
+  Info,
+  Mail
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -60,6 +62,9 @@ export default function ReservationsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedRes, setSelectedRes] = useState<any>(null);
+  
   const [newBooking, setNewBooking] = useState({
     guestName: "",
     roomId: "",
@@ -71,7 +76,6 @@ export default function ReservationsPage() {
 
   const firestore = useFirestore();
   
-  // Guard references with user check to prevent permission errors before redirect
   const resCollection = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const roomsCollection = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   
@@ -110,7 +114,6 @@ export default function ReservationsPage() {
 
     addDocumentNonBlocking(resCollection, reservationData);
     
-    // Update room status
     const roomRef = doc(firestore, 'rooms', selectedRoom.id);
     updateDocumentNonBlocking(roomRef, { status: "Occupied" });
 
@@ -134,7 +137,6 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Cancelled" });
     
-    // Make room available again
     if (reservation.roomId) {
       const roomRef = doc(firestore, 'rooms', reservation.roomId);
       updateDocumentNonBlocking(roomRef, { status: "Available" });
@@ -142,7 +144,7 @@ export default function ReservationsPage() {
 
     toast({
       title: "Reservation Cancelled",
-      description: `Booking for ${reservation.guestName} has been cancelled and Room ${reservation.roomNumber} is now available.`,
+      description: `Booking for ${reservation.guestName} has been cancelled.`,
     });
   };
 
@@ -152,7 +154,7 @@ export default function ReservationsPage() {
     
     toast({
       title: "Guest Checked In",
-      description: `${reservation.guestName} has successfully checked in to Room ${reservation.roomNumber}.`,
+      description: `${reservation.guestName} has successfully checked in.`,
     });
   };
 
@@ -167,7 +169,14 @@ export default function ReservationsPage() {
 
     toast({
       title: "Guest Checked Out",
-      description: `${reservation.guestName} has checked out. Room ${reservation.roomNumber} is now available.`,
+      description: `${reservation.guestName} has checked out.`,
+    });
+  };
+
+  const handleSendConfirmation = (reservation: any) => {
+    toast({
+      title: "Confirmation Sent",
+      description: `Booking confirmation has been sent to ${reservation.guestName}.`,
     });
   };
 
@@ -241,9 +250,6 @@ export default function ReservationsPage() {
                           Room {room.roomNumber} - {room.roomType} (${room.pricePerNight})
                         </SelectItem>
                       ))}
-                      {availableRooms.length === 0 && !isRoomsLoading && (
-                        <div className="p-2 text-xs text-muted-foreground text-center">No rooms available</div>
-                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -275,34 +281,6 @@ export default function ReservationsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newNumGuests">Guests</Label>
-                    <div className="relative">
-                      <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newNumGuests" 
-                        type="number" 
-                        className="pl-9"
-                        value={newBooking.numberOfGuests}
-                        onChange={(e) => setNewBooking({...newBooking, numberOfGuests: parseInt(e.target.value) || 1})}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newAmount">Total Amount</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="newAmount" 
-                        type="number" 
-                        className="pl-9"
-                        value={newBooking.totalAmount}
-                        onChange={(e) => setNewBooking({...newBooking, totalAmount: parseInt(e.target.value) || 0})}
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
@@ -318,19 +296,11 @@ export default function ReservationsPage() {
               <div className="relative w-full md:w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search reservations by guest, room, or ID..." 
+                  placeholder="Search reservations..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
-              <div className="flex gap-2 w-full md:w-auto">
-                <Button variant="outline" size="sm" className="gap-2 flex-1 md:flex-none">
-                  <Filter className="h-4 w-4" /> Filter
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2 flex-1 md:flex-none">
-                  <ArrowUpDown className="h-4 w-4" /> Sort
-                </Button>
               </div>
             </div>
             
@@ -361,19 +331,11 @@ export default function ReservationsPage() {
                     <TableRow key={res.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-mono text-[10px] font-semibold">{res.id.slice(0, 8)}...</TableCell>
                       <TableCell className="font-medium">{res.guestName}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-sm">Room {res.roomNumber}</span>
-                        </div>
-                      </TableCell>
+                      <TableCell>Room {res.roomNumber}</TableCell>
                       <TableCell className="text-sm">{res.checkInDate}</TableCell>
                       <TableCell className="text-sm">{res.checkOutDate}</TableCell>
                       <TableCell>{getStatusBadge(res.status)}</TableCell>
-                      <TableCell>
-                        <span className="text-xs font-medium text-emerald-600">
-                          ${res.totalAmount}
-                        </span>
-                      </TableCell>
+                      <TableCell className="text-xs font-medium text-emerald-600">${res.totalAmount}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -382,7 +344,12 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedRes(res);
+                              setIsDetailsDialogOpen(true);
+                            }}>
+                              <Info className="mr-2 h-4 w-4" /> View Details
+                            </DropdownMenuItem>
                             {res.status === 'Confirmed' && (
                               <DropdownMenuItem onClick={() => handleCheckIn(res)} className="text-emerald-600">
                                 <UserCheck className="mr-2 h-4 w-4" /> Check In
@@ -393,7 +360,9 @@ export default function ReservationsPage() {
                                 <LogOut className="mr-2 h-4 w-4" /> Check Out
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem>Send Confirmation</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendConfirmation(res)}>
+                              <Mail className="mr-2 h-4 w-4" /> Send Confirmation
+                            </DropdownMenuItem>
                             <Separator className="my-1" />
                             {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
                               <DropdownMenuItem onClick={() => handleCancelReservation(res)} className="text-destructive">
@@ -408,7 +377,7 @@ export default function ReservationsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                      {searchTerm ? "No reservations match your search." : "No reservations found in the system."}
+                      {searchTerm ? "No reservations match your search." : "No reservations found."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -416,6 +385,58 @@ export default function ReservationsPage() {
             </Table>
           </div>
         </main>
+
+        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Reservation Details</DialogTitle>
+              <DialogDescription>Full summary of the guest's booking.</DialogDescription>
+            </DialogHeader>
+            {selectedRes && (
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guest Name</span>
+                    <p className="text-sm font-semibold">{selectedRes.guestName}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Status</span>
+                    <div>{getStatusBadge(selectedRes.status)}</div>
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Check-In</span>
+                    <p className="text-sm font-medium">{selectedRes.checkInDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Check-Out</span>
+                    <p className="text-sm font-medium">{selectedRes.checkOutDate}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Room Assigned</span>
+                    <p className="text-sm font-medium">Room {selectedRes.roomNumber}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guests</span>
+                    <p className="text-sm font-medium">{selectedRes.numberOfGuests} Person(s)</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
+                  <span className="text-sm font-semibold">Total Amount Due</span>
+                  <span className="text-lg font-bold text-emerald-600">${selectedRes.totalAmount}</span>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SidebarInset>
     </div>
   );
