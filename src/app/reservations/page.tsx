@@ -28,7 +28,8 @@ import {
   Phone,
   MessageSquare,
   Trash2,
-  Filter
+  Filter,
+  AlertCircle
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -146,6 +147,16 @@ export default function ReservationsPage() {
 
     const selectedRoom = rooms?.find(r => r.id === newBooking.roomId);
     if (!selectedRoom) return;
+
+    // Strict availability check
+    if (selectedRoom.status !== 'Available') {
+      toast({
+        variant: "destructive",
+        title: "Booking Restricted",
+        description: `Room ${selectedRoom.roomNumber} is currently ${selectedRoom.status} and cannot be booked.`,
+      });
+      return;
+    }
 
     const reservationData = {
       ...newBooking,
@@ -350,28 +361,35 @@ export default function ReservationsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="roomSelect">Assign Room</Label>
-                  <Select 
-                    value={newBooking.roomId} 
-                    onValueChange={(val) => {
-                      const room = rooms?.find(r => r.id === val);
-                      setNewBooking({
-                        ...newBooking, 
-                        roomId: val, 
-                        totalAmount: room ? room.pricePerNight : 0 
-                      });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={isRoomsLoading ? "Loading rooms..." : "Select an available room"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id}>
-                          Room {room.roomNumber} - {room.roomType} (${room.pricePerNight})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {availableRooms.length > 0 ? (
+                    <Select 
+                      value={newBooking.roomId} 
+                      onValueChange={(val) => {
+                        const room = rooms?.find(r => r.id === val);
+                        setNewBooking({
+                          ...newBooking, 
+                          roomId: val, 
+                          totalAmount: room ? (room.pricePerNight || 0) : 0 
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={isRoomsLoading ? "Loading rooms..." : "Select an available room"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            Room {room.roomNumber} - {room.roomType} (${room.pricePerNight || 0})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex items-center gap-2 p-3 border rounded-lg bg-destructive/5 text-destructive text-sm font-medium">
+                      <AlertCircle className="h-4 w-4" />
+                      No rooms are currently available.
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -396,7 +414,7 @@ export default function ReservationsPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId}>Confirm Booking</Button>
+                <Button onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId || availableRooms.length === 0}>Confirm Booking</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

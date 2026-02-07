@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -128,6 +129,17 @@ export default function RoomsPage() {
   const handleQuickBook = () => {
     if (!selectedRoom || !bookingData.guestName) return;
 
+    // Strict availability check
+    if (selectedRoom.status !== 'Available') {
+      toast({
+        variant: "destructive",
+        title: "Booking Restricted",
+        description: `Room ${selectedRoom.roomNumber} is currently ${selectedRoom.status} and cannot be booked.`,
+      });
+      setIsBookingOpen(false);
+      return;
+    }
+
     const resRef = collection(firestore, 'reservations');
     const reservation = {
       roomId: selectedRoom.id,
@@ -138,7 +150,7 @@ export default function RoomsPage() {
       checkInDate: bookingData.checkIn,
       checkOutDate: bookingData.checkOut,
       numberOfGuests: bookingData.guests,
-      totalAmount: selectedRoom.pricePerNight,
+      totalAmount: selectedRoom.pricePerNight || 0,
       status: "Confirmed",
       createdAt: new Date().toISOString()
     };
