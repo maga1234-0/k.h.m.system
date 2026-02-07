@@ -33,8 +33,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter,
-  DialogDescription,
-  DialogTrigger
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +75,7 @@ export default function StaffPage() {
   
   const [messageText, setMessageText] = useState("");
   const [scheduleData, setScheduleData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: "",
     shift: "Morning"
   });
 
@@ -100,6 +99,14 @@ export default function StaffPage() {
       router.push('/login');
     }
   }, [user, isAuthLoading, router]);
+
+  // Fix hydration mismatch by setting initial date on client mount
+  useEffect(() => {
+    setScheduleData(prev => ({
+      ...prev,
+      date: new Date().toISOString().split('T')[0]
+    }));
+  }, []);
 
   const handleAddStaff = () => {
     if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) return;
@@ -217,79 +224,9 @@ export default function StaffPage() {
             <h1 className="font-headline font-semibold text-xl">Staff Management</h1>
           </div>
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-                <UserPlus className="h-4 w-4" /> Add Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add Staff Member</DialogTitle>
-                <DialogDescription>Create a new profile for a hotel staff member.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input 
-                      id="firstName" 
-                      value={newStaff.firstName}
-                      onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input 
-                      id="lastName" 
-                      value={newStaff.lastName}
-                      onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email"
-                    value={newStaff.email}
-                    onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number (International format)</Label>
-                  <Input 
-                    id="phone" 
-                    placeholder="e.g. 243980453935"
-                    value={newStaff.phoneNumber}
-                    onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select 
-                    value={newStaff.role} 
-                    onValueChange={(val) => setNewStaff({...newStaff, role: val})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Receptionist">Receptionist</SelectItem>
-                      <SelectItem value="Housekeeping">Housekeeping</SelectItem>
-                      <SelectItem value="Concierge">Concierge</SelectItem>
-                      <SelectItem value="Security">Security</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.lastName || !newStaff.email}>Add Member</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+            <UserPlus className="h-4 w-4" /> Add Member
+          </Button>
         </header>
 
         <main className="p-6 space-y-6">
@@ -354,7 +291,7 @@ export default function StaffPage() {
 
                   <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
-                      <AvatarImage src={`https://picsum.photos/seed/${member.avatar || member.id}/200`} />
+                      <AvatarImage src={`https://picsum.photos/seed/${member.id}/200`} />
                       <AvatarFallback>{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
@@ -413,6 +350,76 @@ export default function StaffPage() {
             </div>
           )}
         </main>
+
+        {/* Add Staff Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add Staff Member</DialogTitle>
+              <DialogDescription>Create a new profile for a hotel staff member.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input 
+                    id="firstName" 
+                    value={newStaff.firstName}
+                    onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input 
+                    id="lastName" 
+                    value={newStaff.lastName}
+                    onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input 
+                  id="email" 
+                  type="email"
+                  value={newStaff.email}
+                  onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number (International format)</Label>
+                <Input 
+                  id="phone" 
+                  placeholder="e.g. 243980453935"
+                  value={newStaff.phoneNumber}
+                  onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select 
+                  value={newStaff.role} 
+                  onValueChange={(val) => setNewStaff({...newStaff, role: val})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manager">Manager</SelectItem>
+                    <SelectItem value="Receptionist">Receptionist</SelectItem>
+                    <SelectItem value="Housekeeping">Housekeeping</SelectItem>
+                    <SelectItem value="Concierge">Concierge</SelectItem>
+                    <SelectItem value="Security">Security</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.lastName || !newStaff.email}>Add Member</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Staff Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
