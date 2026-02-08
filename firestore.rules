@@ -17,7 +17,7 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && 
              (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
-              request.auth.token.email == 'admin@kks.com');
+              request.auth.token.email == 'aubinmaga@gmail.com');
     }
 
     // --- Rules ---
@@ -30,14 +30,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow the first admin to create their own role record during signup.
+     * @description Allow the primary admin to create their own role record during signup.
      */
     match /roles_admin/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'admin@kks.com';
+      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
     }
 
     match /staff/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'admin@kks.com';
+      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
     }
   }
 }
