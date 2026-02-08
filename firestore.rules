@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -30,14 +31,18 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow the primary admin to create their own role record during signup.
+     * @description Allow the primary admin to create their own role record and staff profile during initialization.
      */
     match /roles_admin/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
+      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin());
     }
 
     match /staff/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
+      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin());
+    }
+    
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
     }
   }
 }

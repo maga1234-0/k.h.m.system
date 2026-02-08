@@ -4,13 +4,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,6 +24,8 @@ export default function LoginPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  const PRIMARY_ADMIN = 'aubinmaga@gmail.com';
+
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push('/');
@@ -35,22 +37,64 @@ export default function LoginPage() {
     
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      let userCredential;
       
-      // Verify admin status in Firestore
-      const adminRoleRef = doc(firestore, 'roles_admin', userCredential.user.uid);
+      try {
+        // 1. Attempt standard sign-in
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+      } catch (authError: any) {
+        // 2. Special handling for primary admin first-time login
+        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found')) {
+          // Attempt to register the primary admin if login fails
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          toast({
+            title: "System Initialized",
+            description: "Primary administrator account has been created and verified.",
+          });
+        } else {
+          throw authError;
+        }
+      }
+
+      const uid = userCredential.user.uid;
+      
+      // 3. Verify or Initialize administrator role record
+      const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
       if (!adminSnap.exists()) {
-        await signOut(auth);
-        throw new Error("This account is not registered in the administrator directory.");
+        if (email === PRIMARY_ADMIN) {
+          // Initialize the database records for the primary admin
+          await setDoc(adminRoleRef, {
+            id: uid,
+            email: email,
+            role: 'Administrator',
+            createdAt: new Date().toISOString()
+          });
+
+          // Also ensure a staff profile exists for the sidebar/management
+          const staffRef = doc(firestore, 'staff', uid);
+          await setDoc(staffRef, {
+            id: uid,
+            firstName: "Primary",
+            lastName: "Administrator",
+            email: email,
+            role: "Manager",
+            status: "On Duty",
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          await signOut(auth);
+          throw new Error("Security Violation: This account is not registered in the management directory.");
+        }
       }
       
       router.push('/');
     } catch (error: any) {
+      console.error(error);
       const message = error.code === 'auth/invalid-credential' 
-        ? "Access Denied: Invalid credentials."
-        : error.message || 'Authentication error occurred.';
+        ? "Authentication Failed: Incorrect password for this account."
+        : error.message || 'A security error occurred during authentication.';
         
       toast({
         variant: 'destructive',
@@ -87,7 +131,7 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
             <AlertDescription className="text-xs text-amber-700">
-              Authorized hotel management personnel only. Logins are audited.
+              Authorized hotel management personnel only. All logins are audited for security compliance.
             </AlertDescription>
           </Alert>
 
@@ -99,7 +143,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder=""
+                  placeholder="admin@kks.com"
                   className="pl-9"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -114,7 +158,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder=""
+                  placeholder="••••••••"
                   className="pl-9 pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -129,15 +173,15 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg" disabled={isLoading}>
+            <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg shadow-lg shadow-primary/20" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              Authenticate
+              {email === PRIMARY_ADMIN ? 'Initialize & Login' : 'Authenticate'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="text-center pt-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full">
-            Proprietary system of K.H.M.System Group
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full flex items-center justify-center gap-1">
+            <Sparkles className="h-2 w-2" /> Powered by GenAI • K.H.M.System Group
           </p>
         </CardFooter>
       </Card>
