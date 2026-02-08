@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react";
@@ -21,7 +20,7 @@ export default function ForecastingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ForecastOccupancyOutput | null>(null);
-  const [bookingTrends, setBookingTrends] = useState("We have a major tech conference nearby from June 15-20. Previous years showed a 30% spike in demand during this window.");
+  const [bookingTrends, setBookingTrends] = useState("");
   const [horizon, setHorizon] = useState(7);
 
   const firestore = useFirestore();
