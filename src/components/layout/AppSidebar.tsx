@@ -15,8 +15,7 @@ import {
   User,
   Sun,
   Moon,
-  Monitor,
-  Brain
+  Monitor
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -51,7 +50,6 @@ const menuItems = [
   { title: "Réservations", icon: CalendarCheck, url: "/reservations" },
   { title: "Registre Clients", icon: Users, url: "/clients" },
   { title: "Facturation", icon: Receipt, url: "/billing" },
-  { title: "Prévisions IA", icon: Brain, url: "/forecasting" },
   { title: "Personnel", icon: ShieldCheck, url: "/staff" },
 ]
 

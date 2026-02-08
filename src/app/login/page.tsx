@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert, Sparkles } from 'lucide-react';
+import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -174,8 +174,8 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="text-center pt-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full flex items-center justify-center gap-1">
-            <Sparkles className="h-2 w-2" /> Propulsé par GenAI • K.H.M.System Group
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full text-center">
+            K.H.M.System Group • Console de Sécurité
           </p>
         </CardFooter>
       </Card>
