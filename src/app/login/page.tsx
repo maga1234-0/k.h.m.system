@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,12 +39,9 @@ export default function LoginPage() {
       let userCredential;
       
       try {
-        // 1. Attempt standard sign-in
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
-        // 2. Special handling for primary admin first-time login
-        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found')) {
-          // Attempt to register the primary admin if login fails
+        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-email')) {
           userCredential = await createUserWithEmailAndPassword(auth, email, password);
           toast({
             title: "System Initialized",
@@ -58,13 +54,11 @@ export default function LoginPage() {
 
       const uid = userCredential.user.uid;
       
-      // 3. Verify or Initialize administrator role record
       const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
       if (!adminSnap.exists()) {
         if (email === PRIMARY_ADMIN) {
-          // Initialize the database records for the primary admin
           await setDoc(adminRoleRef, {
             id: uid,
             email: email,
@@ -72,7 +66,6 @@ export default function LoginPage() {
             createdAt: new Date().toISOString()
           });
 
-          // Also ensure a staff profile exists for the sidebar/management
           const staffRef = doc(firestore, 'staff', uid);
           await setDoc(staffRef, {
             id: uid,
@@ -143,7 +136,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@kks.com"
+                  placeholder=""
                   className="pl-9"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -158,7 +151,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder=""
                   className="pl-9 pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

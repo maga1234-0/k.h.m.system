@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -118,19 +117,16 @@ export default function SettingsPage() {
 
     setIsUpdatingAccount(true);
     try {
-      // 1. Update Firestore Staff Record
       updateDocumentNonBlocking(staffProfileRef, {
         firstName: accountData.firstName,
         lastName: accountData.lastName,
-        email: accountData.email // Sync email to staff doc
+        email: accountData.email 
       });
 
-      // 2. Update Firebase Auth Email if changed
       if (accountData.email !== user.email) {
         await updateEmail(user, accountData.email);
       }
 
-      // 3. Update Password if provided
       if (accountData.newPassword) {
         await updatePassword(user, accountData.newPassword);
       }
@@ -174,22 +170,24 @@ export default function SettingsPage() {
           <h1 className="font-headline font-semibold text-xl">System Settings</h1>
         </header>
 
-        <main className="p-6 max-w-4xl mx-auto w-full space-y-6">
+        <main className="p-4 md:p-6 max-w-4xl mx-auto w-full space-y-6">
           <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
-              <TabsTrigger value="general" className="gap-2">
-                <Hotel className="h-4 w-4" /> General
-              </TabsTrigger>
-              <TabsTrigger value="reservations" className="gap-2">
-                <Clock className="h-4 w-4" /> Policies
-              </TabsTrigger>
-              <TabsTrigger value="account" className="gap-2">
-                <ShieldCheck className="h-4 w-4" /> Account
-              </TabsTrigger>
-              <TabsTrigger value="system" className="gap-2">
-                <Shield className="h-4 w-4" /> System
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto pb-2">
+              <TabsList className="grid w-full grid-cols-4 min-w-[500px]">
+                <TabsTrigger value="general" className="gap-2">
+                  <Hotel className="h-4 w-4" /> General
+                </TabsTrigger>
+                <TabsTrigger value="reservations" className="gap-2">
+                  <Clock className="h-4 w-4" /> Policies
+                </TabsTrigger>
+                <TabsTrigger value="account" className="gap-2">
+                  <ShieldCheck className="h-4 w-4" /> Account
+                </TabsTrigger>
+                <TabsTrigger value="system" className="gap-2">
+                  <Shield className="h-4 w-4" /> System
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="general">
               <Card>
@@ -210,7 +208,7 @@ export default function SettingsPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="email">Official Email</Label>
                       <div className="relative">
@@ -253,7 +251,7 @@ export default function SettingsPage() {
                   <CardDescription>Define check-in/out times and booking behavior.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <Label>Standard Check-In Time</Label>
                       <Input 
@@ -301,7 +299,7 @@ export default function SettingsPage() {
                     <CardDescription>Update your personal information used throughout the system.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
                         <Input 
@@ -344,7 +342,7 @@ export default function SettingsPage() {
                     <CardDescription>Securely update your system access password.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="newPass">New Password</Label>
                         <div className="relative">

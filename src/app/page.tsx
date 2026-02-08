@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react";
@@ -142,8 +141,8 @@ export default function DashboardPage() {
           <h1 className="font-headline font-semibold text-xl">Real-time Dashboard</h1>
         </header>
 
-        <main className="p-6 space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <main className="p-4 md:p-6 space-y-6">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => (
               <Card key={stat.title} className="shadow-sm border-none bg-card hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -170,13 +169,13 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-4 border-none shadow-sm">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
+            <Card className="lg:col-span-4 border-none shadow-sm h-fit">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Occupancy & Revenue Overview</CardTitle>
                 <CardDescription>7-day performance tracking based on live data.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[350px]">
+              <CardContent className="h-[300px] md:h-[350px]">
                 <DashboardCharts data={chartData} />
               </CardContent>
             </Card>
@@ -188,41 +187,41 @@ export default function DashboardPage() {
                   <CardDescription>Live breakdown of your {roomStatusBreakdown.total} rooms.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                      <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white shrink-0">
                         <CheckCircle2 className="h-4 w-4" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xl font-bold">{roomStatusBreakdown.available}</span>
-                        <span className="text-[10px] uppercase font-bold text-emerald-600">Available</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xl font-bold leading-none">{roomStatusBreakdown.available}</span>
+                        <span className="text-[10px] uppercase font-bold text-emerald-600 truncate">Available</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                      <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shrink-0">
                         <BedDouble className="h-4 w-4" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xl font-bold">{roomStatusBreakdown.occupied}</span>
-                        <span className="text-[10px] uppercase font-bold text-amber-600">Occupied</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xl font-bold leading-none">{roomStatusBreakdown.occupied}</span>
+                        <span className="text-[10px] uppercase font-bold text-amber-600 truncate">Occupied</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                      <div className="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0">
                         <Clock className="h-4 w-4" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xl font-bold">{roomStatusBreakdown.cleaning}</span>
-                        <span className="text-[10px] uppercase font-bold text-blue-600">Cleaning</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xl font-bold leading-none">{roomStatusBreakdown.cleaning}</span>
+                        <span className="text-[10px] uppercase font-bold text-blue-600 truncate">Cleaning</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
-                      <div className="h-8 w-8 rounded-lg bg-rose-500 flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-lg bg-rose-500 flex items-center justify-center text-white shrink-0">
                         <Wrench className="h-4 w-4" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xl font-bold">{roomStatusBreakdown.maintenance}</span>
-                        <span className="text-[10px] uppercase font-bold text-rose-600">In Service</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xl font-bold leading-none">{roomStatusBreakdown.maintenance}</span>
+                        <span className="text-[10px] uppercase font-bold text-rose-600 truncate">In Service</span>
                       </div>
                     </div>
                   </div>
@@ -238,12 +237,12 @@ export default function DashboardPage() {
                   <div className="space-y-4 pt-2">
                     {recentReservations.length > 0 ? (
                       recentReservations.map((res, i) => (
-                        <div key={i} className="flex items-center justify-between group">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
-                            <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                        <div key={i} className="flex items-center justify-between group gap-2">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium text-sm group-hover:text-primary transition-colors truncate">{res.guestName}</span>
+                            <span className="text-xs text-muted-foreground truncate">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                           </div>
-                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px]">
+                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px] shrink-0">
                             {res.status}
                           </Badge>
                         </div>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -214,19 +213,13 @@ export default function ReservationsPage() {
   };
 
   const handleCheckIn = (reservation: any) => {
-    // Safety check: Is the room still occupied?
     const room = rooms?.find(r => r.id === reservation.roomId);
     if (room && room.status === 'Occupied') {
-      // Check if it's occupied by someone else (not the current reservation)
-      // Since rooms are currently marked "Occupied" as soon as they are booked, 
-      // we need to be careful. However, for a strict check-out logic:
       toast({
         variant: "destructive",
         title: "Room Occupied",
         description: `Room ${room.roomNumber} is currently occupied. Please ensure previous guests have checked out.`,
       });
-      // We still allow it if the user insists, but it's better to block or warn.
-      // Based on "if room is occupied don't check out", let's be strict.
       return;
     }
 
@@ -324,50 +317,48 @@ export default function ReservationsPage() {
     <div className="flex h-screen w-full">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
-        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
+        <header className="flex h-16 items-center border-b px-4 md:px-6 justify-between bg-background sticky top-0 z-10">
           <div className="flex items-center">
             <SidebarTrigger />
-            <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Reservations</h1>
+            <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
+            <h1 className="font-headline font-semibold text-lg md:text-xl truncate">Reservations</h1>
           </div>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-                <Plus className="h-4 w-4" /> New Booking
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 md:gap-2">
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">New Booking</span><span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-w-[95vw] rounded-lg">
               <DialogHeader>
                 <DialogTitle>New Reservation</DialogTitle>
-                <DialogDescription>Enter guest details and assign a room to create a new booking.</DialogDescription>
+                <DialogDescription>Enter guest details and assign a room.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="space-y-2">
                   <Label htmlFor="newGuestName">Guest Name</Label>
                   <Input 
                     id="newGuestName" 
-                    placeholder="Full name of primary guest"
+                    placeholder="Full name"
                     value={newBooking.guestName}
                     onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newGuestEmail">Email Address</Label>
+                    <Label htmlFor="newGuestEmail">Email</Label>
                     <Input 
                       id="newGuestEmail" 
                       type="email"
-                      placeholder="guest@example.com"
                       value={newBooking.guestEmail}
                       onChange={(e) => setNewBooking({...newBooking, guestEmail: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newGuestPhone">Phone (International)</Label>
+                    <Label htmlFor="newGuestPhone">Phone</Label>
                     <Input 
                       id="newGuestPhone" 
-                      placeholder="e.g. 15551234567"
                       value={newBooking.guestPhone}
                       onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})}
                     />
@@ -388,7 +379,7 @@ export default function ReservationsPage() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={isRoomsLoading ? "Loading rooms..." : "Select an available room"} />
+                        <SelectValue placeholder={isRoomsLoading ? "Loading..." : "Select room"} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableRooms.map((room) => (
@@ -401,7 +392,7 @@ export default function ReservationsPage() {
                   ) : (
                     <div className="flex items-center gap-2 p-3 border rounded-lg bg-destructive/5 text-destructive text-sm font-medium">
                       <AlertCircle className="h-4 w-4" />
-                      No rooms are currently available.
+                      No rooms available.
                     </div>
                   )}
                 </div>
@@ -426,31 +417,31 @@ export default function ReservationsPage() {
                   </div>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId || availableRooms.length === 0}>Confirm Booking</Button>
+              <DialogFooter className="flex-row gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId || availableRooms.length === 0}>Confirm</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </header>
 
-        <main className="p-6">
+        <main className="p-4 md:p-6">
           <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
-            <div className="p-4 border-b bg-muted/20 flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative w-full md:w-96">
+            <div className="p-4 border-b bg-muted/20 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+              <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search reservations..." 
+                  placeholder="Search guests..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px] bg-background">
-                    <SelectValue placeholder="Filter by status" />
+                  <SelectTrigger className="w-full md:w-[180px] bg-background">
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All Statuses</SelectItem>
@@ -463,114 +454,116 @@ export default function ReservationsPage() {
               </div>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[120px]">ID</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Room</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isResLoading ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...
-                      </div>
-                    </TableCell>
+                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Room</TableHead>
+                    <TableHead className="hidden sm:table-cell">Dates</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : filteredReservations && filteredReservations.length > 0 ? (
-                  filteredReservations.map((res) => (
-                    <TableRow key={res.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell className="font-mono text-[10px] font-semibold">{res.id.slice(0, 8)}...</TableCell>
-                      <TableCell className="font-medium text-sm">
-                        <div className="flex flex-col">
-                          <span>{res.guestName}</span>
-                          <span className="text-[10px] text-muted-foreground">{res.guestEmail || res.guestPhone || 'No contact info'}</span>
+                </TableHeader>
+                <TableBody>
+                  {isResLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Syncing...
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm">Room {res.roomNumber}</TableCell>
-                      <TableCell className="text-xs">
-                        <div className="flex flex-col">
-                          <span>{res.checkInDate}</span>
-                          <span className="text-muted-foreground">to {res.checkOutDate}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(res.status)}</TableCell>
-                      <TableCell className="text-xs font-bold text-emerald-600">${res.totalAmount}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onSelect={() => {
-                              setSelectedResId(res.id);
-                              setTimeout(() => setIsDetailsDialogOpen(true), 150);
-                            }}>
-                              <Info className="mr-2 h-4 w-4" /> View Details
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuSub>
-                              <DropdownMenuSubTrigger>
-                                <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent>
-                                <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
-                                  <Phone className="mr-2 h-4 w-4" /> via WhatsApp
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'email')}>
-                                  <Mail className="mr-2 h-4 w-4" /> via Email
-                                </DropdownMenuItem>
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-
-                            <Separator className="my-1" />
-                            {res.status === 'Confirmed' && (
-                              <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
-                                <UserCheck className="mr-2 h-4 w-4" /> Check In
-                              </DropdownMenuItem>
-                            )}
-                            {res.status === 'Checked In' && (
-                              <DropdownMenuItem onSelect={() => handleCheckOut(res)} className="text-blue-600">
-                                <LogOut className="mr-2 h-4 w-4" /> Check Out
-                              </DropdownMenuItem>
-                            )}
-                            {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
-                              <DropdownMenuItem onSelect={() => handleCancelReservation(res)} className="text-destructive">
-                                <Ban className="mr-2 h-4 w-4" /> Cancel Booking
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              onSelect={() => {
-                                setResToDelete(res);
-                                setTimeout(() => setIsDeleteDialogOpen(true), 150);
-                              }} 
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete Record
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      No records found for this filter.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredReservations && filteredReservations.length > 0 ? (
+                    filteredReservations.map((res) => (
+                      <TableRow key={res.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-mono text-[10px] font-semibold">{res.id.slice(0, 4)}...</TableCell>
+                        <TableCell className="font-medium text-sm">
+                          <div className="flex flex-col max-w-[120px] md:max-w-none">
+                            <span className="truncate">{res.guestName}</span>
+                            <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{res.guestEmail || res.guestPhone || 'No contact'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">R-{res.roomNumber}</TableCell>
+                        <TableCell className="text-xs hidden sm:table-cell">
+                          <div className="flex flex-col">
+                            <span>{res.checkInDate}</span>
+                            <span className="text-muted-foreground">to {res.checkOutDate}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(res.status)}</TableCell>
+                        <TableCell className="text-xs font-bold text-emerald-600">${res.totalAmount}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onSelect={() => {
+                                setSelectedResId(res.id);
+                                setTimeout(() => setIsDetailsDialogOpen(true), 150);
+                              }}>
+                                <Info className="mr-2 h-4 w-4" /> View Details
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                  <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
+                                    <Phone className="mr-2 h-4 w-4" /> via WhatsApp
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'email')}>
+                                    <Mail className="mr-2 h-4 w-4" /> via Email
+                                  </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
+
+                              <Separator className="my-1" />
+                              {res.status === 'Confirmed' && (
+                                <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
+                                  <UserCheck className="mr-2 h-4 w-4" /> Check In
+                                </DropdownMenuItem>
+                              )}
+                              {res.status === 'Checked In' && (
+                                <DropdownMenuItem onSelect={() => handleCheckOut(res)} className="text-blue-600">
+                                  <LogOut className="mr-2 h-4 w-4" /> Check Out
+                                </DropdownMenuItem>
+                              )}
+                              {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
+                                <DropdownMenuItem onSelect={() => handleCancelReservation(res)} className="text-destructive">
+                                  <Ban className="mr-2 h-4 w-4" /> Cancel Booking
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onSelect={() => {
+                                  setResToDelete(res);
+                                  setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                                }} 
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Record
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                        No records found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </main>
 
@@ -578,19 +571,19 @@ export default function ReservationsPage() {
           setIsDetailsDialogOpen(open);
           if (!open) setTimeout(() => setSelectedResId(null), 200);
         }}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
             <DialogHeader>
               <DialogTitle>Reservation Summary</DialogTitle>
               <DialogDescription>Overview of the guest's booking details.</DialogDescription>
             </DialogHeader>
             {selectedRes ? (
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Guest</span>
-                    <p className="text-sm font-semibold">{selectedRes.guestName}</p>
-                    <p className="text-[10px] text-muted-foreground">{selectedRes.guestEmail}</p>
-                    <p className="text-[10px] text-muted-foreground">{selectedRes.guestPhone}</p>
+                    <p className="text-sm font-semibold truncate">{selectedRes.guestName}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestEmail}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestPhone}</p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Status</span>
@@ -630,24 +623,23 @@ export default function ReservationsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
+              <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="max-w-[95vw] rounded-lg">
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Reservation Record?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the booking record for <strong>{resToDelete?.guestName}</strong>. 
-                If the guest is currently checked in, the room will be marked as available. This action cannot be undone.
+                This will permanently delete the booking record for <strong>{resToDelete?.guestName}</strong>. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setResToDelete(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete Record
+            <AlertDialogFooter className="flex-row gap-2">
+              <AlertDialogCancel className="flex-1 mt-0" onClick={() => setResToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
