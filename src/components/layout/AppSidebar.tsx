@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react"
@@ -18,9 +19,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuth, useUser } from "@/firebase"
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
 import { useTheme } from "next-themes"
+import { doc } from "firebase/firestore"
 
 import {
   Sidebar,
@@ -59,6 +61,10 @@ export function AppSidebar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
+  const firestore = useFirestore()
+  const staffProfileRef = useMemoFirebase(() => user ? doc(firestore, 'staff', user.uid) : null, [firestore, user]);
+  const { data: staffProfile } = useDoc(staffProfileRef);
+
   React.useEffect(() => {
     setMounted(true)
   }, [])
@@ -72,21 +78,17 @@ export function AppSidebar() {
     }
   }
 
-  const renderThemeIcon = () => {
-    if (!mounted) return <Monitor className="h-3 w-3" />
-    if (theme === 'dark') return <Moon className="h-3 w-3" />
-    if (theme === 'light') return <Sun className="h-3 w-3" />
-    return <Monitor className="h-3 w-3" />
-  }
-
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return "AD";
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
+  const getInitials = () => {
+    if (staffProfile?.firstName && staffProfile?.lastName) {
+      return `${staffProfile.firstName[0]}${staffProfile.lastName[0]}`.toUpperCase();
+    }
+    if (user?.email) return user.email[0].toUpperCase();
+    return "AD";
   };
+
+  const displayName = staffProfile 
+    ? `${staffProfile.firstName} ${staffProfile.lastName}`
+    : (user?.displayName || 'Administrator');
 
   return (
     <Sidebar className="border-r">
@@ -165,17 +167,19 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">{getInitials(user?.displayName)}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{getInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.displayName || 'Administrator'}</span>
-                    <span className="truncate text-xs">{user?.email || 'admin@kks.com'}</span>
+                    <span className="truncate font-semibold">{displayName}</span>
+                    <span className="truncate text-xs">{user?.email}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
-                <DropdownMenuItem className="gap-2">
-                  <User className="h-4 w-4" /> Profile
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href="/settings?tab=account">
+                    <User className="h-4 w-4" /> Profile & Account
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4" /> Sign Out

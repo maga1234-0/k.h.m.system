@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +25,7 @@ export default function LoginPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const ADMIN_EMAIL = 'admin@kks.com';
+  const BOOTSTRAP_ADMIN_EMAIL = 'admin@kks.com';
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -35,19 +36,20 @@ export default function LoginPage() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Strict admin-only check
-    if (email.toLowerCase() !== ADMIN_EMAIL) {
-      toast({
-        variant: 'destructive',
-        title: 'Access Denied',
-        description: 'Only the system administrator is authorized to log in.',
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
       if (isSignUp) {
+        // Strict bootstrap check for initial creation
+        if (email.toLowerCase() !== BOOTSTRAP_ADMIN_EMAIL) {
+          toast({
+            variant: 'destructive',
+            title: 'Unauthorized Bootstrap',
+            description: `Initial administrator setup is restricted to ${BOOTSTRAP_ADMIN_EMAIL}.`,
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
         // Register as Staff
@@ -71,20 +73,29 @@ export default function LoginPage() {
 
         toast({
           title: 'Admin Registered',
-          description: 'Welcome, Administrator.',
+          description: 'System initialization complete. Welcome, Administrator.',
         });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Verify admin status in Firestore
+        const adminRoleRef = doc(firestore, 'roles_admin', userCredential.user.uid);
+        const adminSnap = await getDoc(adminRoleRef);
+        
+        if (!adminSnap.exists()) {
+          await signOut(auth);
+          throw new Error("This account is not registered in the administrator directory.");
+        }
       }
       router.push('/');
     } catch (error: any) {
       const message = error.code === 'auth/invalid-credential' 
-        ? "Incorrect credentials. If this is your first time, please use 'Setup Administrator Account' below."
-        : error.message || 'Check your credentials.';
+        ? "Access Denied: Invalid credentials."
+        : error.message || 'Authentication error occurred.';
         
       toast({
         variant: 'destructive',
-        title: isSignUp ? 'Registration Failed' : 'Login Failed',
+        title: 'Security Alert',
         description: message,
       });
     } finally {
@@ -109,16 +120,16 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
-            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Secure Admin Login</CardDescription>
+            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Management Console</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {isSignUp ? (
              <Alert className="bg-blue-50 border-blue-200">
              <Info className="h-4 w-4 text-blue-600" />
-             <AlertTitle className="text-xs font-bold uppercase tracking-wider text-blue-800">First-Time Setup</AlertTitle>
+             <AlertTitle className="text-xs font-bold uppercase tracking-wider text-blue-800">Bootstrap Protocol</AlertTitle>
              <AlertDescription className="text-xs text-blue-700">
-               Enter the admin credentials below to create your permanent system account.
+               Initialize the root administrator account using the master setup credentials.
              </AlertDescription>
            </Alert>
           ) : (
@@ -126,14 +137,14 @@ export default function LoginPage() {
               <ShieldAlert className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
               <AlertDescription className="text-xs text-amber-700">
-                Authorized access only for: <span className="font-bold">{ADMIN_EMAIL}</span>
+                Authorized hotel management personnel only. Logins are audited.
               </AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Administrator Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -148,7 +159,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Security Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -171,7 +182,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSignUp ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />)}
-              {isSignUp ? 'Initialize Admin Account' : 'Secure Sign In'}
+              {isSignUp ? 'Initialize System' : 'Authenticate'}
             </Button>
           </form>
 
@@ -184,7 +195,7 @@ export default function LoginPage() {
               className="text-sm text-primary hover:underline font-bold"
               onClick={() => setIsSignUp(!isSignUp)}
             >
-              {isSignUp ? 'Already have an account? Sign In' : "First time? Setup Administrator Account"}
+              {isSignUp ? 'Return to Security Login' : "Initial Setup / Bootstrap Account"}
             </button>
           </div>
         </CardContent>
