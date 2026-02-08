@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
+import { Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -112,8 +112,16 @@ export default function LoginPage() {
     <div className="flex h-screen w-full items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md border-none shadow-xl">
         <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20">
-            <Hotel className="h-8 w-8" />
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white border border-primary/20 shadow-lg shadow-primary/5">
+            <svg viewBox="0 0 100 100" className="h-20 w-20">
+              <circle cx="50" cy="50" r="45" fill="#F0F9F6" stroke="#66D3B2" strokeWidth="2" />
+              <path d="M32 75V38L40 30V75H32Z" fill="#66D3B2" />
+              <path d="M68 75V38L60 30V75H68Z" fill="#66D3B2" />
+              <path d="M40 48C40 48 45 42 50 42C55 42 60 48 60 48V62C60 62 55 68 50 68C45 68 40 62 40 62V48Z" fill="#55C2A1" />
+              <circle cx="50" cy="53" r="5" fill="white" />
+              <path d="M47 53L53 53L55 63L45 63Z" fill="white" />
+              <path d="M20 85Q35 80 50 85T80 85" stroke="#66D3B2" strokeWidth="2" fill="none" />
+            </svg>
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
