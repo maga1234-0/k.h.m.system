@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -24,19 +24,16 @@ import {
   User,
   Key,
   ShieldCheck,
-  AlertCircle,
   Eye,
   EyeOff
 } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, useUser, useAuth } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { updatePassword, updateEmail } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const auth = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'general';
@@ -46,8 +43,8 @@ export default function SettingsPage() {
   const settingsRef = useMemoFirebase(() => user ? doc(firestore, 'settings', 'general') : null, [firestore, user]);
   const staffProfileRef = useMemoFirebase(() => user ? doc(firestore, 'staff', user.uid) : null, [firestore, user]);
   
-  const { data: settings, isLoading: isSettingsLoading } = useDoc(settingsRef);
-  const { data: staffProfile, isLoading: isProfileLoading } = useDoc(staffProfileRef);
+  const { data: settings } = useDoc(settingsRef);
+  const { data: staffProfile } = useDoc(staffProfileRef);
 
   const [formData, setFormData] = useState({
     hotelName: "K.H.M.System",
@@ -434,5 +431,17 @@ export default function SettingsPage() {
         </main>
       </SidebarInset>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }
