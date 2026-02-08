@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -329,7 +329,6 @@ export default function SettingsPage() {
                           onChange={(e) => setAccountData({...accountData, email: e.target.value})}
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Changing this will update your management login credentials.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -382,13 +381,6 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     </div>
-                    <Alert className="bg-primary/5 border-primary/20">
-                      <AlertCircle className="h-4 w-4 text-primary" />
-                      <AlertTitle className="text-xs font-bold uppercase tracking-wider">Note</AlertTitle>
-                      <AlertDescription className="text-xs">
-                        Leave password fields blank if you do not wish to change your current security key.
-                      </AlertDescription>
-                    </Alert>
                   </CardContent>
                   <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
                     <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2">
@@ -439,12 +431,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
           </Tabs>
-
-          {(isSettingsLoading || isProfileLoading) && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Syncing with cloud configuration...
-            </div>
-          )}
         </main>
       </SidebarInset>
     </div>

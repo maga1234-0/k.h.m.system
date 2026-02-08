@@ -168,7 +168,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg shadow-lg shadow-primary/20" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              {email === PRIMARY_ADMIN ? 'Initialize & Login' : 'Authenticate'}
+              Authenticate
             </Button>
           </form>
         </CardContent>
