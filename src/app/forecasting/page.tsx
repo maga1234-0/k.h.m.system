@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react";
@@ -25,7 +26,6 @@ export default function ForecastingPage() {
 
   const firestore = useFirestore();
   
-  // Guard references with user check to prevent permission errors before redirect
   const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   
@@ -41,7 +41,7 @@ export default function ForecastingPage() {
   const historicalCSV = useMemo(() => {
     if (!rooms || !reservations) return "";
     
-    const days = 14; // Analyze last 2 weeks for better context
+    const days = 14; 
     const lines = ["date,occupancyRate"];
     const today = new Date();
     
@@ -102,35 +102,37 @@ export default function ForecastingPage() {
         <header className="flex h-16 items-center border-b px-6 bg-background">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl">Occupancy Forecasting</h1>
+          <h1 className="font-headline font-semibold text-xl">Prévisions d'Occupation (IA)</h1>
         </header>
 
         <main className="p-6 max-w-5xl mx-auto w-full space-y-8">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold font-headline flex items-center gap-2">
-              <Brain className="h-6 w-6 text-primary" /> AI Insights
+              <Brain className="h-6 w-6 text-primary" /> Analyses Prédictives
             </h2>
-            <p className="text-muted-foreground">Predict future occupancy rates using live historical data and upcoming events.</p>
+            <p className="text-muted-foreground">Prédisez les taux d'occupation futurs en utilisant vos données historiques et les événements à venir.</p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
             <div className="md:col-span-1 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Input Parameters</CardTitle>
+                  <CardTitle className="text-lg">Paramètres d'entrée</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Booking Trends & Events</label>
-                    <Textarea 
-                      placeholder="e.g., Local festival on the 20th..." 
-                      className="min-h-[120px]"
-                      value={bookingTrends}
-                      onChange={(e) => setBookingTrends(e.target.value)}
-                    />
+                    <label className="text-sm font-medium">Tendances & Événements Locaux</label>
+                    <div className="relative">
+                      <Textarea 
+                        placeholder="Ex: Festival de musique le 20..." 
+                        className="min-h-[120px]"
+                        value={bookingTrends}
+                        onChange={(e) => setBookingTrends(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Forecast Horizon (Days)</label>
+                    <label className="text-sm font-medium">Horizon de prévision (Jours)</label>
                     <Input 
                       type="number" 
                       min="1" 
@@ -145,7 +147,7 @@ export default function ForecastingPage() {
                     disabled={loading || !historicalCSV}
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    Generate Forecast
+                    Générer la prévision
                   </Button>
                 </CardContent>
               </Card>
@@ -153,7 +155,7 @@ export default function ForecastingPage() {
               <Card className="bg-secondary/30 border-none">
                 <CardContent className="p-4 flex items-center gap-3">
                   <TrendingUp className="h-5 w-5 text-accent" />
-                  <p className="text-xs">The AI is currently analyzing data for {rooms?.length || 0} active rooms.</p>
+                  <p className="text-xs">L'IA analyse actuellement les données pour {rooms?.length || 0} chambres actives.</p>
                 </CardContent>
               </Card>
             </div>
@@ -164,7 +166,7 @@ export default function ForecastingPage() {
                   <Card className="border-primary/20 shadow-lg">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-primary" /> Forecasted Occupancy
+                        <Calendar className="h-5 w-5 text-primary" /> Occupation Prévisionnelle
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="h-[300px]">
@@ -202,7 +204,7 @@ export default function ForecastingPage() {
 
                   <Card className="bg-card">
                     <CardHeader>
-                      <CardTitle className="text-lg">AI Analysis</CardTitle>
+                      <CardTitle className="text-lg">Analyse de l'IA</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm leading-relaxed text-muted-foreground italic">
@@ -216,8 +218,8 @@ export default function ForecastingPage() {
                   <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold">Ready for Analysis</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">Click generate to let the AI analyze your hotel trends and provide predictions.</p>
+                  <h3 className="text-lg font-semibold">Prêt pour l'analyse</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">Cliquez sur générer pour laisser l'IA analyser vos tendances hôtelières et fournir des prédictions.</p>
                 </div>
               )}
             </div>

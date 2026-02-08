@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -132,11 +133,11 @@ export default function ReservationsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Checked In": return <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" /> In</Badge>;
-      case "Checked Out": return <Badge variant="outline" className="text-muted-foreground gap-1 text-[10px]"><LogOut className="h-3 w-3" /> Out</Badge>;
-      case "Confirmed": return <Badge className="bg-primary hover:bg-primary/90 gap-1 text-[10px]"><Calendar className="h-3 w-3" /> Confirmed</Badge>;
-      case "Pending": return <Badge variant="secondary" className="gap-1 text-[10px]"><Clock className="h-3 w-3" /> Pending</Badge>;
-      case "Cancelled": return <Badge variant="destructive" className="gap-1 text-[10px]"><XCircle className="h-3 w-3" /> Cancelled</Badge>;
+      case "Checked In": return <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" /> Arrivé</Badge>;
+      case "Checked Out": return <Badge variant="outline" className="text-muted-foreground gap-1 text-[10px]"><LogOut className="h-3 w-3" /> Parti</Badge>;
+      case "Confirmed": return <Badge className="bg-primary hover:bg-primary/90 gap-1 text-[10px]"><Calendar className="h-3 w-3" /> Confirmé</Badge>;
+      case "Pending": return <Badge variant="secondary" className="gap-1 text-[10px]"><Clock className="h-3 w-3" /> En attente</Badge>;
+      case "Cancelled": return <Badge variant="destructive" className="gap-1 text-[10px]"><XCircle className="h-3 w-3" /> Annulé</Badge>;
       default: return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
     }
   };
@@ -150,8 +151,8 @@ export default function ReservationsPage() {
     if (selectedRoom.status !== 'Available') {
       toast({
         variant: "destructive",
-        title: "Booking Restricted",
-        description: `Room ${selectedRoom.roomNumber} is currently ${selectedRoom.status} and cannot be booked.`,
+        title: "Réservation Restreinte",
+        description: `La chambre ${selectedRoom.roomNumber} est actuellement occupée et ne peut être réservée.`,
       });
       return;
     }
@@ -170,8 +171,8 @@ export default function ReservationsPage() {
 
     setIsAddDialogOpen(false);
     toast({
-      title: "Reservation Created",
-      description: `New booking confirmed for ${reservationData.guestName} in Room ${selectedRoom.roomNumber}.`,
+      title: "Réservation Créée",
+      description: `Nouvelle réservation confirmée pour ${reservationData.guestName} en chambre ${selectedRoom.roomNumber}.`,
     });
   };
 
@@ -179,19 +180,19 @@ export default function ReservationsPage() {
     let message = "";
     
     if (reservation.status === 'Checked Out') {
-      message = `*THANK YOU FOR YOUR STAY - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* Checked Out\n*Room:* ${reservation.roomNumber}\n*Total Charges:* $${reservation.totalAmount}\n-----------------------------\nWe hope you enjoyed your time with us. See you again soon!`;
+      message = `*MERCI DE VOTRE VISITE - K.H.M.SYSTEM*\n-----------------------------\n*Client:* ${reservation.guestName}\n*Statut:* Départ effectué\n*Chambre:* ${reservation.roomNumber}\n*Total:* ${reservation.totalAmount} $\n-----------------------------\nNous espérons que vous avez passé un bon séjour. À bientôt !`;
     } else if (reservation.status === 'Cancelled') {
-      message = `*RESERVATION CANCELLED - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* Cancelled\n*Room:* ${reservation.roomNumber}\n-----------------------------\nThis is a confirmation that your booking has been cancelled. If you have questions, please reach out.`;
+      message = `*RÉSERVATION ANNULÉE - K.H.M.SYSTEM*\n-----------------------------\n*Client:* ${reservation.guestName}\n*Statut:* Annulé\n*Chambre:* ${reservation.roomNumber}\n-----------------------------\nCeci confirme l'annulation de votre réservation. Pour toute question, contactez-nous.`;
     } else {
-      message = `*BOOKING CONFIRMATION - K.H.M.SYSTEM*\n-----------------------------\n*Guest:* ${reservation.guestName}\n*Status:* ${reservation.status}\n*Room:* ${reservation.roomNumber}\n*Check-In:* ${reservation.checkInDate}\n*Check-Out:* ${reservation.checkOutDate}\n*Amount:* $${reservation.totalAmount}\n-----------------------------\nWe look forward to welcoming you!`;
+      message = `*CONFIRMATION DE RÉSERVATION - K.H.M.SYSTEM*\n-----------------------------\n*Client:* ${reservation.guestName}\n*Statut:* ${reservation.status}\n*Chambre:* ${reservation.roomNumber}\n*Arrivée:* ${reservation.checkInDate}\n*Départ:* ${reservation.checkOutDate}\n*Montant:* ${reservation.totalAmount} $\n-----------------------------\nAu plaisir de vous accueillir !`;
     }
     
     if (method === 'whatsapp') {
       if (!reservation.guestPhone) {
         toast({
           variant: "destructive",
-          title: "Phone Missing",
-          description: "This guest has no phone number saved for WhatsApp.",
+          title: "Téléphone manquant",
+          description: "Ce client n'a pas de numéro de téléphone enregistré.",
         });
         return;
       }
@@ -202,12 +203,12 @@ export default function ReservationsPage() {
       if (!reservation.guestEmail) {
         toast({
           variant: "destructive",
-          title: "Email Missing",
-          description: "This guest has no email address saved for confirmation.",
+          title: "E-mail manquant",
+          description: "Ce client n'a pas d'adresse e-mail enregistrée.",
         });
         return;
       }
-      const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Reservation Update - K.H.M.System&body=${encodeURIComponent(message)}`;
+      const mailtoUrl = `mailto:${reservation.guestEmail}?subject=Mise à jour Réservation - K.H.M.System&body=${encodeURIComponent(message)}`;
       window.open(mailtoUrl, '_blank');
     }
   };
@@ -217,8 +218,8 @@ export default function ReservationsPage() {
     if (room && room.status === 'Occupied') {
       toast({
         variant: "destructive",
-        title: "Room Occupied",
-        description: `Room ${room.roomNumber} is currently occupied. Please ensure previous guests have checked out.`,
+        title: "Chambre Occupée",
+        description: `La chambre ${room.roomNumber} est occupée. Vérifiez que les clients précédents sont partis.`,
       });
       return;
     }
@@ -240,8 +241,8 @@ export default function ReservationsPage() {
     }, { merge: true });
 
     toast({
-      title: "Guest Checked In",
-      description: `${reservation.guestName} has checked in. Invoice generated.`,
+      title: "Client Arrivé",
+      description: `${reservation.guestName} est maintenant enregistré. Facture générée.`,
     });
   };
 
@@ -253,8 +254,8 @@ export default function ReservationsPage() {
       updateDocumentNonBlocking(roomRef, { status: "Available" });
     }
     toast({
-      title: "Guest Checked Out",
-      description: `${reservation.guestName} has checked out.`,
+      title: "Client Parti",
+      description: `${reservation.guestName} a effectué son départ.`,
     });
   };
 
@@ -266,8 +267,8 @@ export default function ReservationsPage() {
       updateDocumentNonBlocking(roomRef, { status: "Available" });
     }
     toast({
-      title: "Reservation Cancelled",
-      description: `Booking for ${reservation.guestName} has been cancelled.`,
+      title: "Réservation Annulée",
+      description: `La réservation de ${reservation.guestName} a été annulée.`,
     });
   };
 
@@ -284,8 +285,8 @@ export default function ReservationsPage() {
     
     toast({
       variant: "destructive",
-      title: "Reservation Deleted",
-      description: `Record for ${resToDelete.guestName} has been permanently removed.`,
+      title: "Réservation Supprimée",
+      description: `Le dossier de ${resToDelete.guestName} a été supprimé.`,
     });
     
     setResToDelete(null);
@@ -321,33 +322,33 @@ export default function ReservationsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-lg md:text-xl truncate">Reservations</h1>
+            <h1 className="font-headline font-semibold text-lg md:text-xl truncate">Réservations</h1>
           </div>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 md:gap-2">
-                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">New Booking</span><span className="sm:hidden">New</span>
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nouvelle réservation</span><span className="sm:hidden">Neuve</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] max-w-[95vw] rounded-lg">
               <DialogHeader>
-                <DialogTitle>New Reservation</DialogTitle>
-                <DialogDescription>Enter guest details and assign a room.</DialogDescription>
+                <DialogTitle>Nouvelle réservation</DialogTitle>
+                <DialogDescription>Entrez les détails et assignez une chambre.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="space-y-2">
-                  <Label htmlFor="newGuestName">Guest Name</Label>
+                  <Label htmlFor="newGuestName">Nom du client</Label>
                   <Input 
                     id="newGuestName" 
-                    placeholder="Full name"
+                    placeholder="Nom complet"
                     value={newBooking.guestName}
                     onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newGuestEmail">Email</Label>
+                    <Label htmlFor="newGuestEmail">E-mail</Label>
                     <Input 
                       id="newGuestEmail" 
                       type="email"
@@ -356,7 +357,7 @@ export default function ReservationsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newGuestPhone">Phone</Label>
+                    <Label htmlFor="newGuestPhone">Téléphone</Label>
                     <Input 
                       id="newGuestPhone" 
                       value={newBooking.guestPhone}
@@ -365,7 +366,7 @@ export default function ReservationsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="roomSelect">Assign Room</Label>
+                  <Label htmlFor="roomSelect">Assigner une chambre</Label>
                   {availableRooms.length > 0 ? (
                     <Select 
                       value={newBooking.roomId} 
@@ -379,12 +380,12 @@ export default function ReservationsPage() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={isRoomsLoading ? "Loading..." : "Select room"} />
+                        <SelectValue placeholder={isRoomsLoading ? "Chargement..." : "Choisir une chambre"} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableRooms.map((room) => (
                           <SelectItem key={room.id} value={room.id}>
-                            Room {room.roomNumber} - {room.roomType} (${room.pricePerNight || 0})
+                            Chambre {room.roomNumber} - {room.roomType} ({room.pricePerNight || 0} $)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -392,13 +393,13 @@ export default function ReservationsPage() {
                   ) : (
                     <div className="flex items-center gap-2 p-3 border rounded-lg bg-destructive/5 text-destructive text-sm font-medium">
                       <AlertCircle className="h-4 w-4" />
-                      No rooms available.
+                      Aucune chambre disponible.
                     </div>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newCheckIn">Check-In</Label>
+                    <Label htmlFor="newCheckIn">Arrivée</Label>
                     <Input 
                       id="newCheckIn" 
                       type="date" 
@@ -407,7 +408,7 @@ export default function ReservationsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newCheckOut">Check-Out</Label>
+                    <Label htmlFor="newCheckOut">Départ</Label>
                     <Input 
                       id="newCheckOut" 
                       type="date" 
@@ -418,8 +419,8 @@ export default function ReservationsPage() {
                 </div>
               </div>
               <DialogFooter className="flex-row gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button className="flex-1" onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId || availableRooms.length === 0}>Confirm</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
+                <Button className="flex-1" onClick={handleCreateBooking} disabled={!newBooking.guestName || !newBooking.roomId || availableRooms.length === 0}>Confirmer</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -431,7 +432,7 @@ export default function ReservationsPage() {
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search guests..." 
+                  placeholder="Rechercher des clients..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -441,14 +442,14 @@ export default function ReservationsPage() {
                 <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full md:w-[180px] bg-background">
-                    <SelectValue placeholder="All Statuses" />
+                    <SelectValue placeholder="Tous les statuts" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Statuses</SelectItem>
-                    <SelectItem value="Confirmed">Confirmed</SelectItem>
-                    <SelectItem value="Checked In">Checked In</SelectItem>
-                    <SelectItem value="Checked Out">Checked Out</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="All">Tous les statuts</SelectItem>
+                    <SelectItem value="Confirmed">Confirmé</SelectItem>
+                    <SelectItem value="Checked In">Arrivé</SelectItem>
+                    <SelectItem value="Checked Out">Parti</SelectItem>
+                    <SelectItem value="Cancelled">Annulé</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -459,11 +460,11 @@ export default function ReservationsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Guest</TableHead>
-                    <TableHead>Room</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Chambre</TableHead>
                     <TableHead className="hidden sm:table-cell">Dates</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Montant</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -472,7 +473,7 @@ export default function ReservationsPage() {
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
                         <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" /> Syncing...
+                          <Loader2 className="h-4 w-4 animate-spin" /> Synchronisation...
                         </div>
                       </TableCell>
                     </TableRow>
@@ -483,18 +484,18 @@ export default function ReservationsPage() {
                         <TableCell className="font-medium text-sm">
                           <div className="flex flex-col max-w-[120px] md:max-w-none">
                             <span className="truncate">{res.guestName}</span>
-                            <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{res.guestEmail || res.guestPhone || 'No contact'}</span>
+                            <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{res.guestEmail || res.guestPhone || 'Aucun contact'}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">R-{res.roomNumber}</TableCell>
+                        <TableCell className="text-sm">Ch-{res.roomNumber}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell">
                           <div className="flex flex-col">
                             <span>{res.checkInDate}</span>
-                            <span className="text-muted-foreground">to {res.checkOutDate}</span>
+                            <span className="text-muted-foreground">au {res.checkOutDate}</span>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(res.status)}</TableCell>
-                        <TableCell className="text-xs font-bold text-emerald-600">${res.totalAmount}</TableCell>
+                        <TableCell className="text-xs font-bold text-emerald-600">{res.totalAmount} $</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -507,19 +508,19 @@ export default function ReservationsPage() {
                                 setSelectedResId(res.id);
                                 setTimeout(() => setIsDetailsDialogOpen(true), 150);
                               }}>
-                                <Info className="mr-2 h-4 w-4" /> View Details
+                                <Info className="mr-2 h-4 w-4" /> Détails
                               </DropdownMenuItem>
                               
                               <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
-                                  <MessageSquare className="mr-2 h-4 w-4" /> Send Confirmation
+                                  <MessageSquare className="mr-2 h-4 w-4" /> Envoyer Confirmation
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent>
                                   <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'whatsapp')}>
                                     <Phone className="mr-2 h-4 w-4" /> via WhatsApp
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onSelect={() => handleSendConfirmation(res, 'email')}>
-                                    <Mail className="mr-2 h-4 w-4" /> via Email
+                                    <Mail className="mr-2 h-4 w-4" /> via E-mail
                                   </DropdownMenuItem>
                                 </DropdownMenuSubContent>
                               </DropdownMenuSub>
@@ -527,17 +528,17 @@ export default function ReservationsPage() {
                               <Separator className="my-1" />
                               {res.status === 'Confirmed' && (
                                 <DropdownMenuItem onSelect={() => handleCheckIn(res)} className="text-emerald-600">
-                                  <UserCheck className="mr-2 h-4 w-4" /> Check In
+                                  <UserCheck className="mr-2 h-4 w-4" /> Enregistrer l'arrivée
                                 </DropdownMenuItem>
                               )}
                               {res.status === 'Checked In' && (
                                 <DropdownMenuItem onSelect={() => handleCheckOut(res)} className="text-blue-600">
-                                  <LogOut className="mr-2 h-4 w-4" /> Check Out
+                                  <LogOut className="mr-2 h-4 w-4" /> Enregistrer le départ
                                 </DropdownMenuItem>
                               )}
                               {res.status !== 'Cancelled' && res.status !== 'Checked Out' && (
                                 <DropdownMenuItem onSelect={() => handleCancelReservation(res)} className="text-destructive">
-                                  <Ban className="mr-2 h-4 w-4" /> Cancel Booking
+                                  <Ban className="mr-2 h-4 w-4" /> Annuler réservation
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem 
@@ -547,7 +548,7 @@ export default function ReservationsPage() {
                                 }} 
                                 className="text-destructive"
                               >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Record
+                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer record
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -557,7 +558,7 @@ export default function ReservationsPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                        No records found.
+                        Aucun enregistrement trouvé.
                       </TableCell>
                     </TableRow>
                   )}
@@ -573,48 +574,48 @@ export default function ReservationsPage() {
         }}>
           <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
             <DialogHeader>
-              <DialogTitle>Reservation Summary</DialogTitle>
-              <DialogDescription>Overview of the guest's booking details.</DialogDescription>
+              <DialogTitle>Résumé Réservation</DialogTitle>
+              <DialogDescription>Aperçu des détails du séjour du client.</DialogDescription>
             </DialogHeader>
             {selectedRes ? (
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guest</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Client</span>
                     <p className="text-sm font-semibold truncate">{selectedRes.guestName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestEmail}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestPhone}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Status</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Statut</span>
                     <div>{getStatusBadge(selectedRes.status)}</div>
                   </div>
                 </div>
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Check-In</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Arrivée</span>
                     <p className="text-sm font-medium">{selectedRes.checkInDate}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Check-Out</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Départ</span>
                     <p className="text-sm font-medium">{selectedRes.checkOutDate}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Room</span>
-                    <p className="text-sm font-medium">Room {selectedRes.roomNumber}</p>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Chambre</span>
+                    <p className="text-sm font-medium">Chambre {selectedRes.roomNumber}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Guests</span>
-                    <p className="text-sm font-medium">{selectedRes.numberOfGuests} Person(s)</p>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Personnes</span>
+                    <p className="text-sm font-medium">{selectedRes.numberOfGuests} Personne(s)</p>
                   </div>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
-                  <span className="text-sm font-semibold">Total Amount</span>
-                  <span className="text-lg font-bold text-emerald-600">${selectedRes.totalAmount}</span>
+                  <span className="text-sm font-semibold">Montant Total</span>
+                  <span className="text-lg font-bold text-emerald-600">{selectedRes.totalAmount} $</span>
                 </div>
               </div>
             ) : (
@@ -623,7 +624,7 @@ export default function ReservationsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
+              <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -631,15 +632,15 @@ export default function ReservationsPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="max-w-[95vw] rounded-lg">
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Reservation Record?</AlertDialogTitle>
+              <AlertDialogTitle>Supprimer la réservation ?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the booking record for <strong>{resToDelete?.guestName}</strong>. This action cannot be undone.
+                Ceci supprimera définitivement le dossier de réservation pour <strong>{resToDelete?.guestName}</strong>. Cette action est irréversible.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-2">
-              <AlertDialogCancel className="flex-1 mt-0" onClick={() => setResToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel className="flex-1 mt-0" onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

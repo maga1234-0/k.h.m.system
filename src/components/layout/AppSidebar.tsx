@@ -15,7 +15,8 @@ import {
   User,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  Brain
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -45,12 +46,13 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, url: "/" },
-  { title: "Rooms", icon: Bed, url: "/rooms" },
-  { title: "Reservations", icon: CalendarCheck, url: "/reservations" },
-  { title: "Clients", icon: Users, url: "/clients" },
-  { title: "Billing", icon: Receipt, url: "/billing" },
-  { title: "Staff", icon: ShieldCheck, url: "/staff" },
+  { title: "Tableau de bord", icon: LayoutDashboard, url: "/" },
+  { title: "Chambres", icon: Bed, url: "/rooms" },
+  { title: "Réservations", icon: CalendarCheck, url: "/reservations" },
+  { title: "Registre Clients", icon: Users, url: "/clients" },
+  { title: "Facturation", icon: Receipt, url: "/billing" },
+  { title: "Prévisions IA", icon: Brain, url: "/forecasting" },
+  { title: "Personnel", icon: ShieldCheck, url: "/staff" },
 ]
 
 export function AppSidebar() {
@@ -88,7 +90,7 @@ export function AppSidebar() {
 
   const displayName = staffProfile 
     ? `${staffProfile.firstName} ${staffProfile.lastName}`
-    : (user?.displayName || 'Administrator');
+    : (user?.displayName || 'Administrateur');
 
   return (
     <Sidebar className="border-r">
@@ -98,12 +100,12 @@ export function AppSidebar() {
         </div>
         <div className="flex flex-col">
           <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.H.M.System</span>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Management</span>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Gestion Hôtelière</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Operations</SidebarGroupLabel>
+          <SidebarGroupLabel>Opérations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -123,10 +125,10 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 border-t bg-muted/5">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/settings"} tooltip="Settings">
+            <SidebarMenuButton asChild isActive={pathname === "/settings"} tooltip="Paramètres">
               <Link href="/settings">
                 <Settings className="h-4 w-4" />
-                <span>Settings</span>
+                <span>Paramètres</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -134,7 +136,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton tooltip="Change Appearance">
+                <SidebarMenuButton tooltip="Changer l'apparence">
                   <div className="flex items-center gap-2">
                     <div className="flex h-5 w-5 items-center justify-center rounded-md border bg-background">
                       {mounted && (
@@ -144,19 +146,19 @@ export function AppSidebar() {
                       )}
                       {!mounted && <Monitor className="h-3 w-3" />}
                     </div>
-                    <span>Appearance</span>
+                    <span>Apparence</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="w-32">
                 <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
-                  <Sun className="h-4 w-4 text-amber-500" /> Light
+                  <Sun className="h-4 w-4 text-amber-500" /> Clair
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
-                  <Moon className="h-4 w-4 text-blue-400" /> Dark
+                  <Moon className="h-4 w-4 text-blue-400" /> Sombre
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
-                  <Monitor className="h-4 w-4 text-muted-foreground" /> System
+                  <Monitor className="h-4 w-4 text-muted-foreground" /> Système
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -178,11 +180,11 @@ export function AppSidebar() {
               <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
                 <DropdownMenuItem asChild className="gap-2">
                   <Link href="/settings?tab=account">
-                    <User className="h-4 w-4" /> Profile & Account
+                    <User className="h-4 w-4" /> Profil & Compte
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
-                  <LogOut className="h-4 w-4" /> Sign Out
+                  <LogOut className="h-4 w-4" /> Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

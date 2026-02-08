@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -69,7 +70,7 @@ export default function ClientsPage() {
     phoneNumber: "",
     address: "",
     preferences: "",
-    loyalty: "New"
+    loyalty: "Nouveau"
   });
 
   const firestore = useFirestore();
@@ -96,6 +97,13 @@ export default function ClientsPage() {
     }
   };
 
+  const translateLoyalty = (status: string) => {
+    switch (status) {
+      case "New": return "Nouveau";
+      default: return status;
+    }
+  }
+
   const handleRegisterClient = () => {
     if (!newClient.firstName || !newClient.lastName || !newClient.email || !clientsCollection) return;
 
@@ -116,12 +124,12 @@ export default function ClientsPage() {
       phoneNumber: "",
       address: "",
       preferences: "",
-      loyalty: "New"
+      loyalty: "Nouveau"
     });
 
     toast({
-      title: "Guest Registered",
-      description: `${clientData.firstName} ${clientData.lastName} has been added to the registry.`,
+      title: "Client Enregistré",
+      description: `${clientData.firstName} ${clientData.lastName} a été ajouté au registre.`,
     });
   };
 
@@ -133,8 +141,8 @@ export default function ClientsPage() {
     
     toast({
       variant: "destructive",
-      title: "Guest Removed",
-      description: `Registry record for ${clientToDelete.firstName} ${clientToDelete.lastName} has been deleted.`,
+      title: "Client Retiré",
+      description: `Le dossier pour ${clientToDelete.firstName} ${clientToDelete.lastName} a été supprimé.`,
     });
     
     setClientToDelete(null);
@@ -163,24 +171,24 @@ export default function ClientsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Guest Registry</h1>
+            <h1 className="font-headline font-semibold text-xl">Registre des Voyageurs</h1>
           </div>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-                <UserPlus className="h-4 w-4" /> Register Guest
+                <UserPlus className="h-4 w-4" /> Enregistrer un Client
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Guest Registration</DialogTitle>
-                <DialogDescription>Create a new profile for a new or returning guest.</DialogDescription>
+                <DialogTitle>Inscription Client</DialogTitle>
+                <DialogDescription>Créez un profil pour un nouveau voyageur ou un habitué.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">Prénom</Label>
                     <Input 
                       id="firstName" 
                       value={newClient.firstName}
@@ -188,7 +196,7 @@ export default function ClientsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">Nom</Label>
                     <Input 
                       id="lastName" 
                       value={newClient.lastName}
@@ -198,7 +206,7 @@ export default function ClientsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email">Adresse E-mail</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
@@ -211,7 +219,7 @@ export default function ClientsPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">N° Téléphone</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
@@ -224,7 +232,7 @@ export default function ClientsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Adresse physique</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input 
@@ -236,13 +244,13 @@ export default function ClientsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="preferences">Preferences & Notes</Label>
+                  <Label htmlFor="preferences">Préférences & Notes</Label>
                   <div className="relative">
                     <Heart className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Textarea 
                       id="preferences" 
                       className="pl-9 min-h-[80px]"
-                      placeholder="e.g. Extra pillows, high floor, allergies..."
+                      placeholder="Ex: Oreillers extra, étage élevé, allergies..."
                       value={newClient.preferences}
                       onChange={(e) => setNewClient({...newClient, preferences: e.target.value})}
                     />
@@ -250,8 +258,8 @@ export default function ClientsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleRegisterClient} disabled={!newClient.firstName || !newClient.lastName || !newClient.email}>Save Profile</Button>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
+                <Button onClick={handleRegisterClient} disabled={!newClient.firstName || !newClient.lastName || !newClient.email}>Sauvegarder Profil</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -263,7 +271,7 @@ export default function ClientsPage() {
               <div className="relative w-full md:w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search by name, email, or loyalty ID..." 
+                  placeholder="Rechercher par nom, e-mail..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -274,11 +282,11 @@ export default function ClientsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Contact Info</TableHead>
-                  <TableHead>Loyalty Status</TableHead>
-                  <TableHead>Stays</TableHead>
-                  <TableHead>Last Visit</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Coordonnées</TableHead>
+                  <TableHead>Statut Fidélité</TableHead>
+                  <TableHead>Séjours</TableHead>
+                  <TableHead>Dernière Visite</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -287,7 +295,7 @@ export default function ClientsPage() {
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Accessing registry...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Accès au registre...
                       </div>
                     </TableCell>
                   </TableRow>
@@ -314,11 +322,11 @@ export default function ClientsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getLoyaltyColor(client.loyalty)}>
-                          {client.loyalty}
+                          {translateLoyalty(client.loyalty)}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{client.stays || 0}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{client.lastVisit || 'Never'}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{client.lastVisit || 'Jamais'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -328,10 +336,10 @@ export default function ClientsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
-                              <Edit2 className="mr-2 h-4 w-4" /> Edit Profile
+                              <Edit2 className="mr-2 h-4 w-4" /> Modifier Profil
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <Calendar className="mr-2 h-4 w-4" /> Booking History
+                              <Calendar className="mr-2 h-4 w-4" /> Historique Résas
                             </DropdownMenuItem>
                             <Separator className="my-1" />
                             <DropdownMenuItem 
@@ -341,7 +349,7 @@ export default function ClientsPage() {
                               }} 
                               className="text-destructive"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Remove Profile
+                              <Trash2 className="mr-2 h-4 w-4" /> Supprimer Profil
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -351,7 +359,7 @@ export default function ClientsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      {searchTerm ? "No guests match your search." : "Guest registry is currently empty."}
+                      {searchTerm ? "Aucun client ne correspond." : "Le registre est vide."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -363,16 +371,16 @@ export default function ClientsPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the guest profile for <strong>{clientToDelete?.firstName} {clientToDelete?.lastName}</strong>. 
-                This action cannot be undone and will remove all associated registry data.
+                Ceci supprimera définitivement le profil de <strong>{clientToDelete?.firstName} {clientToDelete?.lastName}</strong>. 
+                Toutes les données associées seront perdues.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setClientToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setClientToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete Profile
+                Supprimer Profil
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

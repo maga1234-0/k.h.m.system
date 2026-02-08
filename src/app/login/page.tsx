@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -44,8 +45,8 @@ export default function LoginPage() {
         if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-email')) {
           userCredential = await createUserWithEmailAndPassword(auth, email, password);
           toast({
-            title: "System Initialized",
-            description: "Primary administrator account has been created and verified.",
+            title: "Système Initialisé",
+            description: "Le compte administrateur principal a été créé et vérifié.",
           });
         } else {
           throw authError;
@@ -62,23 +63,23 @@ export default function LoginPage() {
           await setDoc(adminRoleRef, {
             id: uid,
             email: email,
-            role: 'Administrator',
+            role: 'Administrateur',
             createdAt: new Date().toISOString()
           });
 
           const staffRef = doc(firestore, 'staff', uid);
           await setDoc(staffRef, {
             id: uid,
-            firstName: "Primary",
-            lastName: "Administrator",
+            firstName: "Principal",
+            lastName: "Administrateur",
             email: email,
             role: "Manager",
-            status: "On Duty",
+            status: "En Service",
             createdAt: new Date().toISOString()
           });
         } else {
           await signOut(auth);
-          throw new Error("Security Violation: This account is not registered in the management directory.");
+          throw new Error("Violation de Sécurité : Ce compte n'est pas enregistré dans le répertoire de gestion.");
         }
       }
       
@@ -86,12 +87,12 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error(error);
       const message = error.code === 'auth/invalid-credential' 
-        ? "Authentication Failed: Incorrect password for this account."
-        : error.message || 'A security error occurred during authentication.';
+        ? "Échec d'Authentification : Mot de passe incorrect pour ce compte."
+        : error.message || 'Une erreur de sécurité est survenue lors de l\'authentification.';
         
       toast({
         variant: 'destructive',
-        title: 'Security Alert',
+        title: 'Alerte de Sécurité',
         description: message,
       });
     } finally {
@@ -116,21 +117,21 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
-            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Management Console</CardDescription>
+            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Console de Gestion</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert className="bg-amber-50 border-amber-200">
             <ShieldAlert className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Restricted Access</AlertTitle>
+            <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Accès Restreint</AlertTitle>
             <AlertDescription className="text-xs text-amber-700">
-              Authorized hotel management personnel only. All logins are audited for security compliance.
+              Personnel de gestion autorisé uniquement. Toutes les connexions sont auditées pour la conformité de sécurité.
             </AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">Adresse E-mail</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -145,7 +146,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Security Password</Label>
+              <Label htmlFor="password">Mot de passe de Sécurité</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -168,13 +169,13 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg shadow-lg shadow-primary/20" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              Authenticate
+              S'authentifier
             </Button>
           </form>
         </CardContent>
         <CardFooter className="text-center pt-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full flex items-center justify-center gap-1">
-            <Sparkles className="h-2 w-2" /> Powered by GenAI • K.H.M.System Group
+            <Sparkles className="h-2 w-2" /> Propulsé par GenAI • K.H.M.System Group
           </p>
         </CardFooter>
       </Card>

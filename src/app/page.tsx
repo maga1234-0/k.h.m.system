@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect, useState } from "react";
@@ -59,7 +60,7 @@ export default function DashboardPage() {
   const chartData = useMemo(() => {
     if (!rooms || !reservations || !mounted) return [];
     
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
     const result = [];
     const today = new Date();
 
@@ -109,10 +110,10 @@ export default function DashboardPage() {
     })?.length || 0;
 
     return [
-      { title: "Current Occupancy", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
-      { title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "+12.1%", trend: "up", icon: CreditCard },
-      { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: `+${newBookingsToday}`, trend: "up", icon: CalendarClock },
-      { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users },
+      { title: "Occupation Actuelle", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
+      { title: "Revenu Total", value: `${totalRevenue.toLocaleString()} $`, change: "+12.1%", trend: "up", icon: CreditCard },
+      { title: "Nouvelles Résas (Aujourd'hui)", value: newBookingsToday.toString(), change: `+${newBookingsToday}`, trend: "up", icon: CalendarClock },
+      { title: "Clients Actifs", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users },
     ];
   }, [rooms, reservations, mounted, roomStatusBreakdown]);
 
@@ -138,7 +139,7 @@ export default function DashboardPage() {
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl">Real-time Dashboard</h1>
+          <h1 className="font-headline font-semibold text-xl">Tableau de bord temps réel</h1>
         </header>
 
         <main className="p-4 md:p-6 space-y-6">
@@ -162,7 +163,7 @@ export default function DashboardPage() {
                     <span className={stat.trend === "up" ? "text-emerald-500 text-xs font-medium" : "text-rose-500 text-xs font-medium"}>
                       {stat.change}
                     </span>
-                    <span className="text-muted-foreground text-[10px] ml-1">vs last week</span>
+                    <span className="text-muted-foreground text-[10px] ml-1">vs semaine dernière</span>
                   </div>
                 </CardContent>
               </Card>
@@ -172,8 +173,8 @@ export default function DashboardPage() {
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
             <Card className="lg:col-span-4 border-none shadow-sm h-fit">
               <CardHeader>
-                <CardTitle className="font-headline text-lg">Occupancy & Revenue Overview</CardTitle>
-                <CardDescription>7-day performance tracking based on live data.</CardDescription>
+                <CardTitle className="font-headline text-lg">Aperçu Occupation & Revenus</CardTitle>
+                <CardDescription>Performance sur 7 jours basée sur les données réelles.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] md:h-[350px]">
                 <DashboardCharts data={chartData} />
@@ -183,8 +184,8 @@ export default function DashboardPage() {
             <div className="lg:col-span-3 space-y-6">
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-headline text-lg">Room Inventory Status</CardTitle>
-                  <CardDescription>Live breakdown of your {roomStatusBreakdown.total} rooms.</CardDescription>
+                  <CardTitle className="font-headline text-lg">Statut de l'Inventaire</CardTitle>
+                  <CardDescription>Répartition en direct de vos {roomStatusBreakdown.total} chambres.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-2 gap-3 md:gap-4">
@@ -194,7 +195,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xl font-bold leading-none">{roomStatusBreakdown.available}</span>
-                        <span className="text-[10px] uppercase font-bold text-emerald-600 truncate">Available</span>
+                        <span className="text-[10px] uppercase font-bold text-emerald-600 truncate">Disponible</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
@@ -203,7 +204,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xl font-bold leading-none">{roomStatusBreakdown.occupied}</span>
-                        <span className="text-[10px] uppercase font-bold text-amber-600 truncate">Occupied</span>
+                        <span className="text-[10px] uppercase font-bold text-amber-600 truncate">Occupée</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
@@ -212,7 +213,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xl font-bold leading-none">{roomStatusBreakdown.cleaning}</span>
-                        <span className="text-[10px] uppercase font-bold text-blue-600 truncate">Cleaning</span>
+                        <span className="text-[10px] uppercase font-bold text-blue-600 truncate">Nettoyage</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
@@ -221,7 +222,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xl font-bold leading-none">{roomStatusBreakdown.maintenance}</span>
-                        <span className="text-[10px] uppercase font-bold text-rose-600 truncate">In Service</span>
+                        <span className="text-[10px] uppercase font-bold text-rose-600 truncate">Maintenance</span>
                       </div>
                     </div>
                   </div>
@@ -230,8 +231,8 @@ export default function DashboardPage() {
 
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-headline text-lg">Recent Reservations</CardTitle>
-                  <CardDescription>Latest updates from the front desk.</CardDescription>
+                  <CardTitle className="font-headline text-lg">Réservations Récentes</CardTitle>
+                  <CardDescription>Dernières mises à jour de la réception.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4 pt-2">
@@ -240,17 +241,17 @@ export default function DashboardPage() {
                         <div key={i} className="flex items-center justify-between group gap-2">
                           <div className="flex flex-col min-w-0">
                             <span className="font-medium text-sm group-hover:text-primary transition-colors truncate">{res.guestName}</span>
-                            <span className="text-xs text-muted-foreground truncate">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                            <span className="text-xs text-muted-foreground truncate">Chambre {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                           </div>
                           <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px] shrink-0">
-                            {res.status}
+                            {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Confirmed' ? 'Confirmé' : res.status}
                           </Badge>
                         </div>
                       ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-8 opacity-40">
                         <CalendarClock className="h-8 w-8 mb-2" />
-                        <p className="text-xs">No recent activity</p>
+                        <p className="text-xs">Aucune activité récente</p>
                       </div>
                     )}
                   </div>

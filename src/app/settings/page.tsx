@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from "react";
@@ -54,7 +55,7 @@ function SettingsContent() {
     checkOutTime: "11:00",
     autoInvoicing: true,
     notificationsEnabled: true,
-    currency: "USD",
+    currency: "EUR",
   });
 
   const [accountData, setAccountData] = useState({
@@ -95,8 +96,8 @@ function SettingsContent() {
     if (!settingsRef) return;
     setDocumentNonBlocking(settingsRef, formData, { merge: true });
     toast({
-      title: "Settings Saved",
-      description: "Hotel configuration updated successfully.",
+      title: "Paramètres Sauvegardés",
+      description: "La configuration de l'hôtel a été mise à jour.",
     });
   };
 
@@ -106,8 +107,8 @@ function SettingsContent() {
     if (accountData.newPassword && accountData.newPassword !== accountData.confirmPassword) {
       toast({
         variant: "destructive",
-        title: "Validation Error",
-        description: "Passwords do not match.",
+        title: "Erreur de Validation",
+        description: "Les mots de passe ne correspondent pas.",
       });
       return;
     }
@@ -129,19 +130,19 @@ function SettingsContent() {
       }
 
       toast({
-        title: "Account Updated",
-        description: "Administrator credentials have been synchronized.",
+        title: "Compte Mis à Jour",
+        description: "Vos identifiants administrateur ont été synchronisés.",
       });
       
       setAccountData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }));
     } catch (error: any) {
       const message = error.code === 'auth/requires-recent-login'
-        ? "Security protocol requires a recent login to change credentials. Please sign out and sign back in to continue."
-        : error.message || "Failed to update security credentials.";
+        ? "Le protocole de sécurité requiert une connexion récente pour changer les identifiants. Veuillez vous déconnecter et vous reconnecter."
+        : error.message || "Échec de la mise à jour des identifiants.";
       
       toast({
         variant: "destructive",
-        title: "Security Error",
+        title: "Erreur de Sécurité",
         description: message,
       });
     } finally {
@@ -164,7 +165,7 @@ function SettingsContent() {
         <header className="flex h-16 items-center border-b px-6 bg-background">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl">System Settings</h1>
+          <h1 className="font-headline font-semibold text-xl">Paramètres Système</h1>
         </header>
 
         <main className="p-4 md:p-6 max-w-4xl mx-auto w-full space-y-6">
@@ -172,16 +173,16 @@ function SettingsContent() {
             <div className="overflow-x-auto pb-2">
               <TabsList className="grid w-full grid-cols-4 min-w-[500px]">
                 <TabsTrigger value="general" className="gap-2">
-                  <Hotel className="h-4 w-4" /> General
+                  <Hotel className="h-4 w-4" /> Général
                 </TabsTrigger>
                 <TabsTrigger value="reservations" className="gap-2">
-                  <Clock className="h-4 w-4" /> Policies
+                  <Clock className="h-4 w-4" /> Politiques
                 </TabsTrigger>
                 <TabsTrigger value="account" className="gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Account
+                  <ShieldCheck className="h-4 w-4" /> Compte
                 </TabsTrigger>
                 <TabsTrigger value="system" className="gap-2">
-                  <Shield className="h-4 w-4" /> System
+                  <Shield className="h-4 w-4" /> Système
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -189,12 +190,12 @@ function SettingsContent() {
             <TabsContent value="general">
               <Card>
                 <CardHeader>
-                  <CardTitle>Hotel Information</CardTitle>
-                  <CardDescription>Manage the public identity of your establishment.</CardDescription>
+                  <CardTitle>Informations de l'Hôtel</CardTitle>
+                  <CardDescription>Gérez l'identité publique de votre établissement.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="hotelName">Hotel Name</Label>
+                    <Label htmlFor="hotelName">Nom de l'Hôtel</Label>
                     <div className="relative">
                       <Hotel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
@@ -207,7 +208,7 @@ function SettingsContent() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="email">Official Email</Label>
+                      <Label htmlFor="email">E-mail Officiel</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -220,7 +221,7 @@ function SettingsContent() {
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="phone">Contact Number</Label>
+                      <Label htmlFor="phone">N° de Contact</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -235,7 +236,7 @@ function SettingsContent() {
                 </CardContent>
                 <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
                   <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Save Changes
+                    <Save className="h-4 w-4" /> Sauvegarder
                   </Button>
                 </CardFooter>
               </Card>
@@ -244,13 +245,13 @@ function SettingsContent() {
             <TabsContent value="reservations">
               <Card>
                 <CardHeader>
-                  <CardTitle>Reservation Policies</CardTitle>
-                  <CardDescription>Define check-in/out times and booking behavior.</CardDescription>
+                  <CardTitle>Politiques de Réservation</CardTitle>
+                  <CardDescription>Définissez les horaires d'arrivée/départ et le comportement des réservations.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
-                      <Label>Standard Check-In Time</Label>
+                      <Label>Heure d'Arrivée Standard</Label>
                       <Input 
                         type="time" 
                         value={formData.checkInTime}
@@ -258,7 +259,7 @@ function SettingsContent() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Standard Check-Out Time</Label>
+                      <Label>Heure de Départ Standard</Label>
                       <Input 
                         type="time" 
                         value={formData.checkOutTime}
@@ -269,8 +270,8 @@ function SettingsContent() {
                   <Separator />
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Automatic Invoicing</Label>
-                      <p className="text-xs text-muted-foreground">Generate bills instantly when a guest checks in.</p>
+                      <Label>Facturation Automatique</Label>
+                      <p className="text-xs text-muted-foreground">Générer les factures dès l'arrivée d'un client.</p>
                     </div>
                     <Switch 
                       checked={formData.autoInvoicing}
@@ -280,7 +281,7 @@ function SettingsContent() {
                 </CardContent>
                 <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
                   <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Save Changes
+                    <Save className="h-4 w-4" /> Sauvegarder
                   </Button>
                 </CardFooter>
               </Card>
@@ -291,14 +292,14 @@ function SettingsContent() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" /> Administrator Profile
+                      <User className="h-5 w-5 text-primary" /> Profil Administrateur
                     </CardTitle>
-                    <CardDescription>Update your personal information used throughout the system.</CardDescription>
+                    <CardDescription>Mettez à jour vos informations personnelles utilisées dans le système.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
+                        <Label htmlFor="firstName">Prénom</Label>
                         <Input 
                           id="firstName" 
                           value={accountData.firstName} 
@@ -306,7 +307,7 @@ function SettingsContent() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
+                        <Label htmlFor="lastName">Nom</Label>
                         <Input 
                           id="lastName" 
                           value={accountData.lastName} 
@@ -315,7 +316,7 @@ function SettingsContent() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="loginEmail">Login Email Address</Label>
+                      <Label htmlFor="loginEmail">E-mail de Connexion</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -333,14 +334,14 @@ function SettingsContent() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Key className="h-5 w-5 text-primary" /> Security Credentials
+                      <Key className="h-5 w-5 text-primary" /> Identifiants de Sécurité
                     </CardTitle>
-                    <CardDescription>Securely update your system access password.</CardDescription>
+                    <CardDescription>Mettez à jour votre mot de passe d'accès au système.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="newPass">New Password</Label>
+                        <Label htmlFor="newPass">Nouveau Mot de Passe</Label>
                         <div className="relative">
                           <Input 
                             id="newPass" 
@@ -359,7 +360,7 @@ function SettingsContent() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPass">Confirm Password</Label>
+                        <Label htmlFor="confirmPass">Confirmer Mot de Passe</Label>
                         <div className="relative">
                           <Input 
                             id="confirmPass" 
@@ -382,7 +383,7 @@ function SettingsContent() {
                   <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
                     <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2">
                       {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Sync Credentials
+                      Synchroniser Identifiants
                     </Button>
                   </CardFooter>
                 </Card>
@@ -392,16 +393,16 @@ function SettingsContent() {
             <TabsContent value="system">
               <Card>
                 <CardHeader>
-                  <CardTitle>System & Preferences</CardTitle>
-                  <CardDescription>Global application behavior and preferences.</CardDescription>
+                  <CardTitle>Système & Préférences</CardTitle>
+                  <CardDescription>Comportement global de l'application.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-accent" /> Push Notifications
+                        <Bell className="h-4 w-4 text-accent" /> Notifications Push
                       </Label>
-                      <p className="text-xs text-muted-foreground">Receive alerts for new bookings and cancellations.</p>
+                      <p className="text-xs text-muted-foreground">Recevoir des alertes pour les nouvelles réservations.</p>
                     </div>
                     <Switch 
                       checked={formData.notificationsEnabled}
@@ -411,18 +412,18 @@ function SettingsContent() {
                   <Separator />
                   <div className="grid gap-2">
                     <Label className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-accent" /> Base Currency
+                      <Globe className="h-4 w-4 text-accent" /> Devise de Base
                     </Label>
                     <Input 
                       value={formData.currency}
                       onChange={(e) => setFormData({...formData, currency: e.target.value.toUpperCase()})}
-                      placeholder="e.g., USD, EUR, KES"
+                      placeholder="Ex: USD, EUR, CFA"
                     />
                   </div>
                 </CardContent>
                 <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
                   <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Save Changes
+                    <Save className="h-4 w-4" /> Sauvegarder
                   </Button>
                 </CardFooter>
               </Card>

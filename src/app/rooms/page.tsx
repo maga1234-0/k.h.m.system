@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -90,7 +91,7 @@ export default function RoomsPage() {
       ...newRoom,
       id: roomId,
       status: "Available",
-      amenities: ["Wi-Fi", "TV", "Air Conditioning"],
+      amenities: ["Wi-Fi", "TV", "Climatisation"],
       pricePerNight: Number(newRoom.pricePerNight) || null,
       capacity: Number(newRoom.capacity) || null,
       floor: Number(newRoom.floor) || null,
@@ -120,8 +121,8 @@ export default function RoomsPage() {
 
     setIsEditDialogOpen(false);
     toast({
-      title: "Room Updated",
-      description: `Room ${editRoomData.roomNumber} has been updated successfully.`,
+      title: "Chambre Mise à Jour",
+      description: `La chambre ${editRoomData.roomNumber} a été mise à jour avec succès.`,
     });
   };
 
@@ -131,8 +132,8 @@ export default function RoomsPage() {
     if (selectedRoom.status !== 'Available') {
       toast({
         variant: "destructive",
-        title: "Booking Restricted",
-        description: `Room ${selectedRoom.roomNumber} is currently ${selectedRoom.status} and cannot be booked.`,
+        title: "Réservation Restreinte",
+        description: `La chambre ${selectedRoom.roomNumber} est actuellement en statut ${selectedRoom.status} et ne peut pas être réservée.`,
       });
       setIsBookingOpen(false);
       return;
@@ -169,8 +170,8 @@ export default function RoomsPage() {
     });
 
     toast({
-      title: "Booking Confirmed",
-      description: `Room ${selectedRoom.roomNumber} reserved for ${reservation.guestName}.`,
+      title: "Réservation Confirmée",
+      description: `Chambre ${selectedRoom.roomNumber} réservée pour ${reservation.guestName}.`,
     });
   };
 
@@ -183,6 +184,16 @@ export default function RoomsPage() {
       default: return "bg-slate-500/10 text-slate-600";
     }
   };
+
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case "Available": return "Disponible";
+      case "Occupied": return "Occupée";
+      case "Maintenance": return "Maintenance";
+      case "Cleaning": return "Nettoyage";
+      default: return status;
+    }
+  }
 
   const filteredRooms = rooms?.filter(room => 
     room.roomNumber.includes(searchTerm) || 
@@ -197,28 +208,28 @@ export default function RoomsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-lg md:text-xl">Rooms</h1>
+            <h1 className="font-headline font-semibold text-lg md:text-xl">Chambres</h1>
           </div>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 md:gap-2">
-                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add Room</span><span className="sm:hidden">Add</span>
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Ajouter une chambre</span><span className="sm:hidden">Ajouter</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
               <DialogHeader>
-                <DialogTitle>Register New Room</DialogTitle>
+                <DialogTitle>Enregistrer une nouvelle chambre</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="roomNumber" className="text-right text-xs">Number</Label>
+                  <Label htmlFor="roomNumber" className="text-right text-xs">Numéro</Label>
                   <Input id="roomNumber" value={newRoom.roomNumber} onChange={(e) => setNewRoom({...newRoom, roomNumber: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right text-xs">Type</Label>
                   <Select value={newRoom.roomType} onValueChange={(val) => setNewRoom({...newRoom, roomType: val})}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Standard">Standard</SelectItem>
                       <SelectItem value="Deluxe">Deluxe</SelectItem>
@@ -228,18 +239,18 @@ export default function RoomsPage() {
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="floor" className="text-right text-xs">Floor</Label>
+                  <Label htmlFor="floor" className="text-right text-xs">Étage</Label>
                   <Input id="floor" type="number" value={newRoom.floor} onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price" className="text-right text-xs">Price</Label>
+                  <Label htmlFor="price" className="text-right text-xs">Prix</Label>
                   <div className="col-span-3 relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input id="price" type="number" value={newRoom.pricePerNight} onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} className="pl-9" />
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="capacity" className="text-right text-xs">Capacity</Label>
+                  <Label htmlFor="capacity" className="text-right text-xs">Capacité</Label>
                   <div className="col-span-3 relative">
                     <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input id="capacity" type="number" value={newRoom.capacity} onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} className="pl-9" />
@@ -247,8 +258,8 @@ export default function RoomsPage() {
                 </div>
               </div>
               <DialogFooter className="flex-row gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button className="flex-1" onClick={handleAddRoom}>Create</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
+                <Button className="flex-1" onClick={handleAddRoom}>Créer</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -259,27 +270,27 @@ export default function RoomsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search rooms..." 
+                placeholder="Rechercher des chambres..." 
                 className="pl-9" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             {searchTerm && (
-              <Button variant="ghost" className="w-full md:w-auto" onClick={() => setSearchTerm("")}>Clear</Button>
+              <Button variant="ghost" className="w-full md:w-auto" onClick={() => setSearchTerm("")}>Effacer</Button>
             )}
           </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground text-sm">Synchronizing data...</p>
+              <p className="text-muted-foreground text-sm">Synchronisation des données...</p>
             </div>
           ) : filteredRooms?.length === 0 ? (
             <div className="text-center p-12 bg-muted/20 rounded-xl border-2 border-dashed">
               <Bed className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold">No rooms found</h3>
-              <p className="text-sm text-muted-foreground">Adjust search or add a new room.</p>
+              <h3 className="text-lg font-semibold">Aucune chambre trouvée</h3>
+              <p className="text-sm text-muted-foreground">Ajustez votre recherche ou ajoutez une chambre.</p>
             </div>
           ) : (
             <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -288,26 +299,26 @@ export default function RoomsPage() {
                   <div className={`h-1.5 w-full ${room.status === 'Available' ? 'bg-emerald-500' : room.status === 'Occupied' ? 'bg-amber-500' : room.status === 'Maintenance' ? 'bg-rose-500' : 'bg-blue-500'}`} />
                   <CardHeader className="p-4 pb-2">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="font-headline text-xl">Room {room.roomNumber}</CardTitle>
+                      <CardTitle className="font-headline text-xl">Chambre {room.roomNumber}</CardTitle>
                       <Badge variant="outline" className={`${getStatusColor(room.status)} text-[10px] px-1.5 h-5`}>
-                        {room.status}
+                        {translateStatus(room.status)}
                       </Badge>
                     </div>
-                    <span className="text-xs text-muted-foreground">{room.roomType} • Floor {room.floor ?? 'N/A'}</span>
+                    <span className="text-xs text-muted-foreground">{room.roomType} • Étage {room.floor ?? 'N/A'}</span>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 pb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-bold text-primary">${room.pricePerNight ?? 0}</span>
-                      <span className="text-[10px] text-muted-foreground">/ night</span>
+                      <span className="text-xl font-bold text-primary">{room.pricePerNight ?? 0} $</span>
+                      <span className="text-[10px] text-muted-foreground">/ nuit</span>
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/50 p-2 flex justify-end gap-1.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditRoomData({...room}); setIsEditDialogOpen(true); }}>
                       <Edit2 className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setSelectedRoom(room); setIsDetailsOpen(true); }}>Details</Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setSelectedRoom(room); setIsDetailsOpen(true); }}>Détails</Button>
                     {room.status === 'Available' && (
-                      <Button size="sm" className="h-8 text-xs bg-primary" onClick={() => { setSelectedRoom(room); setIsBookingOpen(true); }}>Book</Button>
+                      <Button size="sm" className="h-8 text-xs bg-primary" onClick={() => { setSelectedRoom(room); setIsBookingOpen(true); }}>Réserver</Button>
                     )}
                   </CardFooter>
                 </Card>
@@ -316,47 +327,68 @@ export default function RoomsPage() {
           )}
         </main>
 
-        {/* Similar updates for other dialogs to ensure sm:max-w-x and max-w-95vw */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
-            <DialogHeader><DialogTitle>Edit Room</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Modifier la chambre</DialogTitle></DialogHeader>
             {editRoomData && (
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
-                {/* Inputs for editing... */}
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right text-xs">Number</Label>
+                  <Label className="text-right text-xs">Numéro</Label>
                   <Input value={editRoomData.roomNumber} onChange={(e) => setEditRoomData({...editRoomData, roomNumber: e.target.value})} className="col-span-3" />
                 </div>
-                {/* ... other fields ... */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right text-xs">Type</Label>
+                  <Select value={editRoomData.roomType} onValueChange={(val) => setEditRoomData({...editRoomData, roomType: val})}>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Deluxe">Deluxe</SelectItem>
+                      <SelectItem value="Suite">Suite</SelectItem>
+                      <SelectItem value="Penthouse">Penthouse</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right text-xs">Étage</Label>
+                  <Input type="number" value={editRoomData.floor} onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right text-xs">Prix</Label>
+                  <Input type="number" value={editRoomData.pricePerNight} onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right text-xs">Capacité</Label>
+                  <Input type="number" value={editRoomData.capacity} onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} className="col-span-3" />
+                </div>
               </div>
             )}
             <DialogFooter className="flex-row gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={handleUpdateRoom}>Save</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
+              <Button className="flex-1" onClick={handleUpdateRoom}>Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
           <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
-            <DialogHeader><DialogTitle>Quick Book</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Réservation Rapide</DialogTitle></DialogHeader>
             <div className="grid gap-3 py-4 max-h-[70vh] overflow-y-auto px-1">
               <div className="space-y-1">
-                <Label>Guest Name</Label>
+                <Label>Nom du client</Label>
                 <Input value={bookingData.guestName} onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Check-In</Label><Input type="date" value={bookingData.checkIn} onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})} /></div>
-                <div className="space-y-1"><Label>Check-Out</Label><Input type="date" value={bookingData.checkOut} onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})} /></div>
+                <div className="space-y-1"><Label>Arrivée</Label><Input type="date" value={bookingData.checkIn} onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})} /></div>
+                <div className="space-y-1"><Label>Départ</Label><Input type="date" value={bookingData.checkOut} onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})} /></div>
               </div>
               <div className="p-3 bg-primary/5 rounded-lg border border-primary/10 flex justify-between items-center mt-2">
-                <span className="text-xs font-medium">Estimated Total</span>
-                <span className="text-lg font-bold text-primary">${selectedRoom?.pricePerNight ?? 0}</span>
+                <span className="text-xs font-medium">Total Estimé</span>
+                <span className="text-lg font-bold text-primary">{selectedRoom?.pricePerNight ?? 0} $</span>
               </div>
             </div>
             <DialogFooter className="flex-row gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setIsBookingOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={handleQuickBook} disabled={!bookingData.guestName}>Confirm</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
+              <Button className="flex-1" onClick={handleQuickBook} disabled={!bookingData.guestName}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
