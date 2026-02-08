@@ -1,3 +1,4 @@
+
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
@@ -21,6 +22,7 @@ export default function Icon() {
           justifyContent: 'center',
           borderRadius: '8px',
           border: '1.5px solid #66D3B2',
+          color: '#66D3B2',
         }}
       >
         <svg
@@ -30,12 +32,10 @@ export default function Icon() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Background Circle */}
-          <circle cx="50" cy="50" r="48" fill="#F0F9F6" stroke="#66D3B2" strokeWidth="2" />
           {/* Towers */}
-          <path d="M30 75V35L40 25V75H30Z" fill="#66D3B2" />
-          <path d="M70 75V35L60 25V75H70Z" fill="#66D3B2" />
-          {/* Connecting Bridge & Keyhole Area */}
+          <path d="M30 80V35L40 25V80H30Z" fill="currentColor" />
+          <path d="M70 80V35L60 25V80H70Z" fill="currentColor" />
+          {/* Bridge */}
           <path d="M40 45C40 45 45 40 50 40C55 40 60 45 60 45V60C60 60 55 65 50 65C45 65 40 60 40 60V45Z" fill="#55C2A1" />
           {/* Keyhole */}
           <circle cx="50" cy="50" r="4" fill="white" />

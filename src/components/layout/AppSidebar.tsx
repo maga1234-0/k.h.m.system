@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react"
@@ -9,7 +10,6 @@ import {
   Receipt, 
   ShieldCheck,
   Settings,
-  Hotel,
   LogOut,
   User,
   Sun,
@@ -22,6 +22,7 @@ import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/fireb
 import { signOut } from "firebase/auth"
 import { useTheme } from "next-themes"
 import { doc } from "firebase/firestore"
+import { Logo } from "@/components/ui/logo"
 
 import {
   Sidebar,
@@ -92,14 +93,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="p-4 flex flex-row items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-white border border-primary/20 flex items-center justify-center text-primary shadow-sm">
-          <svg viewBox="0 0 100 100" className="h-8 w-8">
-            <circle cx="50" cy="50" r="45" fill="#F0F9F6" stroke="currentColor" strokeWidth="2" />
-            <path d="M35 70V40L42 32V70H35Z" fill="currentColor" />
-            <path d="M65 70V40L58 32V70H65Z" fill="currentColor" />
-            <circle cx="50" cy="50" r="4" fill="#55C2A1" />
-            <path d="M48 50L52 50L54 58L46 58Z" fill="#55C2A1" />
-          </svg>
+        <div className="h-10 w-10 rounded-xl bg-white border border-primary/20 flex items-center justify-center text-primary shadow-sm overflow-hidden">
+          <Logo size={32} />
         </div>
         <div className="flex flex-col">
           <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.H.M.System</span>

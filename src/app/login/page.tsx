@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Lock, Mail, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -86,8 +88,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error(error);
       const message = error.code === 'auth/invalid-credential' 
-        ? "Échec d'Authentification : Mot de passe incorrect pour ce compte."
-        : error.message || 'Une erreur de sécurité est survenue lors de l\'authentification.';
+        ? "Échec d'Authentification : Mot de passe incorrect."
+        : error.message || 'Une erreur de sécurité est survenue.';
         
       toast({
         variant: 'destructive',
@@ -111,16 +113,8 @@ export default function LoginPage() {
     <div className="flex h-screen w-full items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md border-none shadow-xl">
         <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white border border-primary/20 shadow-lg shadow-primary/5">
-            <svg viewBox="0 0 100 100" className="h-20 w-20">
-              <circle cx="50" cy="50" r="45" fill="#F0F9F6" stroke="#66D3B2" strokeWidth="2" />
-              <path d="M32 75V38L40 30V75H32Z" fill="#66D3B2" />
-              <path d="M68 75V38L60 30V75H68Z" fill="#66D3B2" />
-              <path d="M40 48C40 48 45 42 50 42C55 42 60 48 60 48V62C60 62 55 68 50 68C45 68 40 62 40 62V48Z" fill="#55C2A1" />
-              <circle cx="50" cy="53" r="5" fill="white" />
-              <path d="M47 53L53 53L55 63L45 63Z" fill="white" />
-              <path d="M20 85Q35 80 50 85T80 85" stroke="#66D3B2" strokeWidth="2" fill="none" />
-            </svg>
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white border border-primary/20 shadow-lg shadow-primary/5 text-primary">
+            <Logo size={80} />
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
@@ -132,7 +126,7 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Accès Restreint</AlertTitle>
             <AlertDescription className="text-xs text-amber-700">
-              Personnel de gestion autorisé uniquement. Toutes les connexions sont auditées pour la conformité de sécurité.
+              Personnel de gestion autorisé uniquement. Toutes les connexions sont auditées.
             </AlertDescription>
           </Alert>
 
@@ -144,7 +138,6 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder=""
                   className="pl-9"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -153,13 +146,12 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe de Sécurité</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder=""
                   className="pl-9 pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
