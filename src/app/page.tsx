@@ -109,15 +109,14 @@ export default function DashboardPage() {
       return createdDate === todayStr;
     })?.length || 0;
 
-    // Calculation of real active guests (those who are 'Checked In')
-    const activeGuestsCount = reservations?.filter(r => r.status === 'Checked In')
-      .reduce((acc, r) => acc + (Number(r.numberOfGuests) || 0), 0) || 0;
+    // Comptage des dossiers de réservation actifs (ceux qui ont le statut 'Checked In')
+    const activeReservationsCount = reservations?.filter(r => r.status === 'Checked In').length || 0;
 
     return [
       { title: "Occupation Actuelle", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
       { title: "Revenu Total", value: `${totalRevenue.toLocaleString()} $`, change: "+12.1%", trend: "up", icon: CreditCard },
       { title: "Nouvelles Résas (Aujourd'hui)", value: newBookingsToday.toString(), change: `+${newBookingsToday}`, trend: "up", icon: CalendarClock },
-      { title: "Clients Actifs", value: activeGuestsCount.toString(), change: "+8.4%", trend: "up", icon: Users },
+      { title: "Clients Actifs", value: activeReservationsCount.toString(), change: "+8.4%", trend: "up", icon: Users },
     ];
   }, [rooms, reservations, mounted, roomStatusBreakdown]);
 
