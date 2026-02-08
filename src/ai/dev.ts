@@ -1,4 +1,2 @@
-import { config } from 'dotenv';
-config();
-
-import '@/ai/flows/occupancy-forecasting.ts';
+// Fichier de développement IA désactivé.
+export {};
