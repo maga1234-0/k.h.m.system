@@ -25,7 +25,9 @@ import {
   User,
   Key,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, useUser, useAuth } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -68,6 +70,7 @@ export default function SettingsPage() {
   });
 
   const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -344,21 +347,41 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="newPass">New Password</Label>
-                        <Input 
-                          id="newPass" 
-                          type="password" 
-                          value={accountData.newPassword}
-                          onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})}
-                        />
+                        <div className="relative">
+                          <Input 
+                            id="newPass" 
+                            type={showPasswords ? 'text' : 'password'} 
+                            value={accountData.newPassword}
+                            onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                            onClick={() => setShowPasswords(!showPasswords)}
+                          >
+                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="confirmPass">Confirm Password</Label>
-                        <Input 
-                          id="confirmPass" 
-                          type="password"
-                          value={accountData.confirmPassword}
-                          onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
-                        />
+                        <div className="relative">
+                          <Input 
+                            id="confirmPass" 
+                            type={showPasswords ? 'text' : 'password'}
+                            value={accountData.confirmPassword}
+                            onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                            onClick={() => setShowPasswords(!showPasswords)}
+                          >
+                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <Alert className="bg-primary/5 border-primary/20">
