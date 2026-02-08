@@ -137,10 +137,13 @@ export default function StaffPage() {
   const handleUpdateStaff = () => {
     if (!editStaffData || !editStaffData.id) return;
 
-    const staffRef = doc(firestore, 'staff', editStaffData.id);
-    updateDocumentNonBlocking(staffRef, editStaffData);
+    // Destructure to remove the ID from the update payload to avoid Firestore errors
+    const { id, ...dataToUpdate } = editStaffData;
+    const staffRef = doc(firestore, 'staff', id);
+    updateDocumentNonBlocking(staffRef, dataToUpdate);
     
     setIsEditDialogOpen(false);
+    setEditStaffData(null);
     toast({
       title: "Profile Updated",
       description: `Details for ${editStaffData.firstName} have been saved.`,
@@ -263,7 +266,8 @@ export default function StaffPage() {
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem onSelect={() => {
                           setEditStaffData({...member});
-                          setIsEditDialogOpen(true);
+                          // Timeout ensures the dropdown closes before dialog opens to prevent focus conflicts
+                          setTimeout(() => setIsEditDialogOpen(true), 150);
                         }}>
                           <Edit2 className="h-4 w-4 mr-2" /> Edit Member
                         </DropdownMenuItem>
@@ -416,7 +420,10 @@ export default function StaffPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) setEditStaffData(null);
+        }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Edit Member Details</DialogTitle>
