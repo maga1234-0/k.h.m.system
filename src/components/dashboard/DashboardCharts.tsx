@@ -1,18 +1,16 @@
 
 "use client"
 
-import { CartesianGrid, XAxis, ResponsiveContainer, YAxis, Line, LineChart, Legend, AreaChart, Area } from "recharts"
+import { CartesianGrid, XAxis, ResponsiveContainer, YAxis, Legend, AreaChart, Area } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
-const data = [
-  { name: "Mon", occupancy: 45, revenue: 2400 },
-  { name: "Tue", occupancy: 52, revenue: 3100 },
-  { name: "Wed", occupancy: 48, revenue: 2800 },
-  { name: "Thu", occupancy: 61, revenue: 4200 },
-  { name: "Fri", occupancy: 85, revenue: 5900 },
-  { name: "Sat", occupancy: 94, revenue: 7100 },
-  { name: "Sun", occupancy: 78, revenue: 5200 },
-]
+interface DashboardChartsProps {
+  data: {
+    name: string;
+    occupancy: number;
+    revenue: number;
+  }[];
+}
 
 const chartConfig = {
   occupancy: {
@@ -20,12 +18,20 @@ const chartConfig = {
     color: "hsl(var(--primary))",
   },
   revenue: {
-    label: "Revenue $",
+    label: "Daily Rev $",
     color: "hsl(var(--accent))",
   },
 }
 
-export function DashboardCharts() {
+export function DashboardCharts({ data }: DashboardChartsProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center text-muted-foreground text-sm italic">
+        Insufficient data to generate performance trends.
+      </div>
+    );
+  }
+
   return (
     <ChartContainer config={chartConfig} className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">

@@ -18,8 +18,7 @@ import {
   Loader2,
   CheckCircle2,
   Clock,
-  Wrench,
-  Ban
+  Wrench
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -57,6 +56,42 @@ export default function DashboardPage() {
       total: rooms.length
     };
   }, [rooms]);
+
+  const chartData = useMemo(() => {
+    if (!rooms || !reservations || !mounted) return [];
+    
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const result = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = days[date.getDay()];
+
+      const activeOnDay = reservations.filter(r => 
+        r.status !== 'Cancelled' && 
+        r.checkInDate <= dateStr && 
+        r.checkOutDate >= dateStr
+      );
+
+      const occupancy = rooms.length > 0 ? (activeOnDay.length / rooms.length) * 100 : 0;
+      const revenueOnDay = activeOnDay.reduce((acc, r) => {
+        const start = new Date(r.checkInDate);
+        const end = new Date(r.checkOutDate);
+        const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+        return acc + (Number(r.totalAmount) / nights);
+      }, 0);
+
+      result.push({
+        name: dayName,
+        occupancy: Math.round(occupancy),
+        revenue: Math.round(revenueOnDay)
+      });
+    }
+    return result;
+  }, [rooms, reservations, mounted]);
 
   const stats = useMemo(() => {
     if (!mounted) return [];
@@ -139,10 +174,10 @@ export default function DashboardPage() {
             <Card className="lg:col-span-4 border-none shadow-sm">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Occupancy & Revenue Overview</CardTitle>
-                <CardDescription>Performance tracking based on live data.</CardDescription>
+                <CardDescription>7-day performance tracking based on live data.</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px]">
-                <DashboardCharts />
+                <DashboardCharts data={chartData} />
               </CardContent>
             </Card>
 
