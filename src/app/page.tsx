@@ -15,7 +15,11 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   CreditCard,
-  Loader2
+  Loader2,
+  CheckCircle2,
+  Clock,
+  Wrench,
+  Ban
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -32,7 +36,7 @@ export default function DashboardPage() {
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
 
-  const { data: rooms } = useCollection(roomsRef);
+  const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
   const { data: clients } = useCollection(clientsRef);
 
@@ -43,28 +47,40 @@ export default function DashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
+  const roomStatusBreakdown = useMemo(() => {
+    if (!rooms) return { available: 0, occupied: 0, maintenance: 0, cleaning: 0, total: 0 };
+    return {
+      available: rooms.filter(r => r.status === 'Available').length,
+      occupied: rooms.filter(r => r.status === 'Occupied').length,
+      maintenance: rooms.filter(r => r.status === 'Maintenance').length,
+      cleaning: rooms.filter(r => r.status === 'Cleaning').length,
+      total: rooms.length
+    };
+  }, [rooms]);
+
   const stats = useMemo(() => {
-    // Only calculate stats after mounting to avoid hydration mismatch with dates
     if (!mounted) return [];
 
-    const occupiedRooms = rooms?.filter(r => r.status === 'Occupied')?.length || 0;
-    const occupancyRate = rooms && rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0;
+    const occupiedRooms = roomStatusBreakdown.occupied;
+    const occupancyRate = roomStatusBreakdown.total > 0 
+      ? Math.round((occupiedRooms / roomStatusBreakdown.total) * 100) 
+      : 0;
     
     const totalRevenue = reservations?.reduce((acc, r) => acc + (Number(r.totalAmount) || 0), 0) || 0;
     
-    const todayStr = new Date().toDateString();
+    const todayStr = new Date().toISOString().split('T')[0];
     const newBookingsToday = reservations?.filter(r => {
-      const createdDate = r.createdAt ? new Date(r.createdAt).toDateString() : "";
+      const createdDate = r.createdAt ? r.createdAt.split('T')[0] : "";
       return createdDate === todayStr;
     })?.length || 0;
 
     return [
       { title: "Current Occupancy", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
       { title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "+12.1%", trend: "up", icon: CreditCard },
-      { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: "+4", trend: "up", icon: CalendarClock },
+      { title: "New Bookings (Today)", value: newBookingsToday.toString(), change: `+${newBookingsToday}`, trend: "up", icon: CalendarClock },
       { title: "Active Guests", value: (occupiedRooms * 1.5).toFixed(0), change: "+8.4%", trend: "up", icon: Users },
     ];
-  }, [rooms, reservations, mounted]);
+  }, [rooms, reservations, mounted, roomStatusBreakdown]);
 
   const recentReservations = useMemo(() => {
     if (!reservations) return [];
@@ -85,7 +101,7 @@ export default function DashboardPage() {
     <div className="flex h-screen w-full">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background/50">
-        <header className="flex h-16 items-center border-b px-6 bg-background">
+        <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
           <h1 className="font-headline font-semibold text-xl">Real-time Dashboard</h1>
@@ -123,38 +139,90 @@ export default function DashboardPage() {
             <Card className="lg:col-span-4 border-none shadow-sm">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Occupancy & Revenue Overview</CardTitle>
-                <CardDescription>Visualizing performance based on current Firestore data.</CardDescription>
+                <CardDescription>Performance tracking based on live data.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[350px]">
                 <DashboardCharts />
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3 border-none shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-headline text-lg">Recent Reservations</CardTitle>
-                <CardDescription>Latest updates from the front desk.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentReservations.length > 0 ? (
-                    recentReservations.map((res, i) => (
-                      <div key={i} className="flex items-center justify-between group">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
-                          <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
-                        </div>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px]">
-                          {res.status}
-                        </Badge>
+            <div className="lg:col-span-3 space-y-6">
+              <Card className="border-none shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-headline text-lg">Room Inventory Status</CardTitle>
+                  <CardDescription>Live breakdown of your {roomStatusBreakdown.total} rooms.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+                        <CheckCircle2 className="h-4 w-4" />
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">No recent reservations found.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">{roomStatusBreakdown.available}</span>
+                        <span className="text-[10px] uppercase font-bold text-emerald-600">Available</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-white">
+                        <BedDouble className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">{roomStatusBreakdown.occupied}</span>
+                        <span className="text-[10px] uppercase font-bold text-amber-600">Occupied</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                      <div className="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">{roomStatusBreakdown.cleaning}</span>
+                        <span className="text-[10px] uppercase font-bold text-blue-600">Cleaning</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                      <div className="h-8 w-8 rounded-lg bg-rose-500 flex items-center justify-center text-white">
+                        <Wrench className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">{roomStatusBreakdown.maintenance}</span>
+                        <span className="text-[10px] uppercase font-bold text-rose-600">In Service</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-headline text-lg">Recent Reservations</CardTitle>
+                  <CardDescription>Latest updates from the front desk.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4 pt-2">
+                    {recentReservations.length > 0 ? (
+                      recentReservations.map((res, i) => (
+                        <div key={i} className="flex items-center justify-between group">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm group-hover:text-primary transition-colors">{res.guestName}</span>
+                            <span className="text-xs text-muted-foreground">Room {res.roomNumber} • {res.createdAt ? new Date(res.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                          </div>
+                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Confirmed' ? 'secondary' : 'outline'} className="text-[10px]">
+                            {res.status}
+                          </Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                        <CalendarClock className="h-8 w-8 mb-2" />
+                        <p className="text-xs">No recent activity</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </SidebarInset>
