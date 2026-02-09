@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -122,10 +121,10 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert className="bg-amber-50 border-amber-200">
-            <ShieldAlert className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider text-amber-800">Accès Restreint</AlertTitle>
-            <AlertDescription className="text-xs text-amber-700">
+          <Alert variant="moss" className="border-moss/30">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Accès Restreint</AlertTitle>
+            <AlertDescription className="text-xs">
               Personnel de gestion autorisé uniquement. Toutes les connexions sont auditées.
             </AlertDescription>
           </Alert>
