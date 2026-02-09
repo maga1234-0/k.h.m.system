@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -129,10 +130,7 @@ export default function BillingPage() {
 
   const handlePrintAction = () => {
     if (typeof window !== 'undefined') {
-      const originalTitle = document.title;
-      document.title = `Facture_${selectedInvoice?.guestName || 'Client'}_${selectedInvoice?.id?.slice(0, 8) || ''}`;
       window.print();
-      document.title = originalTitle;
     }
   };
 
@@ -292,7 +290,7 @@ export default function BillingPage() {
           </DialogHeader>
           
           {selectedInvoice && (
-            <div className="flex flex-col h-full max-h-[90vh]">
+            <div className="flex flex-col h-full max-h-[90vh] select-text">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
                 {/* Header Section */}
                 <div className="flex justify-between items-start mb-16 relative">
@@ -315,7 +313,7 @@ export default function BillingPage() {
                   </div>
                   
                   <div className="text-right">
-                    <h1 className="text-6xl font-black tracking-tighter text-slate-100 opacity-20 uppercase absolute right-0 top-0 pointer-events-none">FACTURE</h1>
+                    <h1 className="text-6xl font-black tracking-tighter text-slate-100 opacity-20 uppercase absolute right-0 top-0 pointer-events-none select-none">FACTURE</h1>
                     <div className="pt-10 relative z-10 space-y-0.5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">NUMÉRO DE FACTURE</p>
                       <p className="text-2xl font-black font-headline text-slate-900">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>

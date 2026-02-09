@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -125,6 +126,8 @@
     background: white !important;
     color: black !important;
     z-index: 9999 !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   [role="dialog"] {
