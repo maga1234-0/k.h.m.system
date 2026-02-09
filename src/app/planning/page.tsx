@@ -158,16 +158,16 @@ export default function PlanningPage() {
             </Card>
           </TooltipProvider>
           
-          <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex gap-4 text-xs">
+          <div className="mt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex gap-6 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-sm bg-primary" /> <span>En séjour</span>
+                <div className="h-3 w-3 rounded-full bg-primary" /> <span>En séjour</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-sm bg-secondary" /> <span>Réservation confirmée</span>
+                <div className="h-3 w-3 rounded-full bg-secondary" /> <span>Réservation confirmée</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-sm border border-muted-foreground/20" /> <span>Disponible</span>
+                <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" /> <span>Disponible</span>
               </div>
             </div>
           </div>
