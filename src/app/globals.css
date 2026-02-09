@@ -106,6 +106,9 @@
 }
 
 @media print {
+  body {
+    background-color: white !important;
+  }
   /* Masquer tout sauf le contenu de la facture */
   body * {
     visibility: hidden;
@@ -114,20 +117,22 @@
     visibility: visible;
   }
   #invoice-printable {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
-    width: 100%;
-    padding: 0 !important;
+    width: 210mm; /* A4 width */
+    height: 297mm; /* A4 height */
+    padding: 20mm !important;
     margin: 0 !important;
+    background: white !important;
+    color: black !important;
   }
-  /* Supprimer les fonds gris de l'overlay de Dialog */
-  .fixed.inset-0 {
+  /* Cacher les éléments UI du dialogue */
+  .fixed.inset-0, [role="dialog"] button {
     display: none !important;
   }
-  /* Ajuster pour éviter les coupures */
   @page {
-    size: auto;
+    size: A4;
     margin: 0mm;
   }
 }

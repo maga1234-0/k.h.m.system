@@ -19,7 +19,7 @@ import {
   AlertCircle, 
   FileText, 
   Phone,
-  ArrowDown
+  Download
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -122,11 +122,6 @@ export default function BillingPage() {
       `📅 *DATE D'ÉMISSION :* ${date}\n` +
       `💰 *MONTANT TOTAL :* ${amount} $\n` +
       `✅ *STATUT :* ${invoice.status === 'Paid' ? 'RÉGLÉE' : 'À PAYER'}\n\n` +
-      `--------------------------------\n` +
-      `Détails du séjour :\n` +
-      `- Services d'hébergement complets\n` +
-      `- Accès illimité aux installations\n` +
-      `--------------------------------\n\n` +
       `Nous vous remercions de votre confiance.\n` +
       `_L'équipe ImaraPMS_`;
     
@@ -218,12 +213,12 @@ export default function BillingPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Effacer tout le registre ?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Cette action supprimera définitivement toutes les factures archivées. Cette opération est irréversible.
+                          Cette action supprimera définitivement toutes les factures archivées.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90">Supprimer tout</AlertDialogAction>
+                        <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -280,7 +275,7 @@ export default function BillingPage() {
               ) : (
                 <div className="text-center py-20 border-2 border-dashed rounded-2xl print:hidden">
                   <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
-                  <p className="text-muted-foreground font-medium">Aucune facture enregistrée dans le système.</p>
+                  <p className="text-muted-foreground font-medium">Aucune facture enregistrée.</p>
                 </div>
               )}
             </CardContent>
@@ -292,7 +287,6 @@ export default function BillingPage() {
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Facture Officielle ImaraPMS</DialogTitle>
-            <DialogDescription>Aperçu professionnel pour impression et archivage.</DialogDescription>
           </DialogHeader>
           
           {selectedInvoice && (
@@ -328,34 +322,32 @@ export default function BillingPage() {
                 </div>
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-3 gap-8 mb-16">
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-900 pb-1 w-fit pr-12">DESTINATAIRE</p>
+                <div className="grid grid-cols-3 gap-12 mb-16">
+                  <div className="space-y-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-b border-slate-900 pb-1 w-full">DESTINATAIRE</p>
                     <div>
-                      <h3 className="text-3xl font-black text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
-                      <div className="space-y-1 text-[13px] text-slate-600 font-bold">
+                      <h3 className="text-4xl font-black text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
+                      <div className="space-y-1 text-sm text-slate-600 font-bold">
                         <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedInvoice.guestPhone || "N/A"}</p>
-                        <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || "NXHSPSC3"}</p>
+                        <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || "NXHSPSC"}</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1 w-fit pr-12">ÉMISSION</p>
+                  <div className="space-y-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-b border-slate-100 pb-1 w-full">ÉMISSION</p>
                     <p className="text-lg font-bold text-slate-900">
                       {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1 w-fit pr-12">ÉCHÉANCE</p>
+                  <div className="space-y-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-b border-slate-100 pb-1 w-full">ÉCHÉANCE</p>
                     <p className="text-lg font-bold text-slate-900">
                       {new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
                 </div>
-
-                <div className="h-0.5 bg-slate-900 w-full mb-12" />
 
                 {/* Items Table */}
                 <div className="mb-20">
@@ -372,7 +364,7 @@ export default function BillingPage() {
                       <tr>
                         <td className="py-8">
                           <p className="font-black text-slate-900 text-lg">Services d'Hébergement</p>
-                          <p className="text-xs text-slate-400 font-medium">Séjour hôtelier complet incluant l'accès à toutes les installations.</p>
+                          <p className="text-xs text-slate-400 font-medium">Séjour hôtelier incluant l'accès complet aux installations.</p>
                         </td>
                         <td className="py-8 text-center text-sm font-bold">1</td>
                         <td className="py-8 text-right text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
@@ -383,8 +375,8 @@ export default function BillingPage() {
                 </div>
 
                 {/* Totals Section */}
-                <div className="flex justify-end mb-16">
-                  <div className="w-full max-w-[240px] space-y-3">
+                <div className="flex justify-end">
+                  <div className="w-full max-w-[280px] space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SOUS-TOTAL</span>
                       <span className="text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
@@ -393,7 +385,7 @@ export default function BillingPage() {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TAXES (0%)</span>
                       <span className="text-sm font-bold">0.00 $</span>
                     </div>
-                    <div className="h-px bg-slate-200 w-full" />
+                    <div className="h-0.5 bg-slate-900 w-full my-2" />
                     <div className="flex justify-between items-center py-2">
                       <span className="text-xs font-black uppercase tracking-widest">TOTAL À PAYER</span>
                       <span className="text-3xl font-black font-headline text-slate-900 tracking-tighter">
@@ -417,7 +409,7 @@ export default function BillingPage() {
                   className="h-14 px-8 gap-3 bg-[#1A1C1E] hover:bg-[#2A2C2E] text-white rounded-xl shadow-xl transition-all" 
                   onClick={handlePrintAction}
                 >
-                  <ArrowDown className="h-5 w-5" />
+                  <Download className="h-5 w-5" />
                   <span className="font-bold uppercase tracking-[0.1em] text-[11px]">TÉLÉCHARGER</span>
                 </Button>
                 <Button 
