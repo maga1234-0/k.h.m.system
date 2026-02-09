@@ -121,7 +121,7 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert variant="moss" className="border-moss/30">
+          <Alert variant="leafy" className="border-leafy/30">
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle className="text-xs font-bold uppercase tracking-wider">Accès Restreint</AlertTitle>
             <AlertDescription className="text-xs">

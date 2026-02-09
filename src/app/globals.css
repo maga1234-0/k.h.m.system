@@ -26,9 +26,9 @@
     --accent: 231 44% 64%;
     --accent-foreground: 0 0% 100%;
 
-    /* Moss Color for Toasts */
-    --moss: 82 39% 30%;
-    --moss-foreground: 82 20% 98%;
+    /* Leafy Green for Toasts and Alerts */
+    --leafy: 142 71% 45%;
+    --leafy-foreground: 142 80% 98%;
 
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
@@ -70,8 +70,8 @@
     --primary-foreground: 162 54% 10%;
     --secondary: 162 30% 20%;
     --secondary-foreground: 162 30% 90%;
-    --moss: 82 39% 40%;
-    --moss-foreground: 82 20% 98%;
+    --leafy: 142 71% 35%;
+    --leafy-foreground: 142 80% 98%;
     --muted: 162 10% 18%;
     --muted-foreground: 162 10% 65%;
     --accent: 231 44% 64%;

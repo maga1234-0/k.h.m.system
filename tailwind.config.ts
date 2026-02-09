@@ -33,9 +33,9 @@ export default {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
-        moss: {
-          DEFAULT: 'hsl(var(--moss))',
-          foreground: 'hsl(var(--moss-foreground))',
+        leafy: {
+          DEFAULT: 'hsl(var(--leafy))',
+          foreground: 'hsl(var(--leafy-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',

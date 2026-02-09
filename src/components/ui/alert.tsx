@@ -13,7 +13,7 @@ const alertVariants = cva(
         default: "bg-background text-foreground",
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-        moss: "border-moss/20 bg-moss/5 text-moss-foreground [&>svg]:text-moss",
+        leafy: "border-leafy/20 bg-leafy/5 text-leafy [&>svg]:text-leafy",
       },
     },
     defaultVariants: {
