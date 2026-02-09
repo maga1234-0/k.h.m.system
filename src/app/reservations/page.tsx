@@ -104,10 +104,10 @@ export default function ReservationsPage() {
 
   const handleOpenActionDialog = (res: any, type: ActiveDialog) => {
     setSelectedRes(res);
-    // On laisse un tick pour permettre au dropdown de se fermer
+    // On laisse un tick pour permettre au dropdown de se fermer et éviter le conflit de focus
     setTimeout(() => {
       setActiveDialog(type);
-    }, 50);
+    }, 100);
   };
 
   const handleSaveBooking = () => {
@@ -374,11 +374,12 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialogues isolés pour éviter le blocage du focus */}
+        {/* Dialogues isolés de la table pour éviter le blocage du focus */}
         <Dialog open={activeDialog === 'details'} onOpenChange={(open) => !open && setActiveDialog(null)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Gestion du Dossier</DialogTitle>
+              <DialogDescription className="sr-only">Visualisation et modification du statut de séjour.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">

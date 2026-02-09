@@ -28,6 +28,9 @@ import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -276,6 +279,10 @@ export default function BillingPage() {
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Aperçu de la facture</DialogTitle>
+            <DialogDescription>Détails de facturation pour le client.</DialogDescription>
+          </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
