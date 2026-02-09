@@ -1,4 +1,3 @@
-
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -33,6 +32,10 @@ export default {
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
+        },
+        moss: {
+          DEFAULT: 'hsl(var(--moss))',
+          foreground: 'hsl(var(--moss-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
