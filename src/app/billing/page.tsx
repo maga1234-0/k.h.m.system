@@ -95,11 +95,11 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     
-    // Si appelé depuis la liste, ouvrir le dialogue pour rendu
+    // Si appelé depuis la liste, ouvrir l'aperçu temporairement
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      await new Promise(r => setTimeout(r, 800)); // Délai pour rendu propre
+      await new Promise(r => setTimeout(r, 800));
     }
 
     const element = document.getElementById('invoice-printable');
