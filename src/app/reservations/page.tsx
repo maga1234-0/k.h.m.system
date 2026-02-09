@@ -18,7 +18,9 @@ import {
   CreditCard,
   MoreHorizontal,
   CheckCircle,
-  CalendarDays
+  CalendarDays,
+  Trash2,
+  AlertCircle
 } from "lucide-react";
 import { 
   Dialog, 
@@ -28,6 +30,17 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -48,6 +61,7 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   updateDocumentNonBlocking, 
+  deleteDocumentNonBlocking,
   useUser 
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
@@ -59,6 +73,7 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   
   const [activeResId, setActiveResId] = useState<string | null>(null);
   const [activeDialog, setActiveDialog] = useState<"manage" | null>(null);
@@ -92,7 +107,6 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    // Délai pour permettre la fermeture propre du menu dropdown avant d'ouvrir le dialogue
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -127,7 +141,6 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
-    // Création de la facture initiale
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
       reservationId: selectedRes.id,
@@ -151,6 +164,15 @@ export default function ReservationsPage() {
 
     setActiveDialog(null);
     toast({ title: "Départ validé", description: "La chambre a été libérée pour le ménage." });
+  };
+
+  const handleClearAll = () => {
+    if (!reservations) return;
+    reservations.forEach((res) => {
+      deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
+    });
+    setIsClearDialogOpen(false);
+    toast({ variant: "destructive", title: "Registre purgé", description: "Toutes les réservations ont été supprimées." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -178,9 +200,30 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Réservations</h1>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2 h-9 text-xs md:text-sm">
-            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nouvelle résa</span>
-          </Button>
+          <div className="flex gap-2">
+            {reservations && reservations.length > 0 && (
+              <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs">
+                    <Trash2 className="h-4 w-4" /> Purger
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
+                    <AlertDialogDescription>Cette action supprimera définitivement toutes les réservations du système.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">Tout supprimer</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2 h-9 text-xs md:text-sm">
+              <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nouvelle résa</span>
+            </Button>
+          </div>
         </header>
 
         <main className="p-4 md:p-6">
