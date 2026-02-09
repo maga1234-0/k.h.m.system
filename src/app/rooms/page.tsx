@@ -17,10 +17,12 @@ import {
   DollarSign,
   Info,
   Edit2,
+  Trash2,
   LayoutGrid,
   CheckCircle2,
   Clock,
-  Wrench
+  Wrench,
+  AlertCircle
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -28,7 +30,8 @@ import {
   useMemoFirebase, 
   setDocumentNonBlocking,
   updateDocumentNonBlocking,
-  addDocumentNonBlocking
+  addDocumentNonBlocking,
+  deleteDocumentNonBlocking
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { 
@@ -40,6 +43,16 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -55,8 +68,10 @@ export default function RoomsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [editRoomData, setEditRoomData] = useState<any>(null);
+  const [roomToDelete, setRoomToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
   const [newRoom, setNewRoom] = useState<any>({
@@ -126,6 +141,19 @@ export default function RoomsPage() {
     toast({
       title: "Mise à jour réussie",
       description: `Les informations de la chambre ${editRoomData.roomNumber} ont été modifiées.`,
+    });
+  };
+
+  const handleDeleteRoom = () => {
+    if (!roomToDelete) return;
+    const roomRef = doc(firestore, 'rooms', roomToDelete.id);
+    deleteDocumentNonBlocking(roomRef);
+    setIsDeleteDialogOpen(false);
+    setRoomToDelete(null);
+    toast({
+      variant: "destructive",
+      title: "Chambre Supprimée",
+      description: `La chambre ${roomToDelete.roomNumber} a été retirée de l'inventaire.`,
     });
   };
 
@@ -271,6 +299,15 @@ export default function RoomsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-2 flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10" 
+                      onClick={() => { setRoomToDelete(room); setIsDeleteDialogOpen(true); }}
+                      title="Supprimer la chambre"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditRoomData({...room}); setIsEditDialogOpen(true); }}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -424,6 +461,26 @@ export default function RoomsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Supprimer la chambre {roomToDelete?.roomNumber} ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. La chambre sera définitivement retirée de l'inventaire et ne pourra plus être réservée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setRoomToDelete(null)}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
