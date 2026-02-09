@@ -90,7 +90,6 @@
     left: 0 !important;
     top: 0 !important;
     width: 210mm !important;
-    height: 297mm !important;
     background: white !important;
     padding: 20mm !important;
     margin: 0 !important;
@@ -98,11 +97,16 @@
   }
 }
 
-/* Specific styling for capture to avoid blank page and ensure visibility */
+/* Capture Styles for PDF */
 #invoice-printable {
-  min-height: 297mm;
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
   background-color: white !important;
+  color: #0f172a !important;
+}
+
+#invoice-printable * {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }

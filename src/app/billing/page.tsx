@@ -24,7 +24,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
-import jsPDF from 'jsPDF'
+import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
@@ -85,7 +85,7 @@ export default function BillingPage() {
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const hotelName = settings?.hotelName || 'ImaraPMS';
-    const message = `*${hotelName.toUpperCase()} — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${hotelName}`;
+    const message = `*${hotelName.toUpperCase()} — FACTURATION*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture #INV-${invoice.id.slice(0, 8).toUpperCase()}*.\n\nCordialement,\nL'équipe ${hotelName}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -95,17 +95,18 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     
-    // Si appelé depuis la liste, ouvrir l'aperçu temporairement
+    // Si appelé depuis la liste, on s'assure que les données sont là
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      await new Promise(r => setTimeout(r, 800));
+      // Laisser le temps au dialogue de se rendre pour la capture
+      await new Promise(r => setTimeout(r, 500));
     }
 
     const element = document.getElementById('invoice-printable');
     if (!element) {
       setIsGeneratingPdf(false);
-      toast({ variant: "destructive", title: "Erreur", description: "Élément graphique introuvable." });
+      toast({ variant: "destructive", title: "Erreur", description: "Document introuvable." });
       return;
     }
 
@@ -115,22 +116,23 @@ export default function BillingPage() {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        windowWidth: 800
+        windowWidth: 800,
+        height: element.scrollHeight,
+        windowHeight: element.scrollHeight
       });
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`facture-${inv.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "PDF Généré", description: "Le fichier a été enregistré sur votre appareil." });
+      toast({ title: "PDF Prêt", description: "Le fichier a été enregistré." });
     } catch (error) {
       console.error('PDF Error:', error);
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération PDF." });
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -160,7 +162,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Encours Client</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Encours Total</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.unpaid.toLocaleString('fr-FR')} $</h3>
                   </div>
                   <AlertCircle className="h-5 w-5 text-rose-600" />
@@ -171,7 +173,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Chiffre d'Affaires</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Recettes</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.revenue.toLocaleString('fr-FR')} $</h3>
                   </div>
                   <CreditCard className="h-5 w-5 text-primary" />
@@ -182,7 +184,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1">Total Factures</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1">Documents</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.totalCount}</h3>
                   </div>
                   <FileText className="h-5 w-5 text-accent" />
@@ -194,8 +196,8 @@ export default function BillingPage() {
           <Card className="border-none shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="font-headline text-lg">Historique des Factures</CardTitle>
-                <CardDescription>Gérez les transactions de vos clients.</CardDescription>
+                <CardTitle className="font-headline text-lg">Factures Émises</CardTitle>
+                <CardDescription>Consultez et envoyez les factures clients.</CardDescription>
               </div>
               {invoices && invoices.length > 0 && (
                 <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
@@ -206,8 +208,8 @@ export default function BillingPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Effacer tout le registre ?</AlertDialogTitle>
-                      <AlertDialogDescription>Cette action supprimera définitivement toutes les factures archivées.</AlertDialogDescription>
+                      <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
+                      <AlertDialogDescription>Toutes les factures seront définitivement supprimées.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -268,7 +270,7 @@ export default function BillingPage() {
               ) : (
                 <div className="text-center py-20 border-2 border-dashed rounded-2xl">
                   <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
-                  <p className="text-muted-foreground font-medium">Aucune facture enregistrée.</p>
+                  <p className="text-muted-foreground font-medium">Aucune facture émise.</p>
                 </div>
               )}
             </CardContent>
@@ -288,18 +290,18 @@ export default function BillingPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="font-headline font-black text-2xl tracking-tighter text-primary">{settings?.hotelName || 'ImaraPMS'}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Luxury Hospitality</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Hospitalité de Luxe</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight">INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tight">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Date: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-12 mb-16 px-4">
                   <div className="space-y-4">
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] border-b-2 border-primary/10 pb-2">Destinataire</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] border-b-2 border-primary/10 pb-2">Client</p>
                     <div>
                       <h3 className="text-2xl font-black text-slate-900 mb-1">{selectedInvoice.guestName}</h3>
                       <p className="text-sm text-slate-500 font-medium">{selectedInvoice.guestPhone}</p>
@@ -308,9 +310,9 @@ export default function BillingPage() {
                   <div className="space-y-4 text-right">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b-2 border-slate-100 pb-2">Émetteur</p>
                     <div className="text-sm font-medium text-slate-600">
-                      {settings?.hotelName || 'ImaraPMS'} Group<br />
-                      {settings?.address || 'Département de Facturation Centrale'}<br />
-                      Contact: {settings?.phone || '+1 234 567 890'}
+                      {settings?.hotelName || 'ImaraPMS'}<br />
+                      {settings?.address || 'Adresse non configurée'}<br />
+                      Tel: {settings?.phone || 'N/A'}
                     </div>
                   </div>
                 </div>
@@ -319,15 +321,15 @@ export default function BillingPage() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-y border-slate-100">
-                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400">Prestation</th>
+                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
                         <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Montant ($)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       <tr>
                         <td className="py-8 px-6">
-                          <p className="font-bold text-slate-900 text-lg">Séjour Hôtelier & Services Premium</p>
-                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement et services inclus</p>
+                          <p className="font-bold text-slate-900 text-lg">Séjour Hôtelier & Services</p>
+                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement premium</p>
                         </td>
                         <td className="py-8 px-6 text-right">
                           <span className="text-xl font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
@@ -340,7 +342,7 @@ export default function BillingPage() {
                 <div className="flex justify-end px-4">
                   <div className="w-full max-w-[350px] space-y-4">
                     <div className="flex justify-between items-center py-6 border-t-4 border-slate-900">
-                      <span className="text-sm font-black uppercase tracking-widest text-slate-900">Total à Régler</span>
+                      <span className="text-sm font-black uppercase tracking-widest text-slate-900">Total Net à payer</span>
                       <span className="text-4xl font-black font-headline text-primary tracking-tighter">
                         {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>

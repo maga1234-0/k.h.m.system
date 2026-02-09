@@ -96,7 +96,7 @@ export default function ReservationsPage() {
     
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Opération Réussie", description: `Dossier de ${reservationData.guestName} créé.` });
+    toast({ title: "Réservation Enregistrée", description: `Dossier de ${reservationData.guestName} créé.` });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -149,7 +149,7 @@ export default function ReservationsPage() {
                   <TableHead>Nom du client</TableHead>
                   <TableHead>Chambre</TableHead>
                   <TableHead>Arrivée / Départ</TableHead>
-                  <TableHead>Montant</TableHead>
+                  <TableHead>Montant Total</TableHead>
                   <TableHead>Statut</TableHead>
                 </TableRow>
               </TableHeader>
@@ -179,7 +179,7 @@ export default function ReservationsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
-                      Aucune réservation trouvée.
+                      Aucun dossier trouvé.
                     </TableCell>
                   </TableRow>
                 )}
@@ -192,7 +192,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Enregistrez un nouveau séjour client.</DialogDescription>
+              <DialogDescription>Saisissez le nom du client et les détails du séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -200,12 +200,12 @@ export default function ReservationsPage() {
                   <Label>Nom du client</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-9" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
+                    <Input className="pl-9" placeholder="Nom du client" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>WhatsApp / Téléphone</Label>
-                  <Input value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
+                  <Label>Téléphone WhatsApp</Label>
+                  <Input placeholder="+..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -220,10 +220,10 @@ export default function ReservationsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Chambre disponible</Label>
+                  <Label>Chambre Disponible</Label>
                   <Select value={bookingForm.roomId} onValueChange={(val) => setBookingForm({...bookingForm, roomId: val})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir..." />
+                      <SelectValue placeholder="Choisir une chambre" />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRooms.map((room) => (
@@ -235,7 +235,7 @@ export default function ReservationsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Montant du séjour ($)</Label>
+                  <Label>Prix du séjour ($)</Label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input type="number" className="pl-9" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
