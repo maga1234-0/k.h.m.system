@@ -60,6 +60,7 @@ function ServicesContent() {
 
   const [isAddChargeOpen, setIsAddChargeOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [mounted, setMounted] = useState(false);
   const [chargeData, setChargeData] = useState({
     reservationId: "",
     description: "",
@@ -67,6 +68,7 @@ function ServicesContent() {
   });
 
   useEffect(() => {
+    setMounted(true);
     if (!isAuthLoading && !user) {
       router.push('/login');
     }
@@ -79,6 +81,52 @@ function ServicesContent() {
     );
   }, [reservations, searchTerm]);
 
+  // Calcul dynamique des statistiques basé sur les notes des réservations
+  const dynamicStats = useMemo(() => {
+    if (!reservations || !mounted) return { dailySales: 0, orders: 0, popular: "N/A" };
+    
+    const todayStr = new Date().toLocaleDateString('fr-FR');
+    let totalToday = 0;
+    let countToday = 0;
+    const typeCounts: Record<string, number> = {};
+
+    reservations.forEach(res => {
+      if (!res.notes) return;
+      const lines = res.notes.split('\n');
+      lines.forEach(line => {
+        // Format attendu: [DATE] TYPE: DESC (+AMOUNT $)
+        if (line.includes(`[${todayStr}]`)) {
+          countToday++;
+          const amountMatch = line.match(/\(\+(\d+(?:\.\d+)?)\s*\$\)/);
+          if (amountMatch) {
+            totalToday += parseFloat(amountMatch[1]);
+          }
+          
+          const typeMatch = line.match(/\]\s*([^:]+):/);
+          if (typeMatch) {
+            const type = typeMatch[1].trim();
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+          }
+        }
+      });
+    });
+
+    let popular = "N/A";
+    let max = 0;
+    Object.entries(typeCounts).forEach(([type, count]) => {
+      if (count > max) {
+        max = count;
+        popular = type;
+      }
+    });
+
+    return { 
+      dailySales: totalToday, 
+      orders: countToday, 
+      popular 
+    };
+  }, [reservations, mounted]);
+
   const handleAddCharge = () => {
     if (!chargeData.reservationId || !chargeData.amount) return;
 
@@ -86,15 +134,15 @@ function ServicesContent() {
     if (!res) return;
 
     const additionalAmount = Number(chargeData.amount) || 0;
+    const serviceType = getServiceTitle(activeTab).toUpperCase();
+    const dateStr = new Date().toLocaleDateString('fr-FR');
     
-    // 1. Update Reservation Notes & Total for record keeping
     const resUpdateRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resUpdateRef, {
       totalAmount: (Number(res.totalAmount) || 0) + additionalAmount,
-      notes: (res.notes || "") + `\n[${new Date().toLocaleDateString('fr-FR')}] ${getServiceTitle(activeTab).toUpperCase()}: ${chargeData.description} (+${additionalAmount} $)`
+      notes: (res.notes || "") + (res.notes ? "\n" : "") + `[${dateStr}] ${serviceType}: ${chargeData.description} (+${additionalAmount} $)`
     });
 
-    // 2. Update Invoice amountDue (CRITICAL for billing page)
     const invoice = invoices?.find(inv => inv.reservationId === res.id);
     if (invoice) {
       const invoiceUpdateRef = doc(firestore, 'invoices', invoice.id);
@@ -130,16 +178,7 @@ function ServicesContent() {
     }
   };
 
-  const serviceStats = useMemo(() => {
-    // Prototype static stats
-    return [
-      { label: "Ventes du Jour", value: "342.00 $", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" },
-      { label: "Commandes", value: "14", icon: Utensils, color: "text-blue-600", bg: "bg-blue-500/10" },
-      { label: "Populaire", value: "Dîner", icon: Coffee, color: "text-amber-600", bg: "bg-amber-500/10" },
-    ];
-  }, []);
-
-  if (isAuthLoading || !user) {
+  if (!mounted || isAuthLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -150,29 +189,29 @@ function ServicesContent() {
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background/50">
-        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
+      <SidebarInset className="flex flex-col overflow-auto bg-[#0a0a0a]">
+        <header className="flex h-16 items-center border-b border-white/5 px-6 justify-between bg-[#0a0a0a] sticky top-0 z-10">
           <div className="flex items-center">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Point de Vente {getServiceTitle(activeTab)}</h1>
+            <SidebarTrigger className="text-white" />
+            <Separator orientation="vertical" className="mx-4 h-6 bg-white/10" />
+            <h1 className="font-headline font-semibold text-xl text-white">Service {getServiceTitle(activeTab)}</h1>
           </div>
           <Dialog open={isAddChargeOpen} onOpenChange={setIsAddChargeOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="h-4 w-4" /> Nouvelle Vente
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Facturer un service</DialogTitle>
-                <DialogDescription>Les frais seront ajoutés à la facture finale du client.</DialogDescription>
+                <DialogDescription>Ajout de frais au dossier client.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="space-y-2">
-                  <Label>Sélectionner le client</Label>
+                  <Label>Nom du client</Label>
                   <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
-                    <SelectTrigger className="h-12">
+                    <SelectTrigger>
                       <SelectValue placeholder="Choisir un client..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -184,136 +223,156 @@ function ServicesContent() {
                         ))
                       ) : (
                         <div className="p-4 text-center text-xs text-muted-foreground italic">
-                          Aucun client actuellement en séjour.
+                          Aucun client actif.
                         </div>
                       )}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Désignation du service</Label>
+                  <Label>Désignation</Label>
                   <Input 
-                    placeholder="Ex: Dîner Gourmet, Lavage express..."
-                    className="h-12"
+                    placeholder=""
                     value={chargeData.description}
                     onChange={(e) => setChargeData({...chargeData, description: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Montant à facturer ($)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="number" 
-                      className="pl-9 h-12"
-                      value={chargeData.amount}
-                      onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
-                    />
-                  </div>
+                  <Label>Montant ($)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder=""
+                    value={chargeData.amount}
+                    onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" className="h-12 px-6" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button className="h-12 px-8 font-bold" onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer la Facturation</Button>
+                <Button variant="outline" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
+                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </header>
 
         <main className="p-6 space-y-8">
-          {/* Dashboard Section */}
+          {/* Stats Section - Design identique à la capture d'écran */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {serviceStats.map((stat, i) => (
-              <Card key={i} className="border-none shadow-sm">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className={`h-12 w-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
+            <Card className="bg-[#141414] border-none shadow-xl">
+              <CardContent className="p-6 flex items-center gap-5">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                  <DollarSign className="h-7 w-7" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Ventes du Jour</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black font-headline text-white tracking-tighter">
+                      {dynamicStats.dailySales.toFixed(2)}
+                    </span>
+                    <span className="text-lg font-bold text-white">$</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</span>
-                    <span className="text-2xl font-bold font-headline">{stat.value}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-[#141414] border-none shadow-xl">
+              <CardContent className="p-6 flex items-center gap-5">
+                <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                  <Utensils className="h-7 w-7" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Commandes</span>
+                  <span className="text-3xl font-black font-headline text-white tracking-tighter">
+                    {dynamicStats.orders}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-[#141414] border-none shadow-xl">
+              <CardContent className="p-6 flex items-center gap-5">
+                <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                  <Coffee className="h-7 w-7" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Populaire</span>
+                  <span className="text-xl font-black font-headline text-white truncate max-w-[150px]">
+                    {dynamicStats.popular === 'N/A' ? 'Aucun' : dynamicStats.popular}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-0">
+          <Card className="bg-[#141414] border-none shadow-xl text-white">
+            <CardHeader>
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
                   {getServiceIcon(activeTab)}
                 </div>
                 <div>
-                  <CardTitle className="font-headline text-2xl">{getServiceTitle(activeTab)}</CardTitle>
-                  <CardDescription>Gérez les consommations et extras par chambre.</CardDescription>
+                  <CardTitle className="font-headline text-xl">{getServiceTitle(activeTab)}</CardTitle>
+                  <CardDescription className="text-zinc-500">Facturation directe par chambre</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-8 space-y-6">
+            <CardContent className="space-y-6">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <Input 
-                  placeholder="Rechercher un client ou une chambre..." 
-                  className="pl-9 h-12 bg-muted/20 border-none shadow-none"
+                  placeholder="Rechercher Nom du client..." 
+                  className="pl-9 bg-zinc-900 border-none text-white placeholder:text-zinc-600"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <div className="space-y-4">
-                <h3 className="font-bold text-xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-4">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Clients en Séjour
-                </h3>
-                
+              <div className="grid gap-4">
                 {isResLoading ? (
                   <div className="flex justify-center p-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : activeReservations.length > 0 ? (
-                  <div className="grid gap-4">
-                    {activeReservations.map((res) => {
-                      const inv = invoices?.find(i => i.reservationId === res.id);
-                      return (
-                        <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border bg-card hover:bg-muted/5 transition-all group border-transparent hover:border-primary/20 shadow-sm">
-                          <div className="flex items-center gap-5">
-                            <div className="h-14 w-14 rounded-2xl bg-secondary flex items-center justify-center text-primary font-bold text-lg group-hover:scale-110 transition-transform">
-                              {res.roomNumber}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-lg leading-none mb-1">{res.guestName}</span>
-                              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                                {res.checkInDate} — {res.checkOutDate}
-                              </span>
-                            </div>
+                  activeReservations.map((res) => {
+                    const inv = invoices?.find(i => i.reservationId === res.id);
+                    return (
+                      <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {res.roomNumber}
                           </div>
-                          
-                          <div className="flex items-center gap-8 mt-4 md:mt-0">
-                            <div className="text-right">
-                              <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Encours Facture</span>
-                              <span className="text-2xl font-black font-headline text-primary">
-                                {Number(inv?.amountDue || 0).toLocaleString()} $
-                              </span>
-                            </div>
-                            <Button 
-                              variant="secondary" 
-                              className="h-12 px-8 font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all"
-                              onClick={() => {
-                                setChargeData({...chargeData, reservationId: res.id});
-                                setIsAddChargeOpen(true);
-                              }}
-                            >
-                              Facturer
-                            </Button>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-lg">{res.guestName}</span>
+                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                              Arrivé: {res.checkInDate}
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                        
+                        <div className="flex items-center gap-6 mt-4 md:mt-0">
+                          <div className="text-right">
+                            <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Encours Facture</span>
+                            <span className="text-xl font-black font-headline text-primary">
+                              {Number(inv?.amountDue || 0).toLocaleString()} $
+                            </span>
+                          </div>
+                          <Button 
+                            className="bg-white text-black hover:bg-zinc-200 font-bold text-[10px] uppercase tracking-widest h-10 px-6 rounded-lg"
+                            onClick={() => {
+                              setChargeData({...chargeData, reservationId: res.id});
+                              setIsAddChargeOpen(true);
+                            }}
+                          >
+                            Facturer
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <div className="py-20 text-center border-2 border-dashed rounded-3xl opacity-30 bg-muted/10">
+                  <div className="py-20 text-center opacity-20 border-2 border-dashed border-zinc-800 rounded-3xl">
                     <ConciergeBell className="h-16 w-16 mx-auto mb-4" />
-                    <p className="font-bold uppercase tracking-widest text-sm">Aucun client actif trouvé.</p>
+                    <p className="font-bold uppercase tracking-widest text-sm">Aucun client en séjour.</p>
                   </div>
                 )}
               </div>
