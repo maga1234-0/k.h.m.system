@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Receipt, Printer, Loader2, CreditCard, MessageCircle, Hotel, Trash2, AlertCircle } from "lucide-react"
+import { Receipt, Printer, Loader2, CreditCard, MessageCircle, Hotel, Trash2, AlertCircle, FileText, Download } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
@@ -53,12 +53,12 @@ export default function BillingPage() {
   }, [user, isAuthLoading, router]);
 
   const stats = useMemo(() => {
-    if (!invoices) return { unpaid: 0, revenue: 0, pendingRefunds: 0 };
+    if (!invoices) return { unpaid: 0, revenue: 0, totalCount: 0 };
     
     const unpaid = invoices.reduce((acc, inv) => inv.status !== 'Paid' ? acc + (Number(inv.amountDue) - Number(inv.amountPaid)) : acc, 0);
     const revenue = invoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
     
-    return { unpaid, revenue, pendingRefunds: 0 };
+    return { unpaid, revenue, totalCount: invoices.length };
   }, [invoices]);
 
   const handleMarkAsPaid = (invoice: any) => {
@@ -70,8 +70,8 @@ export default function BillingPage() {
     });
     
     toast({
-      title: "Facture Mise à Jour",
-      description: `Facture de ${invoice.guestName} marquée comme Payée.`,
+      title: "Paiement Confirmé",
+      description: `La facture de ${invoice.guestName} a été marquée comme payée.`,
     });
   };
 
@@ -86,8 +86,8 @@ export default function BillingPage() {
     setIsClearDialogOpen(false);
     toast({
       variant: "destructive",
-      title: "Registre Nettoyé",
-      description: "Toutes les archives de factures ont été définitivement supprimées.",
+      title: "Registre Effacé",
+      description: "Toutes les archives de factures ont été supprimées.",
     });
   };
 
@@ -95,8 +95,8 @@ export default function BillingPage() {
     if (!invoice.guestPhone) {
       toast({
         variant: "destructive",
-        title: "Téléphone Manquant",
-        description: "Aucun numéro associé à ce record de facture.",
+        title: "Numéro Manquant",
+        description: "Impossible d'envoyer le message sans numéro de téléphone.",
       });
       return;
     }
@@ -104,15 +104,9 @@ export default function BillingPage() {
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
     
-    const message = `*RÉSUMÉ DE FACTURE - IMARAPMS*\n-----------------------------\n*Client:* ${invoice.guestName}\n*Facture:* #INV-${invoiceId}\n*Montant Dû:* ${Number(invoice.amountDue).toFixed(2)} $\n*Échéance:* ${new Date(invoice.dueDate).toLocaleDateString('fr-FR')}\n*Statut:* ${invoice.status === 'Paid' ? 'Payée' : 'Impayée'}\n-----------------------------\nMerci d'avoir choisi ImaraPMS. Contactez-nous pour toute question !`;
+    const message = `*IMARAPMS - VOTRE FACTURE*\n\nCher(e) ${invoice.guestName},\n\nVoici le résumé de votre facture #INV-${invoiceId} :\n- Montant : ${Number(invoice.amountDue).toFixed(2)} $\n- Statut : ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\nMerci de votre confiance.\nL'équipe ImaraPMS.`;
     
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-
-    toast({
-      title: "WhatsApp Ouvert",
-      description: `Envoi du résumé de facture à ${invoice.guestName}...`,
-    });
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const handlePrint = () => {
@@ -130,124 +124,127 @@ export default function BillingPage() {
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto print:hidden">
-        <header className="flex h-16 items-center border-b px-6 bg-background">
+      <SidebarInset className="flex flex-col overflow-auto print:bg-white">
+        <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10 print:hidden">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
           <h1 className="font-headline font-semibold text-xl">Finance & Facturation</h1>
         </header>
 
-        <main className="p-6 space-y-6">
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="border-none shadow-sm bg-primary/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Solde Impayé</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold font-headline">{stats.unpaid.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} $</div>
-                <p className="text-xs text-muted-foreground mt-1">Créances en attente</p>
+        <main className="p-6 space-y-8 print:p-0">
+          <div className="grid gap-6 md:grid-cols-3 print:hidden">
+            <Card className="border-none shadow-sm bg-rose-500/5 border border-rose-500/10">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Encours Client</p>
+                    <h3 className="text-3xl font-bold font-headline">{stats.unpaid.toLocaleString('fr-FR')} $</h3>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
+                    <AlertCircle className="h-5 w-5" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-none shadow-sm bg-accent/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Chiffre d'Affaires</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold font-headline">{stats.revenue.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} $</div>
-                <p className="text-xs text-muted-foreground mt-1">Total encaissé</p>
+            <Card className="border-none shadow-sm bg-primary/5 border border-primary/10">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Chiffre d'Affaires</p>
+                    <h3 className="text-3xl font-bold font-headline">{stats.revenue.toLocaleString('fr-FR')} $</h3>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-none shadow-sm bg-amber-500/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Remboursements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold font-headline">{stats.pendingRefunds.toFixed(2)} $</div>
-                <p className="text-xs text-muted-foreground mt-1">0 demande en attente</p>
+            <Card className="border-none shadow-sm bg-accent/5 border border-accent/10">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-accent mb-1">Total Factures</p>
+                    <h3 className="text-3xl font-bold font-headline">{stats.totalCount}</h3>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-none shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="border-none shadow-sm print:shadow-none print:border-none">
+            <CardHeader className="flex flex-row items-center justify-between print:hidden">
               <div>
-                <CardTitle className="font-headline">Registre des Factures</CardTitle>
-                <CardDescription>Gérez les paiements clients et les factures générées.</CardDescription>
+                <CardTitle className="font-headline">Historique des Factures</CardTitle>
+                <CardDescription>Consultez et gérez les transactions de vos clients.</CardDescription>
               </div>
-              {invoices && invoices.length > 0 && (
-                <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground gap-2">
-                      <Trash2 className="h-4 w-4" /> Vider le registre
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-destructive" />
-                        Effacer tout le registre ?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Ceci supprimera définitivement les {invoices.length} factures du système. 
-                        Cette action est irréversible et réinitialisera vos indicateurs de revenus.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Garder le registre</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Oui, tout effacer
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+              <div className="flex gap-2">
+                {invoices && invoices.length > 0 && (
+                  <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive gap-2">
+                        <Trash2 className="h-4 w-4" /> Purger
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Effacer tout le registre ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Cette action supprimera définitivement toutes les factures archivées. Cette opération est irréversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90">Supprimer tout</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="print:p-0">
               {isInvoicesLoading ? (
                 <div className="flex justify-center p-12">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : invoices && invoices.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-4 print:hidden">
                   {invoices.map((inv) => (
-                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border hover:bg-muted/10 transition-colors gap-4">
+                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border hover:bg-muted/10 transition-all gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary shrink-0">
-                          <Receipt className="h-5 w-5" />
+                        <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0">
+                          <Receipt className="h-6 w-6" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-sm">FAC-{inv.id.slice(0, 8).toUpperCase()}</span>
-                          <span className="text-xs text-muted-foreground">{inv.guestName || 'Client'} • Émise le {new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
+                          <span className="font-bold text-sm tracking-tight">INV-{inv.id.slice(0, 8).toUpperCase()}</span>
+                          <span className="text-xs text-muted-foreground font-medium">{inv.guestName} • {new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 ml-auto md:ml-0">
-                        <div className="flex items-center flex-col items-end">
+                      <div className="flex items-center gap-6 ml-auto md:ml-0">
+                        <div className="flex flex-col items-end">
                           <span className="font-bold text-lg">{Number(inv.amountDue).toFixed(2)} $</span>
-                          <span className="text-[10px] text-muted-foreground">Échéance: {new Date(inv.dueDate).toLocaleDateString('fr-FR')}</span>
+                          <Badge variant={inv.status === 'Paid' ? 'default' : 'secondary'} className="text-[10px] py-0 px-2 h-4">
+                            {inv.status === 'Paid' ? 'Payée' : 'Impayée'}
+                          </Badge>
                         </div>
-                        <Badge variant={inv.status === 'Paid' ? 'default' : inv.status === 'Unpaid' ? 'secondary' : 'destructive'}>
-                          {inv.status === 'Paid' ? 'Payée' : inv.status === 'Unpaid' ? 'Impayée' : inv.status}
-                        </Badge>
                         <div className="flex gap-2">
                           {inv.status !== 'Paid' && (
-                            <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => handleMarkAsPaid(inv)}>
-                              <CreditCard className="h-3 w-3" /> Payer
+                            <Button variant="outline" size="sm" className="h-9 px-3 gap-2" onClick={() => handleMarkAsPaid(inv)}>
+                              <CreditCard className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
-                          <Button variant="secondary" size="sm" className="gap-2 h-8" onClick={() => handleSendWhatsApp(inv)}>
-                            <MessageCircle className="h-3 w-3" /> WhatsApp
-                          </Button>
                           <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8" 
-                            title="Voir/Imprimer Facture"
+                            variant="secondary" 
+                            size="sm" 
+                            className="h-9 px-3 gap-2"
                             onClick={() => {
                               setSelectedInvoice(inv);
                               setIsInvoiceDialogOpen(true);
                             }}
                           >
-                            <Printer className="h-4 w-4" />
+                            <FileText className="h-4 w-4" /> Aperçu
                           </Button>
                         </div>
                       </div>
@@ -255,9 +252,9 @@ export default function BillingPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 border-2 border-dashed rounded-xl">
-                  <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                  <p className="text-muted-foreground">Aucune facture trouvée. Enregistrez un client pour en générer une.</p>
+                <div className="text-center py-20 border-2 border-dashed rounded-2xl print:hidden">
+                  <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
+                  <p className="text-muted-foreground font-medium">Aucune facture enregistrée dans le système.</p>
                 </div>
               )}
             </CardContent>
@@ -266,136 +263,159 @@ export default function BillingPage() {
       </SidebarInset>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-        <DialogContent className="max-w-4xl p-0 bg-white overflow-hidden">
+        <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Détails de la Facture</DialogTitle>
-            <DialogDescription>Aperçu de la facture pour impression ou partage.</DialogDescription>
+            <DialogTitle>Facture ImaraPMS</DialogTitle>
+            <DialogDescription>Aperçu professionnel pour impression et archivage.</DialogDescription>
           </DialogHeader>
+          
           {selectedInvoice && (
-            <div className="flex flex-col">
-              <div className="p-8 print:p-0">
-                <div className="flex justify-between items-start mb-12">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
-                      <Hotel className="h-7 w-7" />
+            <div className="flex flex-col h-full max-h-[90vh]">
+              <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
+                {/* Header Section */}
+                <div className="flex justify-between items-start mb-16">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                        <Hotel className="h-7 w-7" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold font-headline tracking-tighter">ImaraPMS</h2>
+                        <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400">LUXURY HOSPITALITY</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-bold font-headline leading-none">ImaraPMS</h2>
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-primary mt-1">Hospitalité de Luxe</p>
+                    <div className="text-sm text-slate-500 leading-relaxed max-w-[240px]">
+                      123 Avenue de l'Hospitalité<br />
+                      Grand Central, GC 10023<br />
+                      contact@imarapms.com<br />
+                      +1 234 567 890
                     </div>
                   </div>
-                  <div className="text-right">
-                    <h1 className="text-4xl font-bold font-headline text-slate-900 mb-1">FACTURE</h1>
-                    <p className="text-muted-foreground font-mono text-sm uppercase tracking-tighter">
-                      #FAC-{selectedInvoice.id.slice(0, 8).toUpperCase()}
-                    </p>
+                  <div className="text-right space-y-2">
+                    <h1 className="text-6xl font-bold tracking-tighter text-slate-200 opacity-50 absolute right-12 top-10 pointer-events-none uppercase">Facture</h1>
+                    <div className="pt-8 relative z-10">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Numéro de Facture</p>
+                      <p className="text-xl font-bold font-mono">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-12 mb-12">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Facturé à</p>
-                      <h3 className="text-lg font-bold">{selectedInvoice.guestName}</h3>
-                      <p className="text-sm text-slate-600">{selectedInvoice.guestPhone || "Aucun numéro de contact"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">De la part de</p>
-                      <p className="text-sm font-medium">ImaraPMS Hotelier</p>
-                      <p className="text-xs text-slate-500">123 Avenue de l'Hospitalité<br />Grand Central, GC 10023</p>
+                {/* Billing Info Grid */}
+                <div className="grid grid-cols-2 gap-20 mb-16">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Destinataire</p>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
+                    <div className="space-y-1 text-sm text-slate-600">
+                      <p className="flex items-center gap-2"><Phone className="h-3 w-3" /> {selectedInvoice.guestPhone || "N/A"}</p>
+                      <p className="flex items-center gap-2">Client ID: {selectedInvoice.guestId?.slice(0, 6).toUpperCase() || "REG-9912"}</p>
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-6 rounded-2xl flex flex-col justify-between">
-                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                      <span className="text-muted-foreground">Date d'émission :</span>
-                      <span className="text-right font-medium">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</span>
-                      <span className="text-muted-foreground">Échéance :</span>
-                      <span className="text-right font-medium">{new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR')}</span>
-                      <span className="text-muted-foreground">Statut :</span>
-                      <span className="text-right">
-                        <Badge variant={selectedInvoice.status === 'Paid' ? 'default' : 'secondary'} className="text-[10px] h-5 px-2">
-                          {selectedInvoice.status === 'Paid' ? 'Payée' : 'Impayée'}
-                        </Badge>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Émission</p>
+                      <p className="text-sm font-bold text-slate-900">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Échéance</p>
+                      <p className="text-sm font-bold text-slate-900">{new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div className="mb-12">
+                  <div className="rounded-2xl border border-slate-100 overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-900 text-white">
+                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Description</th>
+                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Qté</th>
+                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Prix Unit.</th>
+                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr>
+                          <td className="px-8 py-8">
+                            <p className="font-bold text-slate-900 mb-1">Services d'Hébergement</p>
+                            <p className="text-xs text-slate-500 italic">Séjour hôtelier complet (Nuitées et services de base inclus).</p>
+                          </td>
+                          <td className="px-8 py-8 text-center text-sm font-medium">1</td>
+                          <td className="px-8 py-8 text-right text-sm font-medium">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                          <td className="px-8 py-8 text-right text-sm font-bold text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                        </tr>
+                        {/* Extras placeholder */}
+                        <tr className="bg-slate-50/50">
+                          <td colSpan={4} className="px-8 py-4 text-[10px] text-slate-400 italic text-center uppercase tracking-widest">
+                            Aucun frais de service additionnel enregistré
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Summary Section */}
+                <div className="flex justify-end mb-20">
+                  <div className="w-full max-w-sm space-y-4">
+                    <div className="flex justify-between items-center px-4">
+                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sous-total</span>
+                      <span className="text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                    </div>
+                    <div className="flex justify-between items-center px-4">
+                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Taxes (0%)</span>
+                      <span className="text-sm font-bold">0.00 $</span>
+                    </div>
+                    <div className="h-px bg-slate-200 w-full" />
+                    <div className="flex justify-between items-center px-4 py-2">
+                      <span className="text-lg font-black uppercase tracking-tighter">Total à Payer</span>
+                      <span className="text-4xl font-black font-headline text-slate-900 tracking-tighter">
+                        {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>
                     </div>
-                  </div>
-                </div>
-
-                <div className="border rounded-2xl overflow-hidden mb-8">
-                  <table className="w-full text-left">
-                    <thead className="bg-slate-900 text-white text-xs uppercase tracking-widest">
-                      <tr>
-                        <th className="px-6 py-4 font-bold">Description</th>
-                        <th className="px-6 py-4 font-bold text-center">Qté</th>
-                        <th className="px-6 py-4 font-bold text-right">Prix</th>
-                        <th className="px-6 py-4 font-bold text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y text-sm">
-                      <tr>
-                        <td className="px-6 py-6">
-                          <p className="font-bold">Frais d'Hébergement</p>
-                          <p className="text-xs text-muted-foreground">Séjour complet selon les détails de la réservation.</p>
-                        </td>
-                        <td className="px-6 py-6 text-center">1</td>
-                        <td className="px-6 py-6 text-right">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                        <td className="px-6 py-6 text-right font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                      </tr>
-                      <tr className="bg-slate-50/50">
-                        <td className="px-6 py-4 text-xs italic text-muted-foreground" colSpan={4}>
-                          Aucun service additionnel (Blanchisserie, Spa, Repas) enregistré pour cette période.
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex justify-end mb-12">
-                  <div className="w-full max-w-xs space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Sous-total</span>
-                      <span className="font-medium">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Taxes (0%)</span>
-                      <span className="font-medium">0.00 $</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="text-lg font-bold">Montant Total</span>
-                      <span className="text-3xl font-bold font-headline text-primary">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
-                    </div>
                     {selectedInvoice.status === 'Paid' && (
-                      <div className="flex justify-between text-sm text-emerald-600 font-bold bg-emerald-50 p-2 rounded-lg mt-2">
-                        <span>Montant Payé</span>
-                        <span>-{Number(selectedInvoice.amountPaid).toFixed(2)} $</span>
+                      <div className="mx-4 p-3 bg-emerald-50 rounded-xl flex justify-between items-center border border-emerald-100">
+                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Montant Acquitté</span>
+                        <span className="text-lg font-black text-emerald-600">-{Number(selectedInvoice.amountPaid).toFixed(2)} $</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="border-t pt-8">
-                  <h4 className="font-bold text-sm mb-2 uppercase tracking-widest text-slate-900">Conditions de Paiement</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Veuillez effectuer le paiement avant le {new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR')}. 
-                    Les chèques doivent être libellés à l'ordre de ImaraPMS Hotelier. 
-                    Tout retard de paiement peut faire l'objet d'un intérêt mensuel de 2%.
-                  </p>
-                  <div className="mt-8 text-center border-2 border-dashed border-slate-100 p-4 rounded-xl">
-                    <p className="text-xs font-medium text-slate-400">Merci d'avoir choisi ImaraPMS. Nous espérons vous revoir bientôt !</p>
+                {/* Footer Section */}
+                <div className="border-t border-slate-100 pt-12">
+                  <div className="grid grid-cols-2 gap-20">
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Note au Client</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed italic">
+                        Nous espérons que votre séjour à ImaraPMS a été des plus agréables. 
+                        Toute l'équipe se réjouit de vous accueillir à nouveau très prochainement pour une nouvelle expérience d'exception.
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Conditions de Règlement</h4>
+                      <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tighter">
+                        Le paiement est dû dès réception. Tout retard de paiement au-delà de 30 jours fera l'objet d'une pénalité de retard égale à 3 fois le taux d'intérêt légal. 
+                        Escompte pour paiement anticipé : aucun.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 border-t bg-slate-50 flex justify-end gap-3 print:hidden">
+              {/* Action Bar */}
+              <div className="bg-slate-50 p-6 flex justify-end gap-3 border-t print:hidden">
                 <DialogClose asChild>
-                  <Button variant="ghost">Fermer l'aperçu</Button>
+                  <Button variant="ghost" className="h-11 px-6 font-bold uppercase tracking-widest text-[10px]">Fermer</Button>
                 </DialogClose>
-                <Button variant="outline" onClick={() => handleSendWhatsApp(selectedInvoice)} className="gap-2">
+                <Button variant="outline" className="h-11 px-6 gap-2 font-bold uppercase tracking-widest text-[10px]" onClick={() => handleSendWhatsApp(selectedInvoice)}>
                   <MessageCircle className="h-4 w-4" /> WhatsApp
                 </Button>
-                <Button onClick={handlePrint} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white">
-                  <Printer className="h-4 w-4" /> Imprimer
+                <Button variant="outline" className="h-11 px-6 gap-2 font-bold uppercase tracking-widest text-[10px]" onClick={() => window.print()}>
+                  <Download className="h-4 w-4" /> Télécharger
+                </Button>
+                <Button className="h-11 px-8 gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-slate-200" onClick={handlePrint}>
+                  <Printer className="h-4 w-4" /> Imprimer la Facture
                 </Button>
               </div>
             </div>
