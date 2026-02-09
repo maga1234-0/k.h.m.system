@@ -18,10 +18,7 @@ import {
   Loader2,
   Trash2,
   User,
-  CreditCard,
-  CheckCircle2,
-  Edit2,
-  LogOut
+  CreditCard
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -76,7 +73,6 @@ export default function ReservationsPage() {
   
   // Dialog States
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
@@ -84,7 +80,7 @@ export default function ReservationsPage() {
   const [selectedRes, setSelectedRes] = useState<any>(null);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
-  // Form State
+  // Form State for new booking
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
     guestEmail: "",
@@ -99,7 +95,6 @@ export default function ReservationsPage() {
   const firestore = useFirestore();
   const resCollection = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const roomsCollection = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
-  const invoicesCollection = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
   
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms } = useCollection(roomsCollection);
@@ -121,57 +116,16 @@ export default function ReservationsPage() {
     const reservationData = { 
       ...bookingForm, 
       roomNumber: selectedRoom.roomNumber, 
-      status: selectedRes ? selectedRes.status : "Confirmée", 
+      status: "Confirmée", 
       totalAmount: Number(bookingForm.totalAmount) || 0,
-      createdAt: selectedRes ? selectedRes.createdAt : new Date().toISOString() 
+      createdAt: new Date().toISOString() 
     };
 
-    if (selectedRes && isEditDialogOpen) {
-      updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), reservationData);
-      setIsEditDialogOpen(false);
-    } else {
-      addDocumentNonBlocking(resCollection, reservationData);
-      setIsAddDialogOpen(false);
-    }
+    addDocumentNonBlocking(resCollection, reservationData);
+    setIsAddDialogOpen(false);
     
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    setSelectedRes(null);
-    toast({ title: "Opération Réussie", description: `Dossier de ${reservationData.guestName} mis à jour.` });
-  };
-
-  const handleCheckIn = (res: any) => {
-    if (!res || !invoicesCollection) return;
-    
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, { status: "Checked In" });
-    
-    if (res.roomId) {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Occupied" });
-    }
-
-    const invoiceData = {
-      reservationId: res.id,
-      guestName: res.guestName,
-      guestPhone: res.guestPhone,
-      invoiceDate: new Date().toISOString(),
-      dueDate: new Date().toISOString(),
-      amountDue: res.totalAmount,
-      amountPaid: 0,
-      status: "Unpaid"
-    };
-    addDocumentNonBlocking(invoicesCollection, invoiceData);
-
-    toast({ title: "Arrivée Confirmée", description: `${res.guestName} est maintenant enregistré. Facture générée.` });
-  };
-
-  const handleCheckOut = (res: any) => {
-    if (!res) return;
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, { status: "Checked Out" });
-    if (res.roomId) {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
-    }
-    toast({ title: "Départ Enregistré", description: `${res.guestName} a libéré la chambre. Statut: Nettoyage.` });
+    toast({ title: "Opération Réussie", description: `Dossier de ${reservationData.guestName} créé.` });
   };
 
   const handleDeleteConfirm = () => {
@@ -182,7 +136,7 @@ export default function ReservationsPage() {
     }
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "Dossier supprimé." });
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "Dossier supprimé du registre." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -190,7 +144,7 @@ export default function ReservationsPage() {
     res.roomNumber?.includes(searchTerm)
   );
 
-  const availableRooms = rooms?.filter(r => r.status === 'Available' || (selectedRes && r.id === selectedRes.roomId)) || [];
+  const availableRooms = rooms?.filter(r => r.status === 'Available') || [];
 
   if (!mounted || isAuthLoading || !user) {
     return (
@@ -211,7 +165,6 @@ export default function ReservationsPage() {
             <h1 className="font-headline font-semibold text-xl">Registre des Réservations</h1>
           </div>
           <Button onClick={() => {
-            setSelectedRes(null);
             setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
             setIsAddDialogOpen(true);
           }} className="bg-primary gap-2">
@@ -263,9 +216,7 @@ export default function ReservationsPage() {
                       </TableCell>
                       <TableCell className="font-bold text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                       <TableCell>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'outline' : 'secondary'}>
-                          {res.status === 'Checked In' ? 'Arrivé' : res.status}
-                        </Badge>
+                        <Badge variant="secondary">{res.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -282,33 +233,6 @@ export default function ReservationsPage() {
                             }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => { 
-                              e.preventDefault();
-                              setSelectedRes(res); 
-                              setBookingForm({
-                                guestName: res.guestName,
-                                guestEmail: res.guestEmail || "",
-                                guestPhone: res.guestPhone || "",
-                                roomId: res.roomId,
-                                checkInDate: res.checkInDate,
-                                checkOutDate: res.checkOutDate,
-                                numberOfGuests: res.numberOfGuests,
-                                totalAmount: res.totalAmount.toString()
-                              });
-                              setTimeout(() => setIsEditDialogOpen(true), 150);
-                            }}>
-                              <Edit2 className="mr-2 h-4 w-4" /> Modifier le dossier
-                            </DropdownMenuItem>
-                            {res.status !== 'Checked In' && res.status !== 'Checked Out' && (
-                              <DropdownMenuItem onSelect={() => handleCheckIn(res)}>
-                                <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" /> Marquer l'arrivée
-                              </DropdownMenuItem>
-                            )}
-                            {res.status === 'Checked In' && (
-                              <DropdownMenuItem onSelect={() => handleCheckOut(res)}>
-                                <LogOut className="mr-2 h-4 w-4 text-rose-600" /> Marquer le départ
-                              </DropdownMenuItem>
-                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive" onSelect={(e) => { 
                               e.preventDefault();
@@ -334,17 +258,12 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        {/* MODALS DEFINED OUTSIDE TO PREVENT FREEZING */}
-        <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-          if (!open) {
-            setIsAddDialogOpen(false);
-            setIsEditDialogOpen(false);
-          }
-        }}>
+        {/* DIALOGS */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>{isEditDialogOpen ? "Modifier Réservation" : "Nouvelle Réservation"}</DialogTitle>
-              <DialogDescription>Gérez les informations du séjour client.</DialogDescription>
+              <DialogTitle>Nouvelle Réservation</DialogTitle>
+              <DialogDescription>Enregistrez un nouveau séjour client.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -396,10 +315,7 @@ export default function ReservationsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setIsAddDialogOpen(false);
-                setIsEditDialogOpen(false);
-              }}>Annuler</Button>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
               <Button onClick={handleSaveBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
@@ -408,12 +324,12 @@ export default function ReservationsPage() {
         <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Détails du Dossier</DialogTitle>
+              <DialogTitle>Détails de la Réservation</DialogTitle>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-4 py-4">
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Nom du client</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Client</span>
                   <span className="text-sm font-black">{selectedRes.guestName}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
@@ -421,7 +337,7 @@ export default function ReservationsPage() {
                   <span className="text-sm font-black">N° {selectedRes.roomNumber}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Période</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Séjour</span>
                   <span className="text-sm font-bold">{selectedRes.checkInDate} au {selectedRes.checkOutDate}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
@@ -429,7 +345,7 @@ export default function ReservationsPage() {
                   <Badge>{selectedRes.status}</Badge>
                 </div>
                 <div className="flex justify-between items-center pt-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
-                  <span className="text-xs font-bold uppercase">Total Facturé</span>
+                  <span className="text-xs font-bold uppercase">Total Dossier</span>
                   <span className="text-xl font-black text-primary">{Number(selectedRes.totalAmount).toFixed(2)} $</span>
                 </div>
               </div>
@@ -445,7 +361,7 @@ export default function ReservationsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer cette réservation ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action annulera le séjour et libérera la chambre.
+                Cette action retirera définitivement le dossier de <strong>{resToDelete?.guestName}</strong> du registre.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -456,6 +372,7 @@ export default function ReservationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
       </SidebarInset>
     </div>
   );
