@@ -5,7 +5,7 @@ service cloud.firestore {
 
     /**
      * Core Philosophy:
-     * Restricted access for K.H.M.System Hotelier.
+     * Restricted access for ImaraPMS.
      * Only authenticated admin accounts are permitted to view or manage data.
      */
 
@@ -16,9 +16,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Reordered to check the primary admin email FIRST.
+      // This prevents recursive rule evaluation during the initial setup
+      // when the roles_admin document doesn't exist yet or is being evaluated.
       return isSignedIn() && 
-             (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
-              request.auth.token.email == 'aubinmaga@gmail.com');
+             (request.auth.token.email == 'aubinmaga@gmail.com' ||
+              exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
     // --- Rules ---
@@ -31,14 +34,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow the primary admin to create their own role record and staff profile during initialization.
+     * @description Specific allows to bootstrap the primary admin account roles.
      */
     match /roles_admin/{staffId} {
-      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin());
+      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
     }
 
     match /staff/{staffId} {
-      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin());
+      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
     }
     
     match /settings/{settingId} {
