@@ -5,51 +5,28 @@
 
 @layer base {
   :root {
-    /* Primary: Seafoam Teal (#66D3B2) */
     --primary: 162 54% 61%;
     --primary-foreground: 162 54% 10%;
-
-    /* Secondary: Light Mint (#E0F8F1) */
     --secondary: 162 60% 93%;
     --secondary-foreground: 162 60% 20%;
-
-    /* Background: Soft Light Mint/Grey */
     --background: 162 20% 98%;
     --foreground: 0 0% 15%;
-
-    /* Card & Popover */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 15%;
-
-    /* Accent: Muted Blue (#7986CB) */
     --accent: 231 44% 64%;
     --accent-foreground: 0 0% 100%;
-
-    /* Leafy: Matches Primary */
     --leafy: 162 54% 61%;
     --leafy-foreground: 162 54% 10%;
-
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
-    /* Soft Grey for borders */
     --border: 0 0% 88%;
     --input: 0 0% 88%;
     --ring: 162 54% 61%;
-
     --radius: 0.75rem;
-
-    --chart-1: 162 54% 61%;
-    --chart-2: 231 44% 64%;
-    --chart-3: 173 58% 39%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 15%;
     --sidebar-primary: 162 54% 61%;
@@ -82,7 +59,6 @@
     --border: 162 10% 20%;
     --input: 162 10% 20%;
     --ring: 162 54% 61%;
-
     --sidebar-background: 162 10% 12%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 162 54% 61%;
@@ -95,34 +71,20 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground font-body antialiased;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
-  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-body antialiased; }
+  h1, h2, h3, h4, h5, h6 { @apply font-headline; }
 }
 
 @media print {
-  /* Masquer absolument tout par défaut */
-  body * {
-    visibility: hidden !important;
-  }
-  
-  /* Afficher uniquement le conteneur de la facture */
-  #invoice-printable, #invoice-printable * {
-    visibility: visible !important;
-  }
-
+  body * { visibility: hidden !important; }
+  #invoice-printable, #invoice-printable * { visibility: visible !important; }
   #invoice-printable {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 210mm !important; /* Largeur A4 */
-    height: 297mm !important; /* Hauteur A4 */
+    width: 210mm !important;
+    height: 297mm !important;
     padding: 20mm !important;
     margin: 0 !important;
     background: white !important;
@@ -131,8 +93,6 @@
     box-shadow: none !important;
     border: none !important;
   }
-
-  /* Masquer l'interface de la modale qui pourrait déborder */
   [role="dialog"] {
     position: absolute !important;
     top: 0 !important;
@@ -142,18 +102,6 @@
     box-shadow: none !important;
     border: none !important;
   }
-
-  /* Masquer les boutons et la barre d'action lors de l'impression */
-  [role="dialog"] button,
-  [role="dialog"] .bg-slate-50,
-  [role="dialog"] .print\:hidden {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  /* Forcer le rendu A4 sans marges de navigateur */
-  @page {
-    size: A4;
-    margin: 0;
-  }
+  .print\:hidden { display: none !important; }
+  @page { size: A4; margin: 0; }
 }
