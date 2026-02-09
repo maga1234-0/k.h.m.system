@@ -272,8 +272,8 @@ export default function ReservationsPage() {
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuItem onSelect={(e) => { 
                               e.preventDefault();
-                              setSelectedRes(res); 
-                              setIsDetailsDialogOpen(true); 
+                              setSelectedRes(res);
+                              setTimeout(() => setIsDetailsDialogOpen(true), 150);
                             }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
@@ -290,7 +290,7 @@ export default function ReservationsPage() {
                                 numberOfGuests: res.numberOfGuests,
                                 totalAmount: res.totalAmount.toString()
                               });
-                              setIsEditDialogOpen(true); 
+                              setTimeout(() => setIsEditDialogOpen(true), 150);
                             }}>
                               <Edit2 className="mr-2 h-4 w-4" /> Modifier le dossier
                             </DropdownMenuItem>
@@ -308,7 +308,7 @@ export default function ReservationsPage() {
                             <DropdownMenuItem className="text-destructive" onSelect={(e) => { 
                               e.preventDefault();
                               setResToDelete(res); 
-                              setIsDeleteDialogOpen(true); 
+                              setTimeout(() => setIsDeleteDialogOpen(true), 150);
                             }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
                             </DropdownMenuItem>
