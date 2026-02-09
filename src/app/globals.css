@@ -26,7 +26,7 @@
     --accent: 231 44% 64%;
     --accent-foreground: 0 0% 100%;
 
-    /* Leafy: Now matches Primary for consistency */
+    /* Leafy: Matches Primary */
     --leafy: 162 54% 61%;
     --leafy-foreground: 162 54% 10%;
 
@@ -36,7 +36,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Soft Grey for borders (#E0E0E0) */
+    /* Soft Grey for borders */
     --border: 0 0% 88%;
     --input: 0 0% 88%;
     --ring: 162 54% 61%;
@@ -106,31 +106,39 @@
 }
 
 @media print {
-  body {
-    background-color: white !important;
+  /* Masquer tous les éléments SAUF le dialogue ou la facture */
+  body > *:not([role="dialog"]) {
+    display: none !important;
   }
-  /* Masquer tout sauf le contenu de la facture */
-  body * {
-    visibility: hidden;
+
+  /* Dans le dialogue, ne garder que la facture */
+  [role="dialog"] button,
+  [role="dialog"] .bg-slate-50,
+  [role="dialog"] .print\:hidden {
+    display: none !important;
   }
-  #invoice-printable, #invoice-printable * {
-    visibility: visible;
-  }
+
+  /* Forcer la facture à prendre toute la page */
   #invoice-printable {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 210mm; /* A4 width */
-    height: 297mm; /* A4 height */
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
     padding: 20mm !important;
     margin: 0 !important;
     background: white !important;
     color: black !important;
+    display: block !important;
   }
-  /* Cacher les éléments UI du dialogue */
-  .fixed.inset-0, [role="dialog"] button {
-    display: none !important;
+
+  /* Supprimer les ombres et arrondis pour l'impression */
+  [role="dialog"] {
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
   }
+
   @page {
     size: A4;
     margin: 0mm;

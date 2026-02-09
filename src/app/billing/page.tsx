@@ -328,8 +328,8 @@ export default function BillingPage() {
                     <div>
                       <h3 className="text-4xl font-black text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
                       <div className="space-y-1 text-sm text-slate-600 font-bold">
-                        <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedInvoice.guestPhone || "N/A"}</p>
-                        <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || "NXHSPSC"}</p>
+                        <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedInvoice.guestPhone || ""}</p>
+                        <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || ""}</p>
                       </div>
                     </div>
                   </div>
@@ -364,7 +364,6 @@ export default function BillingPage() {
                       <tr>
                         <td className="py-8">
                           <p className="font-black text-slate-900 text-lg">Services d'Hébergement</p>
-                          <p className="text-xs text-slate-400 font-medium">Séjour hôtelier incluant l'accès complet aux installations.</p>
                         </td>
                         <td className="py-8 text-center text-sm font-bold">1</td>
                         <td className="py-8 text-right text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
