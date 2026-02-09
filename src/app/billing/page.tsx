@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -19,7 +18,6 @@ import {
   Trash2, 
   AlertCircle, 
   FileText, 
-  Download,
   Phone,
   ArrowDown
 } from "lucide-react"
@@ -121,12 +119,10 @@ export default function BillingPage() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownload = () => {
-    window.print();
+  const handlePrintAction = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   if (!mounted || isAuthLoading || !user) {
@@ -281,7 +277,7 @@ export default function BillingPage() {
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Facture ImaraPMS</DialogTitle>
+            <DialogTitle>Facture Officielle ImaraPMS</DialogTitle>
             <DialogDescription>Aperçu professionnel pour impression et archivage.</DialogDescription>
           </DialogHeader>
           
@@ -317,12 +313,12 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Billing Info Grid - Matching 3 Columns of image */}
+                {/* Info Grid */}
                 <div className="grid grid-cols-3 gap-8 mb-16">
                   <div className="space-y-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-900 pb-1 w-fit pr-12">DESTINATAIRE</p>
                     <div>
-                      <h3 className="text-3xl font-black text-slate-900 mb-2 lowercase">{selectedInvoice.guestName}</h3>
+                      <h3 className="text-3xl font-black text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
                       <div className="space-y-1 text-[13px] text-slate-600 font-bold">
                         <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedInvoice.guestPhone || "N/A"}</p>
                         <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || "NXHSPSC3"}</p>
@@ -347,7 +343,7 @@ export default function BillingPage() {
 
                 <div className="h-0.5 bg-slate-900 w-full mb-12" />
 
-                {/* Items Table - Visual spacing */}
+                {/* Items Table */}
                 <div className="mb-20">
                   <table className="w-full text-left">
                     <thead>
@@ -394,7 +390,7 @@ export default function BillingPage() {
                 </div>
               </div>
 
-              {/* Action Bar - Matching exactly the image buttons */}
+              {/* Action Bar */}
               <div className="bg-slate-50 p-8 flex justify-end gap-4 border-t print:hidden">
                 <Button 
                   className="h-14 px-8 gap-3 bg-[#1A1C1E] hover:bg-[#2A2C2E] text-white rounded-xl shadow-xl transition-all" 
@@ -405,14 +401,14 @@ export default function BillingPage() {
                 </Button>
                 <Button 
                   className="h-14 px-8 gap-3 bg-[#1A1C1E] hover:bg-[#2A2C2E] text-white rounded-xl shadow-xl transition-all" 
-                  onClick={handleDownload}
+                  onClick={handlePrintAction}
                 >
                   <ArrowDown className="h-5 w-5" />
                   <span className="font-bold uppercase tracking-[0.1em] text-[11px]">TÉLÉCHARGER</span>
                 </Button>
                 <Button 
                   className="h-14 px-10 gap-3 bg-[#1A1C1E] hover:bg-[#000] text-white rounded-xl shadow-xl transition-all" 
-                  onClick={handlePrint}
+                  onClick={handlePrintAction}
                 >
                   <Printer className="h-5 w-5" />
                   <span className="font-bold uppercase tracking-[0.1em] text-[11px]">IMPRIMER LA FACTURE</span>

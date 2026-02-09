@@ -104,3 +104,30 @@
     @apply font-headline;
   }
 }
+
+@media print {
+  /* Masquer tout sauf le contenu de la facture */
+  body * {
+    visibility: hidden;
+  }
+  #invoice-printable, #invoice-printable * {
+    visibility: visible;
+  }
+  #invoice-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  /* Supprimer les fonds gris de l'overlay de Dialog */
+  .fixed.inset-0 {
+    display: none !important;
+  }
+  /* Ajuster pour éviter les coupures */
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+}
