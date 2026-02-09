@@ -165,6 +165,7 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resRef, { status: "Checked Out" });
     if (res.roomId) {
+      // Room becomes 'Cleaning' (liberated but needs cleaning)
       updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
     }
     toast({ title: "Départ Enregistré", description: `${res.guestName} a libéré la chambre. Statut: Nettoyage.` });
@@ -274,7 +275,7 @@ export default function ReservationsPage() {
                             <DropdownMenuItem onSelect={(e) => { 
                               e.preventDefault();
                               setSelectedRes(res); 
-                              setTimeout(() => setIsDetailsDialogOpen(true), 150); 
+                              setIsDetailsDialogOpen(true); 
                             }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
@@ -291,7 +292,7 @@ export default function ReservationsPage() {
                                 numberOfGuests: res.numberOfGuests,
                                 totalAmount: res.totalAmount.toString()
                               });
-                              setTimeout(() => setIsEditDialogOpen(true), 150); 
+                              setIsEditDialogOpen(true); 
                             }}>
                               <Edit2 className="mr-2 h-4 w-4" /> Modifier le dossier
                             </DropdownMenuItem>
@@ -309,7 +310,7 @@ export default function ReservationsPage() {
                             <DropdownMenuItem className="text-destructive" onSelect={(e) => { 
                               e.preventDefault();
                               setResToDelete(res); 
-                              setTimeout(() => setIsDeleteDialogOpen(true), 150); 
+                              setIsDeleteDialogOpen(true); 
                             }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
                             </DropdownMenuItem>
