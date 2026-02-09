@@ -106,15 +106,24 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     try {
+      // Ensure element is visible for capture and give it a fixed width for stability
+      const originalStyle = element.style.cssText;
+      element.style.width = '800px'; 
+      
       // Small delay to ensure all images/styles are applied
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 500));
       
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        width: 800,
+        windowWidth: 800,
       });
+      
+      // Restore original style
+      element.style.cssText = originalStyle;
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -128,7 +137,7 @@ export default function BillingPage() {
       toast({ title: "Téléchargement Réussi", description: "La facture a été enregistrée dans vos fichiers." });
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le fichier." });
+      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le fichier complet." });
     } finally {
       setIsGeneratingPdf(false);
     }
