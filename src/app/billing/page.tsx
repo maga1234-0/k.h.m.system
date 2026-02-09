@@ -8,7 +8,19 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Receipt, Printer, Loader2, CreditCard, MessageCircle, Hotel, Trash2, AlertCircle, FileText, Download } from "lucide-react"
+import { 
+  Receipt, 
+  Printer, 
+  Loader2, 
+  CreditCard, 
+  MessageCircle, 
+  Hotel, 
+  Trash2, 
+  AlertCircle, 
+  FileText, 
+  Download,
+  Phone
+} from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
