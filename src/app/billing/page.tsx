@@ -95,19 +95,18 @@ export default function BillingPage() {
     const inv = invoiceToGen || selectedInvoice;
     if (!inv) return;
 
-    if (!invoiceToGen) setIsGeneratingPdf(true);
+    setIsGeneratingPdf(true);
     
-    // Si on appelle le téléchargement directement depuis la liste
+    // If called from the list, we must open the dialog first to render the component
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // On attend que le dialogue s'affiche pour capturer
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 600)); // Delay to allow rendering
     }
 
     const element = document.getElementById('invoice-printable');
     if (!element) {
-      if (!invoiceToGen) setIsGeneratingPdf(false);
+      setIsGeneratingPdf(false);
       toast({ variant: "destructive", title: "Erreur", description: "Élément graphique introuvable." });
       return;
     }
@@ -135,7 +134,7 @@ export default function BillingPage() {
       console.error('PDF Error:', error);
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
     } finally {
-      if (!invoiceToGen) setIsGeneratingPdf(false);
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -281,13 +280,9 @@ export default function BillingPage() {
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Facture {settings?.hotelName || 'ImaraPMS'}</DialogTitle>
-          </DialogHeader>
-          
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
-              <div className="flex-1 overflow-auto p-12 bg-white text-slate-900 select-text" id="invoice-printable">
+              <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
                 <div className="flex justify-between items-start mb-16">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-white">
@@ -299,12 +294,7 @@ export default function BillingPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="relative inline-block">
-                      <h1 className="text-5xl font-black text-slate-100/50 uppercase tracking-tighter leading-none pointer-events-none select-none">Facture</h1>
-                      <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
-                        <p className="text-xl font-black text-slate-900 tracking-tight">INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
-                      </div>
-                    </div>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tight">INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Date: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>
@@ -339,7 +329,7 @@ export default function BillingPage() {
                       <tr>
                         <td className="py-8 px-6">
                           <p className="font-bold text-slate-900 text-lg">Séjour Hôtelier & Services Premium</p>
-                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement tout inclus, room service et blanchisserie</p>
+                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement et services inclus</p>
                         </td>
                         <td className="py-8 px-6 text-right">
                           <span className="text-xl font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
@@ -356,9 +346,6 @@ export default function BillingPage() {
                       <span className="text-4xl font-black font-headline text-primary tracking-tighter">
                         {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>
-                    </div>
-                    <div className="pt-8 text-center border-t border-slate-100">
-                      <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">Signature Direction {settings?.hotelName || 'ImaraPMS'}</p>
                     </div>
                   </div>
                 </div>
