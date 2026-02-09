@@ -28,8 +28,6 @@ import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -97,11 +95,11 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     
-    // If called from the list, we must open the dialog first to render the component
+    // Si appelé depuis la liste, ouvrir le dialogue pour rendu
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      await new Promise(r => setTimeout(r, 600)); // Delay to allow rendering
+      await new Promise(r => setTimeout(r, 800)); // Délai pour rendu propre
     }
 
     const element = document.getElementById('invoice-printable');
@@ -129,7 +127,7 @@ export default function BillingPage() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`facture-${inv.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "PDF Généré", description: "Le fichier a été enregistré dans votre explorateur." });
+      toast({ title: "PDF Généré", description: "Le fichier a été enregistré sur votre appareil." });
     } catch (error) {
       console.error('PDF Error:', error);
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
@@ -238,7 +236,7 @@ export default function BillingPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 ml-auto md:ml-0">
-                        <div className="flex flex-col items-end mr-2">
+                        <div className="flex flex-col items-end mr-4">
                           <span className="font-bold text-lg">{Number(inv.amountDue).toFixed(2)} $</span>
                           <Badge variant={inv.status === 'Paid' ? 'default' : 'secondary'} className="text-[10px] py-0 px-2 h-4">
                             {inv.status === 'Paid' ? 'Payée' : 'Impayée'}

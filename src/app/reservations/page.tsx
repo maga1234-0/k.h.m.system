@@ -18,7 +18,9 @@ import {
   Loader2,
   Trash2,
   User,
-  CreditCard
+  CreditCard,
+  CheckCircle2,
+  LogOut
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -142,6 +144,19 @@ export default function ReservationsPage() {
     toast({ variant: "destructive", title: "Réservation Annulée", description: "Dossier supprimé et chambre libérée." });
   };
 
+  const handleUpdateStatus = (resId: string, roomId: string, newStatus: string) => {
+    const resRef = doc(firestore, 'reservations', resId);
+    updateDocumentNonBlocking(resRef, { status: newStatus });
+
+    // Automation: libérer la chambre en mode nettoyage si check-out
+    if (newStatus === 'Checked Out' && roomId) {
+      updateDocumentNonBlocking(doc(firestore, 'rooms', roomId), { status: 'Cleaning' });
+    }
+
+    toast({ title: "Statut Mis à Jour", description: `Le séjour est désormais: ${newStatus}` });
+    setIsDetailsDialogOpen(false);
+  };
+
   const filteredReservations = reservations?.filter(res => 
     res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     res.roomNumber?.includes(searchTerm)
@@ -180,10 +195,9 @@ export default function ReservationsPage() {
             <div className="p-4 border-b bg-muted/20">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input 
-                  type="text"
+                <Input 
                   placeholder="Rechercher Nom du client..." 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="pl-9" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
@@ -353,10 +367,23 @@ export default function ReservationsPage() {
                 <span className="text-xs font-bold uppercase">Total Dossier</span>
                 <span className="text-xl font-black text-primary">{Number(selectedRes.totalAmount).toFixed(2)} $</span>
               </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {selectedRes.status !== 'Checked In' && selectedRes.status !== 'Checked Out' && (
+                  <Button className="gap-2" onClick={() => handleUpdateStatus(selectedRes.id, selectedRes.roomId, 'Checked In')}>
+                    <CheckCircle2 className="h-4 w-4" /> Arrivée
+                  </Button>
+                )}
+                {selectedRes.status === 'Checked In' && (
+                  <Button variant="destructive" className="gap-2" onClick={() => handleUpdateStatus(selectedRes.id, selectedRes.roomId, 'Checked Out')}>
+                    <LogOut className="h-4 w-4" /> Départ (Libérer)
+                  </Button>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Fermer</Button>
+            <Button className="w-full" variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
