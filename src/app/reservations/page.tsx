@@ -455,7 +455,7 @@ export default function ReservationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </SidebarInset>
+      </main>
     </div>
   );
 }

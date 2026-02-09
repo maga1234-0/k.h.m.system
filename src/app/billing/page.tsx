@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
   Receipt, 
-  Printer, 
   Loader2, 
   CreditCard, 
   MessageCircle, 
@@ -97,7 +96,7 @@ export default function BillingPage() {
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
+    const message = `*${(settings?.hotelName || 'IMARAPMS').toUpperCase()} — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -107,11 +106,16 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     try {
+      // Small delay to ensure all images/styles are applied
+      await new Promise(r => setTimeout(r, 100));
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
       });
+      
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
@@ -272,7 +276,7 @@ export default function BillingPage() {
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Facture ImaraPMS</DialogTitle>
+            <DialogTitle>Facture {settings?.hotelName || 'ImaraPMS'}</DialogTitle>
           </DialogHeader>
           
           {selectedInvoice && (
@@ -290,7 +294,7 @@ export default function BillingPage() {
                   </div>
                   <div className="text-right">
                     <div className="relative inline-block">
-                      <h1 className="text-5xl font-black text-slate-100 uppercase tracking-tighter leading-none pointer-events-none select-none">Facture</h1>
+                      <h1 className="text-5xl font-black text-slate-100/50 uppercase tracking-tighter leading-none pointer-events-none select-none">Facture</h1>
                       <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
                         <p className="text-xl font-black text-slate-900 tracking-tight">INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
                       </div>
