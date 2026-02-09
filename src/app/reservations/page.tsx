@@ -18,7 +18,8 @@ import {
   CreditCard,
   MoreHorizontal,
   CheckCircle,
-  LogOut
+  Trash2,
+  CalendarDays
 } from "lucide-react";
 import { 
   Dialog, 
@@ -48,10 +49,21 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   updateDocumentNonBlocking, 
+  deleteDocumentNonBlocking,
   useUser 
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ReservationsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -60,6 +72,7 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedResId, setSelectedResId] = useState<string | null>(null);
   
   const [bookingForm, setBookingForm] = useState({
@@ -91,9 +104,15 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setSelectedResId(resId);
-    // Délai pour éviter le conflit de focus avec le menu Radix
     setTimeout(() => {
       setIsManageDialogOpen(true);
+    }, 100);
+  };
+
+  const handleOpenDelete = (resId: string) => {
+    setSelectedResId(resId);
+    setTimeout(() => {
+      setIsDeleteDialogOpen(true);
     }, 100);
   };
 
@@ -140,7 +159,7 @@ export default function ReservationsPage() {
     });
 
     setIsManageDialogOpen(false);
-    toast({ title: "Arrivée validée", description: "Client enregistré." });
+    toast({ title: "Arrivée validée", description: "Le séjour a commencé." });
   };
 
   const handleCheckOut = () => {
@@ -149,7 +168,20 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
 
     setIsManageDialogOpen(false);
-    toast({ title: "Départ validé", description: "Chambre en cours de ménage." });
+    toast({ title: "Départ validé", description: "La chambre a été libérée pour le ménage." });
+  };
+
+  const handleDeleteRes = () => {
+    if (!selectedRes) return;
+    
+    // Libérer la chambre si elle était occupée
+    if (selectedRes.roomId) {
+      updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
+    }
+    
+    deleteDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id));
+    setIsDeleteDialogOpen(false);
+    toast({ variant: "destructive", title: "Réservation supprimée", description: "Le dossier a été retiré et la chambre libérée." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -238,9 +270,13 @@ export default function ReservationsPage() {
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onSelect={() => handleOpenManage(res.id)}>
-                                <CheckCircle className="h-4 w-4 mr-2" /> Gérer Séjour
+                                <CheckCircle className="h-4 w-4 mr-2" /> Gérer le séjour
+                              </DropdownMenuItem>
+                              <Separator className="my-1" />
+                              <DropdownMenuItem onSelect={() => handleOpenDelete(res.id)} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" /> Annuler / Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -323,49 +359,70 @@ export default function ReservationsPage() {
         </Dialog>
 
         <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-          <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
+          <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl border-none shadow-2xl">
             <DialogHeader>
-              <DialogTitle>Gestion de l'Arrivée / Départ</DialogTitle>
-              <DialogDescription>Actions rapides pour le séjour sélectionné.</DialogDescription>
+              <DialogTitle>Gestion du Séjour</DialogTitle>
+              <DialogDescription>Actions rapides pour le séjour de {selectedRes?.guestName}.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/30">
                   <div>
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Client</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Client</Label>
                     <p className="font-bold text-sm truncate">{selectedRes.guestName}</p>
                   </div>
                   <div>
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Chambre</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Chambre</Label>
                     <p className="font-bold text-sm">N° {selectedRes.roomNumber}</p>
                   </div>
                 </div>
-                <Separator />
-                <div className="bg-muted/30 p-4 rounded-xl flex items-center justify-between gap-4">
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Statut</span>
-                    <Badge className="w-fit mt-1 text-[10px]">{selectedRes.status}</Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    {selectedRes.status === 'Confirmée' && (
-                      <Button onClick={handleCheckIn} className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700">
-                        Check-in
-                      </Button>
-                    )}
-                    {selectedRes.status === 'Checked In' && (
-                      <Button onClick={handleCheckOut} className="h-9 text-xs bg-amber-600 hover:bg-amber-700">
-                        Check-out
-                      </Button>
-                    )}
-                  </div>
+                
+                <div className="flex flex-col gap-3">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">Actions Disponibles</Label>
+                  
+                  {selectedRes.status === 'Confirmée' && (
+                    <Button onClick={handleCheckIn} className="w-full h-12 gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20">
+                      <CheckCircle className="h-5 w-5" /> Enregistrer l'Arrivée (Check-in)
+                    </Button>
+                  )}
+                  
+                  {selectedRes.status === 'Checked In' && (
+                    <Button onClick={handleCheckOut} className="w-full h-12 gap-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20">
+                      <CalendarDays className="h-5 w-5" /> Enregistrer le Départ (Check-out)
+                    </Button>
+                  )}
+                  
+                  {selectedRes.status === 'Checked Out' && (
+                    <div className="p-4 text-center border-2 border-dashed rounded-xl text-muted-foreground text-sm">
+                      Ce séjour est déjà terminé.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" className="w-full h-9 text-xs" onClick={() => setIsManageDialogOpen(false)}>Fermer</Button>
+              <Button variant="ghost" className="w-full h-10 text-xs font-bold uppercase tracking-widest" onClick={() => setIsManageDialogOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Annuler cette réservation ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action supprimera le dossier et remettra la chambre N° {selectedRes?.roomNumber} en disponibilité immédiate.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Retour</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteRes} className="bg-destructive text-white hover:bg-destructive/90">
+                Confirmer l'Annulation
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </SidebarInset>
     </div>
   );

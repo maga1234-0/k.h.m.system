@@ -106,7 +106,7 @@ export default function PlanningPage() {
                     {weekDays.map((day) => (
                       <div key={day.toString()} className="p-2 md:p-4 text-center border-r last:border-r-0">
                         <div className="text-[9px] md:text-xs font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                        <div className={`text-sm md:text-lg font-headline font-bold ${clientToday && isSameDay(day, clientToday) ? 'text-primary ring-2 ring-primary/20 rounded-full w-fit mx-auto px-2' : ''}`}>
+                        <div className={`text-sm md:text-lg font-headline font-bold ${clientToday && isSameDay(day, clientToday) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center mx-auto shadow-lg shadow-primary/20' : ''}`}>
                           {format(day, 'd')}
                         </div>
                       </div>
