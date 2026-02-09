@@ -247,8 +247,8 @@ export default function BillingPage() {
           </DialogHeader>
           
           {selectedInvoice && (
-            <div className="flex flex-col h-full max-h-[90vh] select-text">
-              <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
+            <div className="flex flex-col h-full max-h-[90vh]">
+              <div className="flex-1 overflow-auto p-12 bg-white text-slate-900 select-text" id="invoice-printable">
                 <div className="flex justify-between items-start mb-16">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-white">

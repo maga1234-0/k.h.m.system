@@ -19,7 +19,8 @@ import {
   Trash2,
   User,
   CreditCard,
-  CheckCircle2
+  CheckCircle2,
+  Edit2
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -72,12 +73,13 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRes, setSelectedRes] = useState<any>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
-  const [newBooking, setNewBooking] = useState({
+  const [bookingForm, setBookingForm] = useState({
     guestName: "",
     guestEmail: "",
     guestPhone: "",
@@ -101,27 +103,34 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  const handleCreateBooking = () => {
-    if (!newBooking.guestName || !newBooking.roomId || !resCollection) {
+  const handleSaveBooking = () => {
+    if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
       toast({ variant: "destructive", title: "Données manquantes", description: "Veuillez remplir les informations obligatoires." });
       return;
     }
     
-    const selectedRoom = rooms?.find(r => r.id === newBooking.roomId);
+    const selectedRoom = rooms?.find(r => r.id === bookingForm.roomId);
     if (!selectedRoom) return;
 
     const reservationData = { 
-      ...newBooking, 
+      ...bookingForm, 
       roomNumber: selectedRoom.roomNumber, 
-      status: "Confirmed", 
-      totalAmount: Number(newBooking.totalAmount) || 0,
-      createdAt: new Date().toISOString() 
+      status: selectedRes ? selectedRes.status : "Confirmed", 
+      totalAmount: Number(bookingForm.totalAmount) || 0,
+      createdAt: selectedRes ? selectedRes.createdAt : new Date().toISOString() 
     };
 
-    addDocumentNonBlocking(resCollection, reservationData);
-    setIsAddDialogOpen(false);
-    setNewBooking({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Réservation Enregistrée", description: `Dossier créé pour ${reservationData.guestName}.` });
+    if (selectedRes) {
+      updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), reservationData);
+      setIsEditDialogOpen(false);
+    } else {
+      addDocumentNonBlocking(resCollection, reservationData);
+      setIsAddDialogOpen(false);
+    }
+    
+    setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
+    setSelectedRes(null);
+    toast({ title: "Opération Réussie", description: `Dossier de ${reservationData.guestName} mis à jour.` });
   };
 
   const handleCheckIn = (res: any) => {
@@ -173,7 +182,7 @@ export default function ReservationsPage() {
     );
   }
 
-  const availableRooms = rooms?.filter(r => r.status === 'Available') || [];
+  const availableRooms = rooms?.filter(r => r.status === 'Available' || (selectedRes && r.id === selectedRes.roomId)) || [];
 
   return (
     <div className="flex h-screen w-full">
@@ -185,7 +194,11 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Registre des Réservations</h1>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2">
+          <Button onClick={() => {
+            setSelectedRes(null);
+            setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
+            setIsAddDialogOpen(true);
+          }} className="bg-primary gap-2">
             <Plus className="h-4 w-4" /> Nouvelle réservation
           </Button>
         </header>
@@ -245,9 +258,25 @@ export default function ReservationsPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuItem onSelect={() => { setSelectedRes(res); setTimeout(() => setIsDetailsDialogOpen(true), 150); }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { 
+                              setSelectedRes(res); 
+                              setBookingForm({
+                                guestName: res.guestName,
+                                guestEmail: res.guestEmail || "",
+                                guestPhone: res.guestPhone || "",
+                                roomId: res.roomId,
+                                checkInDate: res.checkInDate,
+                                checkOutDate: res.checkOutDate,
+                                numberOfGuests: res.numberOfGuests,
+                                totalAmount: res.totalAmount.toString()
+                              });
+                              setTimeout(() => setIsEditDialogOpen(true), 150); 
+                            }}>
+                              <Edit2 className="mr-2 h-4 w-4" /> Modifier le dossier
                             </DropdownMenuItem>
                             {res.status !== 'Checked In' && (
                               <DropdownMenuItem onSelect={() => handleCheckIn(res)}>
@@ -275,11 +304,18 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        {/* Add/Edit Dialog */}
+        <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            setIsAddDialogOpen(false);
+            setIsEditDialogOpen(false);
+            setSelectedRes(null);
+          }
+        }}>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Enregistrez un nouveau dossier de séjour.</DialogDescription>
+              <DialogTitle>{isEditDialogOpen ? "Modifier Réservation" : "Nouvelle Réservation"}</DialogTitle>
+              <DialogDescription>Gérez les informations du séjour client.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -287,28 +323,28 @@ export default function ReservationsPage() {
                   <Label>Nom du client</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-9" placeholder="" value={newBooking.guestName} onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})} />
+                    <Input className="pl-9" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>WhatsApp / Téléphone</Label>
-                  <Input placeholder="" value={newBooking.guestPhone} onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})} />
+                  <Input value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Date d'Arrivée</Label>
-                  <Input type="date" value={newBooking.checkInDate} onChange={(e) => setNewBooking({...newBooking, checkInDate: e.target.value})} />
+                  <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <Label>Date de Départ</Label>
-                  <Input type="date" value={newBooking.checkOutDate} onChange={(e) => setNewBooking({...newBooking, checkOutDate: e.target.value})} />
+                  <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Chambre disponible</Label>
-                  <Select value={newBooking.roomId} onValueChange={(val) => setNewBooking({...newBooking, roomId: val})}>
+                  <Select value={bookingForm.roomId} onValueChange={(val) => setBookingForm({...bookingForm, roomId: val})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choisir..." />
                     </SelectTrigger>
@@ -329,14 +365,17 @@ export default function ReservationsPage() {
                   <Label>Montant du séjour ($)</Label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="number" className="pl-9" placeholder="" value={newBooking.totalAmount} onChange={(e) => setNewBooking({...newBooking, totalAmount: e.target.value})} />
+                    <Input type="number" className="pl-9" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
                   </div>
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreateBooking}>Confirmer</Button>
+              <Button variant="outline" onClick={() => {
+                setIsAddDialogOpen(false);
+                setIsEditDialogOpen(false);
+              }}>Annuler</Button>
+              <Button onClick={handleSaveBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
