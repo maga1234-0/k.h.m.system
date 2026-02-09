@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -17,14 +16,14 @@ import {
   Mail, 
   Phone, 
   Shield, 
-  Calendar,
+  Clock,
   MessageSquare,
   Loader2,
   Send,
-  Clock,
   Edit2,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { 
   Dialog, 
@@ -34,6 +33,16 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -73,6 +82,8 @@ export default function StaffPage() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<any>(null);
   
   const [messageText, setMessageText] = useState("");
   const [scheduleData, setScheduleData] = useState({
@@ -150,14 +161,19 @@ export default function StaffPage() {
     });
   };
 
-  const handleDeleteStaff = (member: any) => {
-    const staffRef = doc(firestore, 'staff', member.id);
+  const handleDeleteConfirm = () => {
+    if (!memberToDelete) return;
+    const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
+    
     toast({
       variant: "destructive",
       title: "Membre retiré",
-      description: `${member.firstName} ${member.lastName} a été supprimé du répertoire.`,
+      description: `${memberToDelete.firstName} ${memberToDelete.lastName} a été supprimé du répertoire.`,
     });
+    
+    setMemberToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
   const handleSendMessage = () => {
@@ -291,7 +307,13 @@ export default function StaffPage() {
                           <RefreshCw className="h-4 w-4 mr-2" /> Basculer statut
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onSelect={() => handleDeleteStaff(member)}>
+                        <DropdownMenuItem 
+                          className="text-destructive" 
+                          onSelect={() => {
+                            setMemberToDelete(member);
+                            setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                          }}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" /> Supprimer
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -573,6 +595,26 @@ export default function StaffPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Supprimer {memberToDelete?.firstName} {memberToDelete?.lastName} ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. Le profil de ce membre sera définitivement retiré du répertoire du personnel.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setMemberToDelete(null)}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
