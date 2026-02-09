@@ -113,8 +113,22 @@ export default function BillingPage() {
     
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
+    const date = new Date(invoice.invoiceDate).toLocaleDateString('fr-FR');
+    const amount = Number(invoice.amountDue).toFixed(2);
     
-    const message = `*IMARAPMS - FACTURE OFFICIELLE*\n\n📄 *N° de Facture :* #INV-${invoiceId}\n👤 *Client :* ${invoice.guestName}\n📅 *Date :* ${new Date(invoice.invoiceDate).toLocaleDateString('fr-FR')}\n💰 *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n✅ *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE DE RÈGLEMENT'}\n\nMerci de votre confiance.\nCordialement,\n*L'équipe ImaraPMS*`;
+    const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\n` +
+      `*FACTURE OFFICIELLE N° #INV-${invoiceId}*\n\n` +
+      `👤 *CLIENT :* ${invoice.guestName.toUpperCase()}\n` +
+      `📅 *DATE D'ÉMISSION :* ${date}\n` +
+      `💰 *MONTANT TOTAL :* ${amount} $\n` +
+      `✅ *STATUT :* ${invoice.status === 'Paid' ? 'RÉGLÉE' : 'À PAYER'}\n\n` +
+      `--------------------------------\n` +
+      `Détails du séjour :\n` +
+      `- Services d'hébergement complets\n` +
+      `- Accès illimité aux installations\n` +
+      `--------------------------------\n\n` +
+      `Nous vous remercions de votre confiance.\n` +
+      `_L'équipe ImaraPMS_`;
     
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
