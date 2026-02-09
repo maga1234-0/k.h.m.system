@@ -1,18 +1,23 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, Info } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function PlanningPage() {
   const { user } = useUser();
@@ -72,67 +77,92 @@ export default function PlanningPage() {
         </header>
 
         <main className="p-6">
-          <Card className="border-none shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="min-w-[1000px]">
-                {/* Header Grid */}
-                <div className="grid grid-cols-[150px_repeat(7,1fr)] bg-muted/50 border-b">
-                  <div className="p-4 font-bold text-xs uppercase tracking-widest text-muted-foreground border-r">Chambre</div>
-                  {weekDays.map((day) => (
-                    <div key={day.toString()} className="p-4 text-center border-r last:border-r-0">
-                      <div className="text-xs font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                      <div className={`text-lg font-headline font-bold ${isSameDay(day, new Date()) ? 'text-primary' : ''}`}>
-                        {format(day, 'd')}
+          <TooltipProvider>
+            <Card className="border-none shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="min-w-[1000px]">
+                  {/* Header Grid */}
+                  <div className="grid grid-cols-[150px_repeat(7,1fr)] bg-muted/50 border-b">
+                    <div className="p-4 font-bold text-xs uppercase tracking-widest text-muted-foreground border-r">Chambre</div>
+                    {weekDays.map((day) => (
+                      <div key={day.toString()} className="p-4 text-center border-r last:border-r-0">
+                        <div className="text-xs font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
+                        <div className={`text-lg font-headline font-bold ${isSameDay(day, new Date()) ? 'text-primary' : ''}`}>
+                          {format(day, 'd')}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                {/* Body Grid */}
-                <div className="divide-y">
-                  {isRoomsLoading ? (
-                    <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Chargement du plan...
-                    </div>
-                  ) : sortedRooms.map((room) => (
-                    <div key={room.id} className="grid grid-cols-[150px_repeat(7,1fr)] hover:bg-muted/5 transition-colors">
-                      <div className="p-4 border-r flex flex-col justify-center bg-muted/10">
-                        <span className="font-bold text-sm">Ch. {room.roomNumber}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase font-medium">{room.roomType}</span>
+                  {/* Body Grid */}
+                  <div className="divide-y">
+                    {isRoomsLoading ? (
+                      <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement du plan...
                       </div>
-                      {weekDays.map((day) => {
-                        const res = getReservationForDay(room.id, day);
-                        return (
-                          <div key={day.toString()} className="h-20 border-r last:border-r-0 relative p-1">
-                            {res && (
-                              <div className={`
-                                absolute inset-1 rounded-md p-2 text-[10px] font-bold overflow-hidden shadow-sm flex flex-col justify-center
-                                ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}
-                              `}>
-                                <span className="truncate">{res.guestName}</span>
-                                <span className="opacity-70 truncate">
-                                  {res.status === 'Checked In' ? 'Occupé' : 'Confirmé'}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                    ) : sortedRooms.map((room) => (
+                      <div key={room.id} className="grid grid-cols-[150px_repeat(7,1fr)] hover:bg-muted/5 transition-colors">
+                        <div className="p-4 border-r flex flex-col justify-center bg-muted/10">
+                          <span className="font-bold text-sm">Ch. {room.roomNumber}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase font-medium">{room.roomType}</span>
+                        </div>
+                        {weekDays.map((day) => {
+                          const res = getReservationForDay(room.id, day);
+                          return (
+                            <div key={day.toString()} className="h-20 border-r last:border-r-0 relative p-1">
+                              {res && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className={`
+                                      absolute inset-1 rounded-md p-2 text-[10px] font-bold overflow-hidden shadow-sm flex flex-col justify-center cursor-help
+                                      ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}
+                                    `}>
+                                      <span className="truncate">{res.guestName}</span>
+                                      <span className="opacity-70 truncate">
+                                        {res.status === 'Checked In' ? 'Arrivé' : 'Confirmé'}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <div className="space-y-1 p-1">
+                                      <p className="font-bold text-sm">{res.guestName}</p>
+                                      <p className="text-xs">{res.checkInDate} → {res.checkOutDate}</p>
+                                      <p className="text-[10px] uppercase font-bold text-primary">{res.status}</p>
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </Card>
+          </TooltipProvider>
+          
+          <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-sm bg-primary" /> <span>En séjour</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-sm bg-secondary" /> <span>Réservation confirmée</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-sm border border-muted-foreground/20" /> <span>Disponible</span>
+              </div>
             </div>
-          </Card>
-          <div className="mt-4 flex gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm bg-primary" /> <span>En séjour</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm bg-secondary" /> <span>Réservation confirmée</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm border border-muted-foreground/20" /> <span>Disponible</span>
+            <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 flex items-center gap-3">
+              <Info className="h-4 w-4 text-primary" />
+              <p className="text-[10px] font-medium text-slate-600">
+                Saviez-vous que vous pouvez générer des <strong>prévisions d'occupation IA</strong> basées sur ce planning ?
+              </p>
+              <Button size="sm" variant="ghost" className="h-7 text-[10px] font-bold text-primary" asChild>
+                <a href="/forecasting">Voir l'IA</a>
+              </Button>
             </div>
           </div>
         </main>
