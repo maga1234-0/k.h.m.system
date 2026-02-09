@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -17,7 +16,11 @@ import {
   Monitor,
   Calendar,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Utensils,
+  Shirt,
+  ConciergeBell,
+  PlusCircle
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -56,6 +59,13 @@ const mainMenuItems = [
 const inventoryItems = [
   { title: "Chambres", icon: Bed, url: "/rooms" },
   { title: "Gouvernance", icon: Sparkles, url: "/housekeeping" },
+]
+
+const serviceItems = [
+  { title: "Restaurant / Bar", icon: Utensils, url: "/services?tab=restaurant" },
+  { title: "Blanchisserie", icon: Shirt, url: "/services?tab=laundry" },
+  { title: "Room Service", icon: ConciergeBell, url: "/services?tab=room-service" },
+  { title: "Autres Frais", icon: PlusCircle, url: "/services?tab=extras" },
 ]
 
 const businessItems = [
@@ -137,7 +147,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Inventaire & Ménage</SidebarGroupLabel>
+          <SidebarGroupLabel>Inventaire &amp; Ménage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {inventoryItems.map((item) => (
@@ -155,7 +165,25 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Business & Finance</SidebarGroupLabel>
+          <SidebarGroupLabel>Services &amp; Extras</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {serviceItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/services') && (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('tab') === item.url.split('=')[1])} tooltip={item.title}>
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Business &amp; Finance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (
@@ -239,7 +267,7 @@ export function AppSidebar() {
               <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
                 <DropdownMenuItem asChild className="gap-2">
                   <Link href="/settings?tab=account">
-                    <User className="h-4 w-4" /> Profil & Compte
+                    <User className="h-4 w-4" /> Profil &amp; Compte
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
