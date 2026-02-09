@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -257,7 +258,7 @@ export default function StaffPage() {
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher un membre..." 
+                placeholder="Rechercher..." 
                 className="pl-9 bg-background" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -346,7 +347,7 @@ export default function StaffPage() {
                         <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{member.email}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3 shrink-0" /> {member.phoneNumber || 'N/A'}
+                        <Phone className="h-3 w-3 shrink-0" /> {member.phoneNumber || ''}
                       </div>
                     </div>
 
@@ -416,10 +417,9 @@ export default function StaffPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">N° Téléphone (Format international)</Label>
+                <Label htmlFor="phone">N° Téléphone</Label>
                 <Input 
                   id="phone" 
-                  placeholder="Ex: 33612345678"
                   value={newStaff.phoneNumber}
                   onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
                 />
@@ -431,7 +431,7 @@ export default function StaffPage() {
                   onValueChange={(val) => setNewStaff({...newStaff, role: val})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choisir un rôle" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Manager">Manager</SelectItem>
@@ -457,7 +457,6 @@ export default function StaffPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Modifier Membre</DialogTitle>
-              <DialogDescription>Mettez à jour les informations du profil.</DialogDescription>
             </DialogHeader>
             {editStaffData && (
               <div className="grid gap-4 py-4">
@@ -503,7 +502,7 @@ export default function StaffPage() {
                     onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir un rôle" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Manager">Manager</SelectItem>
@@ -530,13 +529,9 @@ export default function StaffPage() {
                 <MessageSquare className="h-5 w-5 text-primary" /> 
                 WhatsApp {selectedStaff?.firstName}
               </DialogTitle>
-              <DialogDescription>
-                Envoyez un message direct sur le compte WhatsApp de ce membre.
-              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <Textarea 
-                placeholder="Tapez votre message ici..." 
                 className="min-h-[120px]"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -545,7 +540,7 @@ export default function StaffPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsMessageOpen(false)}>Annuler</Button>
               <Button onClick={handleSendMessage} disabled={!messageText} className="gap-2">
-                <Send className="h-4 w-4" /> Envoyer via WhatsApp
+                <Send className="h-4 w-4" /> Envoyer
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -556,11 +551,8 @@ export default function StaffPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" /> 
-                Assigner Shift: {selectedStaff?.firstName}
+                Planning: {selectedStaff?.firstName}
               </DialogTitle>
-              <DialogDescription>
-                Attribuez ou modifiez le planning de travail pour cet employé.
-              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
@@ -573,18 +565,18 @@ export default function StaffPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="shiftType">Type de Shift</Label>
+                <Label htmlFor="shiftType">Shift</Label>
                 <Select 
                   value={scheduleData.shift} 
                   onValueChange={(val) => setScheduleData({...scheduleData, shift: val})}
                 >
                   <SelectTrigger id="shiftType">
-                    <SelectValue placeholder="Choisir un shift" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Morning">Matin (08:00 - 16:00)</SelectItem>
-                    <SelectItem value="Afternoon">Après-midi (16:00 - 00:00)</SelectItem>
-                    <SelectItem value="Night">Nuit (00:00 - 08:00)</SelectItem>
+                    <SelectItem value="Morning">Matin</SelectItem>
+                    <SelectItem value="Afternoon">Après-midi</SelectItem>
+                    <SelectItem value="Night">Nuit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -599,18 +591,17 @@ export default function StaffPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
+              <AlertDialogTitle>
                 Supprimer {memberToDelete?.firstName} {memberToDelete?.lastName} ?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action est irréversible. Le profil de ce membre sera définitivement retiré du répertoire du personnel.
+                Cette action est irréversible.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setMemberToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer définitivement
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

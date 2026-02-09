@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -138,14 +139,13 @@ function ServicesContent() {
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Facturer un Service</DialogTitle>
-                <DialogDescription>Ajoutez des frais de service à la facture d'un client en séjour.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label>Client / Chambre (En séjour)</Label>
+                  <Label>Client / Chambre</Label>
                   <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un client..." />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {activeReservations.map((res) => (
@@ -160,9 +160,8 @@ function ServicesContent() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Description du service</Label>
+                  <Label>Description</Label>
                   <Input 
-                    placeholder="Ex: Petit-déjeuner continental, Lavage express..." 
                     value={chargeData.description}
                     onChange={(e) => setChargeData({...chargeData, description: e.target.value})}
                   />
@@ -171,7 +170,6 @@ function ServicesContent() {
                   <Label>Montant ($)</Label>
                   <Input 
                     type="number" 
-                    placeholder="0.00" 
                     value={chargeData.amount}
                     onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
                   />
@@ -179,7 +177,7 @@ function ServicesContent() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Enregistrer les frais</Button>
+                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Enregistrer</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -193,7 +191,7 @@ function ServicesContent() {
               </div>
               <div>
                 <CardTitle className="font-headline">{getServiceTitle(activeTab)}</CardTitle>
-                <CardDescription>Gérez les consommations et prestations pour ce département.</CardDescription>
+                <CardDescription>Gérez les consommations.</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -251,49 +249,12 @@ function ServicesContent() {
                 ) : (
                   <div className="py-12 text-center border-2 border-dashed rounded-xl opacity-40">
                     <ConciergeBell className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Aucun client en séjour n'est éligible pour la facturation de services.</p>
+                    <p className="text-sm">Aucun client en séjour.</p>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-sm bg-primary/5">
-              <CardHeader>
-                <CardTitle className="text-sm">Prestations les plus demandées</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { name: "Petit-déjeuner", count: 45, rev: "450 $" },
-                  { name: "Blanchisserie Express", count: 28, rev: "320 $" },
-                  { name: "Dîner Room Service", count: 22, rev: "550 $" },
-                ].map((item, i) => (
-                  <div key={i} className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">{item.name} ({item.count})</span>
-                    <span className="font-bold">{item.rev}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-sm">Conseil Opérationnel</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                    <CheckCircle2 className="h-6 w-6" />
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Les frais ajoutés ici sont automatiquement consolidés sur la facture finale générée lors du check-out. 
-                    N'oubliez pas de demander une signature au client pour chaque prestation restaurant ou bar.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </main>
       </SidebarInset>
     </div>

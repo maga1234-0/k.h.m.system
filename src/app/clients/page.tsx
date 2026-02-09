@@ -183,7 +183,7 @@ export default function ClientsPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Inscription Client</DialogTitle>
-                <DialogDescription>Créez un profil pour un nouveau voyageur ou un habitué.</DialogDescription>
+                <DialogDescription>Créez un profil pour un voyageur.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -250,7 +250,6 @@ export default function ClientsPage() {
                     <Textarea 
                       id="preferences" 
                       className="pl-9 min-h-[80px]"
-                      placeholder="Ex: Oreillers extra, étage élevé, allergies..."
                       value={newClient.preferences}
                       onChange={(e) => setNewClient({...newClient, preferences: e.target.value})}
                     />
@@ -259,7 +258,7 @@ export default function ClientsPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-                <Button onClick={handleRegisterClient} disabled={!newClient.firstName || !newClient.lastName || !newClient.email}>Sauvegarder Profil</Button>
+                <Button onClick={handleRegisterClient} disabled={!newClient.firstName || !newClient.lastName || !newClient.email}>Sauvegarder</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -271,7 +270,7 @@ export default function ClientsPage() {
               <div className="relative w-full md:w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher par nom, e-mail..." 
+                  placeholder="Rechercher..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -359,7 +358,7 @@ export default function ClientsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      {searchTerm ? "Aucun client ne correspond." : "Le registre est vide."}
+                      {searchTerm ? "Aucun client." : "Le registre est vide."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -373,14 +372,13 @@ export default function ClientsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Ceci supprimera définitivement le profil de <strong>{clientToDelete?.firstName} {clientToDelete?.lastName}</strong>. 
-                Toutes les données associées seront perdues.
+                Ceci supprimera définitivement le profil de <strong>{clientToDelete?.firstName} {clientToDelete?.lastName}</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setClientToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer Profil
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

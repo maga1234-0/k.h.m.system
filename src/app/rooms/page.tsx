@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -79,10 +80,10 @@ export default function RoomsPage() {
   const [newRoom, setNewRoom] = useState<any>({
     roomNumber: "",
     roomType: "Standard",
-    capacity: "2",
+    capacity: "",
     pricePerNight: "",
     floor: "",
-    amenities: "Wi-Fi, TV, Climatisation",
+    amenities: "",
   });
 
   const [bookingData, setBookingData] = useState({
@@ -123,10 +124,10 @@ export default function RoomsPage() {
     setNewRoom({
       roomNumber: "",
       roomType: "Standard",
-      capacity: "2",
+      capacity: "",
       pricePerNight: "",
       floor: "",
-      amenities: "Wi-Fi, TV, Climatisation",
+      amenities: "",
     });
     toast({
       title: "Chambre Ajoutée",
@@ -255,7 +256,7 @@ export default function RoomsPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">Type</Label>
                   <Select value={newRoom.roomType} onValueChange={(val) => setNewRoom({...newRoom, roomType: val})}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Type" /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Standard">Standard</SelectItem>
                       <SelectItem value="Deluxe">Deluxe</SelectItem>
@@ -269,7 +270,7 @@ export default function RoomsPage() {
                   <Input id="floor" type="number" value={newRoom.floor} onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price" className="text-right">Prix ($)</Label>
+                  <Label htmlFor="price" className="text-right">Prix</Label>
                   <Input id="price" type="number" value={newRoom.pricePerNight} onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -280,7 +281,6 @@ export default function RoomsPage() {
                   <Label htmlFor="amenities" className="text-right">Équipements</Label>
                   <Input 
                     id="amenities" 
-                    placeholder="Wi-Fi, TV, Climatisation..." 
                     value={newRoom.amenities} 
                     onChange={(e) => setNewRoom({...newRoom, amenities: e.target.value})} 
                     className="col-span-3" 
@@ -300,7 +300,7 @@ export default function RoomsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher par numéro ou type..." 
+                placeholder="Rechercher..." 
                 className="pl-9" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -337,7 +337,6 @@ export default function RoomsPage() {
                       size="icon" 
                       className="h-8 w-8 text-destructive hover:bg-destructive/10" 
                       onClick={() => { setRoomToDelete(room); setIsDeleteDialogOpen(true); }}
-                      title="Supprimer la chambre"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -363,7 +362,6 @@ export default function RoomsPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Modifier la Chambre {editRoomData?.roomNumber}</DialogTitle>
-              <DialogDescription>Mettez à jour les informations de la chambre.</DialogDescription>
             </DialogHeader>
             {editRoomData && (
               <div className="grid gap-4 py-4">
@@ -410,7 +408,6 @@ export default function RoomsPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Équipements</Label>
                   <Input 
-                    placeholder="Wi-Fi, TV, Climatisation..." 
                     value={editRoomData.amenitiesString} 
                     onChange={(e) => setEditRoomData({...editRoomData, amenitiesString: e.target.value})} 
                     className="col-span-3" 
@@ -420,7 +417,7 @@ export default function RoomsPage() {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleUpdateRoom}>Enregistrer les modifications</Button>
+              <Button onClick={handleUpdateRoom}>Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -437,11 +434,11 @@ export default function RoomsPage() {
                   <span className="text-sm font-bold">{selectedRoom.roomType}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Statut Actuel</span>
+                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Statut</span>
                   <span>{getStatusBadge(selectedRoom.status)}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Prix par nuit</span>
+                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Prix</span>
                   <span className="text-sm font-bold">{selectedRoom.pricePerNight} $</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
@@ -449,10 +446,10 @@ export default function RoomsPage() {
                   <span className="text-sm font-bold">Étage {selectedRoom.floor}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Capacité d'accueil</span>
+                  <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Capacité</span>
                   <div className="flex items-center gap-1">
                     <UsersIcon className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-bold">{selectedRoom.capacity} Personne(s)</span>
+                    <span className="text-sm font-bold">{selectedRoom.capacity}</span>
                   </div>
                 </div>
                 <div className="space-y-2 pt-2">
@@ -463,7 +460,7 @@ export default function RoomsPage() {
                         <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
                       ))
                     ) : (
-                      <span className="text-xs text-muted-foreground italic">Aucun équipement renseigné</span>
+                      <span className="text-xs text-muted-foreground italic">Aucun équipement</span>
                     )}
                   </div>
                 </div>
@@ -479,7 +476,7 @@ export default function RoomsPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Réservation Rapide</DialogTitle>
-              <DialogDescription>Enregistrez un séjour pour la chambre {selectedRoom?.roomNumber}.</DialogDescription>
+              <DialogDescription>Chambre {selectedRoom?.roomNumber}</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-1">
@@ -487,7 +484,6 @@ export default function RoomsPage() {
                 <Input 
                   value={bookingData.guestName} 
                   onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} 
-                  placeholder="Ex: Jean Dupont"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -500,19 +496,17 @@ export default function RoomsPage() {
                       type="email"
                       value={bookingData.guestEmail} 
                       onChange={(e) => setBookingData({...bookingData, guestEmail: e.target.value})} 
-                      placeholder="client@email.com"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>N° de Téléphone (WhatsApp)</Label>
+                  <Label>N° de Téléphone</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
                       className="pl-9"
                       value={bookingData.guestPhone} 
                       onChange={(e) => setBookingData({...bookingData, guestPhone: e.target.value})} 
-                      placeholder="+1 234 567 890"
                     />
                   </div>
                 </div>
@@ -534,7 +528,7 @@ export default function RoomsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
-              <Button onClick={handleQuickBook} disabled={!bookingData.guestName}>Confirmer la réservation</Button>
+              <Button onClick={handleQuickBook} disabled={!bookingData.guestName}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -542,18 +536,15 @@ export default function RoomsPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                Supprimer la chambre {roomToDelete?.roomNumber} ?
-              </AlertDialogTitle>
+              <AlertDialogTitle>Supprimer la chambre {roomToDelete?.roomNumber} ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action est irréversible. La chambre sera définitivement retirée de l'inventaire et ne pourra plus être réservée.
+                Cette action est irréversible.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setRoomToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer définitivement
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -155,7 +156,6 @@ export default function ReservationsPage() {
 
     addDocumentNonBlocking(resCollection, reservationData);
     
-    // On marque la chambre comme occupée dès la réservation pour éviter les doubles résas
     const roomRef = doc(firestore, 'rooms', selectedRoom.id);
     updateDocumentNonBlocking(roomRef, { status: "Occupied" });
 
@@ -170,7 +170,6 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', reservation.id);
     updateDocumentNonBlocking(resRef, { status: "Checked In" });
     
-    // Génération automatique de la facture lors de l'arrivée
     const invoiceRef = doc(collection(firestore, 'invoices'));
     setDocumentNonBlocking(invoiceRef, {
       id: invoiceRef.id,
@@ -278,14 +277,13 @@ export default function ReservationsPage() {
             <DialogContent className="sm:max-w-[500px] max-w-[95vw] rounded-lg">
               <DialogHeader>
                 <DialogTitle>Créer une Réservation</DialogTitle>
-                <DialogDescription>Assignez une chambre et définissez les dates du séjour.</DialogDescription>
+                <DialogDescription>Assignez une chambre.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="space-y-2">
                   <Label htmlFor="newGuestName">Nom du client</Label>
                   <Input 
                     id="newGuestName" 
-                    placeholder="Ex: Jean Dupont"
                     value={newBooking.guestName}
                     onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
                   />
@@ -310,7 +308,7 @@ export default function ReservationsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="roomSelect">Chambre disponible</Label>
+                  <Label htmlFor="roomSelect">Chambre</Label>
                   {availableRooms.length > 0 ? (
                     <Select 
                       value={newBooking.roomId} 
@@ -324,12 +322,12 @@ export default function ReservationsPage() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={isRoomsLoading ? "Chargement..." : "Sélectionner..."} />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {availableRooms.map((room) => (
                           <SelectItem key={room.id} value={room.id}>
-                            N° {room.roomNumber} - {room.roomType} ({room.pricePerNight} $)
+                            N° {room.roomNumber} ({room.pricePerNight} $)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -337,7 +335,7 @@ export default function ReservationsPage() {
                   ) : (
                     <div className="flex items-center gap-2 p-3 border rounded-lg bg-destructive/5 text-destructive text-xs font-medium">
                       <AlertCircle className="h-4 w-4" />
-                      Aucun inventaire disponible pour le moment.
+                      Aucun inventaire disponible.
                     </div>
                   )}
                 </div>
@@ -376,7 +374,7 @@ export default function ReservationsPage() {
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher un record..." 
+                  placeholder="Rechercher..." 
                   className="pl-9 bg-background" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -386,10 +384,10 @@ export default function ReservationsPage() {
                 <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full md:w-[180px] bg-background">
-                    <SelectValue placeholder="Filtrer par statut" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">Tous les dossiers</SelectItem>
+                    <SelectItem value="All">Tous</SelectItem>
                     <SelectItem value="Confirmed">Confirmé</SelectItem>
                     <SelectItem value="Checked In">Arrivé</SelectItem>
                     <SelectItem value="Checked Out">Parti</SelectItem>
@@ -428,14 +426,13 @@ export default function ReservationsPage() {
                         <TableCell className="font-medium text-sm">
                           <div className="flex flex-col max-w-[120px] md:max-w-none">
                             <span className="truncate">{res.guestName}</span>
-                            <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{res.guestEmail || res.guestPhone || 'Sans contact'}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">N° {res.roomNumber}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell">
                           <div className="flex flex-col">
                             <span>{res.checkInDate}</span>
-                            <span className="text-muted-foreground">jusqu'au {res.checkOutDate}</span>
+                            <span className="text-muted-foreground">au {res.checkOutDate}</span>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(res.status)}</TableCell>
@@ -461,7 +458,7 @@ export default function ReservationsPage() {
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent>
                                   <DropdownMenuItem onSelect={() => {
-                                    const message = `Bonjour ${res.guestName}, ceci est une confirmation de votre réservation pour la chambre ${res.roomNumber} à ImaraPMS. Au plaisir de vous accueillir !`;
+                                    const message = `Bonjour ${res.guestName}, ceci est une confirmation de votre réservation pour la chambre ${res.roomNumber} à ImaraPMS.`;
                                     window.open(`https://wa.me/${res.guestPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
                                   }}>
                                     <Phone className="mr-2 h-4 w-4" /> WhatsApp
@@ -507,7 +504,7 @@ export default function ReservationsPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">
-                        Aucun dossier ne correspond à votre recherche.
+                        Aucun dossier.
                       </TableCell>
                     </TableRow>
                   )}
@@ -524,7 +521,6 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
             <DialogHeader>
               <DialogTitle>Détails du Séjour</DialogTitle>
-              <DialogDescription>Aperçu complet du record de réservation.</DialogDescription>
             </DialogHeader>
             {selectedRes ? (
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
@@ -543,18 +539,18 @@ export default function ReservationsPage() {
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Arrivée Prévue</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Arrivée</span>
                     <p className="text-sm font-medium">{selectedRes.checkInDate}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Départ Prévu</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Départ</span>
                     <p className="text-sm font-medium">{selectedRes.checkOutDate}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Chambre Assignée</span>
-                    <p className="text-sm font-medium">Numéro {selectedRes.roomNumber}</p>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Chambre</span>
+                    <p className="text-sm font-medium">N° {selectedRes.roomNumber}</p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase text-muted-foreground font-bold">Occupation</span>
@@ -563,7 +559,7 @@ export default function ReservationsPage() {
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
-                  <span className="text-sm font-semibold">Total H.T.</span>
+                  <span className="text-sm font-semibold">Total</span>
                   <span className="text-lg font-bold text-emerald-600">{selectedRes.totalAmount} $</span>
                 </div>
               </div>
@@ -573,7 +569,7 @@ export default function ReservationsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Quitter l'aperçu</Button>
+              <Button className="w-full" onClick={() => setIsDetailsDialogOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -581,13 +577,13 @@ export default function ReservationsPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="max-w-[95vw] rounded-lg">
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la suppression ?</AlertDialogTitle>
+              <AlertDialogTitle>Supprimer ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Ceci supprimera définitivement le record de <strong>{resToDelete?.guestName}</strong> de la base de données.
+                Ceci supprimera le record de <strong>{resToDelete?.guestName}</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-2">
-              <AlertDialogCancel className="flex-1 mt-0" onClick={() => setResToDelete(null)}>Conserver</AlertDialogCancel>
+              <AlertDialogCancel className="flex-1 mt-0" onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Supprimer
               </AlertDialogAction>
