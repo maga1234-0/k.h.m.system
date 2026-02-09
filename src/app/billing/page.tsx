@@ -20,7 +20,8 @@ import {
   AlertCircle, 
   FileText, 
   Download,
-  Phone
+  Phone,
+  ArrowDown
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -125,7 +126,6 @@ export default function BillingPage() {
   };
 
   const handleDownload = () => {
-    // In browser, print triggers PDF save options
     window.print();
   };
 
@@ -289,10 +289,10 @@ export default function BillingPage() {
             <div className="flex flex-col h-full max-h-[90vh]">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
                 {/* Header Section */}
-                <div className="flex justify-between items-start mb-16">
+                <div className="flex justify-between items-start mb-16 relative">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                      <div className="h-12 w-12 rounded-xl bg-[#101419] flex items-center justify-center text-white">
                         <Hotel className="h-7 w-7" />
                       </div>
                       <div>
@@ -300,139 +300,122 @@ export default function BillingPage() {
                         <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400">LUXURY HOSPITALITY</p>
                       </div>
                     </div>
-                    <div className="text-sm text-slate-500 leading-relaxed max-w-[240px]">
+                    <div className="text-[13px] text-slate-500 leading-relaxed font-medium">
                       123 Avenue de l'Hospitalité<br />
                       Grand Central, GC 10023<br />
                       contact@imarapms.com<br />
                       +1 234 567 890
                     </div>
                   </div>
+                  
                   <div className="text-right">
-                    <h1 className="text-6xl font-bold tracking-tighter text-slate-100 opacity-30 uppercase absolute right-12 top-10 pointer-events-none">Facture</h1>
-                    <div className="pt-8 relative z-10 space-y-1">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Numéro de Facture</p>
-                      <p className="text-xl font-bold font-mono">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                    <h1 className="text-6xl font-black tracking-tighter text-slate-100 opacity-20 uppercase absolute right-0 top-0 pointer-events-none">FACTURE</h1>
+                    <div className="pt-10 relative z-10 space-y-0.5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">NUMÉRO DE FACTURE</p>
+                      <p className="text-2xl font-black font-headline text-slate-900">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Billing Info Grid */}
-                <div className="grid grid-cols-3 gap-12 mb-16">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Destinataire</p>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
-                    <div className="space-y-1 text-sm text-slate-600">
-                      <p className="flex items-center gap-2 font-medium"><Phone className="h-3 w-3" /> {selectedInvoice.guestPhone || "N/A"}</p>
-                      <p className="flex items-center gap-2 font-medium">ID Client: {selectedInvoice.reservationId?.slice(0, 8).toUpperCase() || "REG-9912"}</p>
+                {/* Billing Info Grid - Matching 3 Columns of image */}
+                <div className="grid grid-cols-3 gap-8 mb-16">
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-900 pb-1 w-fit pr-12">DESTINATAIRE</p>
+                    <div>
+                      <h3 className="text-3xl font-black text-slate-900 mb-2 lowercase">{selectedInvoice.guestName}</h3>
+                      <div className="space-y-1 text-[13px] text-slate-600 font-bold">
+                        <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedInvoice.guestPhone || "N/A"}</p>
+                        <p>ID Client: {selectedInvoice.reservationId?.slice(0, 7).toUpperCase() || "NXHSPSC3"}</p>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Émission</p>
-                    <p className="text-base font-bold text-slate-900">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                  
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1 w-fit pr-12">ÉMISSION</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Échéance</p>
-                    <p className="text-base font-bold text-slate-900">{new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                  </div>
-                </div>
 
-                <Separator className="mb-12" />
-
-                {/* Items Table */}
-                <div className="mb-12">
-                  <div className="rounded-2xl border border-slate-100 overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="bg-slate-900 text-white">
-                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Description</th>
-                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Qté</th>
-                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Prix Unit.</th>
-                          <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        <tr>
-                          <td className="px-8 py-8">
-                            <p className="font-bold text-slate-900 mb-1">Services d'Hébergement</p>
-                            <p className="text-xs text-slate-500 italic">Séjour hôtelier complet incluant l'accès à toutes les installations de l'hôtel.</p>
-                          </td>
-                          <td className="px-8 py-8 text-center text-sm font-medium">1</td>
-                          <td className="px-8 py-8 text-right text-sm font-medium">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                          <td className="px-8 py-8 text-right text-sm font-bold text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1 w-fit pr-12">ÉCHÉANCE</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </p>
                   </div>
                 </div>
 
-                {/* Summary Section */}
-                <div className="flex justify-end mb-20">
-                  <div className="w-full max-w-sm space-y-4">
-                    <div className="flex justify-between items-center px-4">
-                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sous-total</span>
+                <div className="h-0.5 bg-slate-900 w-full mb-12" />
+
+                {/* Items Table - Visual spacing */}
+                <div className="mb-20">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">DESCRIPTION</th>
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">QTÉ</th>
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">PRIX UNIT.</th>
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">TOTAL</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      <tr>
+                        <td className="py-8">
+                          <p className="font-black text-slate-900 text-lg">Services d'Hébergement</p>
+                          <p className="text-xs text-slate-400 font-medium">Séjour hôtelier complet incluant l'accès à toutes les installations.</p>
+                        </td>
+                        <td className="py-8 text-center text-sm font-bold">1</td>
+                        <td className="py-8 text-right text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                        <td className="py-8 text-right text-lg font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals Section */}
+                <div className="flex justify-end mb-16">
+                  <div className="w-full max-w-[240px] space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SOUS-TOTAL</span>
                       <span className="text-sm font-bold">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                     </div>
-                    <div className="flex justify-between items-center px-4">
-                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Taxes (0%)</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TAXES (0%)</span>
                       <span className="text-sm font-bold">0.00 $</span>
                     </div>
                     <div className="h-px bg-slate-200 w-full" />
-                    <div className="flex justify-between items-center px-4 py-2">
-                      <span className="text-lg font-black uppercase tracking-tighter">Total à Payer</span>
-                      <span className="text-4xl font-black font-headline text-slate-900 tracking-tighter">
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-xs font-black uppercase tracking-widest">TOTAL À PAYER</span>
+                      <span className="text-3xl font-black font-headline text-slate-900 tracking-tighter">
                         {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>
-                    </div>
-                    {selectedInvoice.status === 'Paid' && (
-                      <div className="mx-4 p-3 bg-emerald-50 rounded-xl flex justify-between items-center border border-emerald-100">
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Montant Acquitté</span>
-                        <span className="text-lg font-black text-emerald-600">-{Number(selectedInvoice.amountPaid).toFixed(2)} $</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer Section */}
-                <div className="border-t border-slate-100 pt-12">
-                  <div className="grid grid-cols-2 gap-20">
-                    <div className="space-y-4">
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Note au Client</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed italic">
-                        Nous espérons que votre séjour à ImaraPMS a été des plus agréables. 
-                        Toute l'équipe se réjouit de vous accueillir à nouveau très prochainement pour une nouvelle expérience d'exception.
-                      </p>
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Conditions de Règlement</h4>
-                      <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tighter">
-                        Le paiement est dû dès réception. Tout retard de paiement au-delà de 30 jours fera l'objet d'une pénalité de retard égale à 3 fois le taux d'intérêt légal.
-                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Action Bar - Styled to match screenshot buttons */}
-              <div className="bg-slate-50 p-6 flex justify-end gap-3 border-t print:hidden">
+              {/* Action Bar - Matching exactly the image buttons */}
+              <div className="bg-slate-50 p-8 flex justify-end gap-4 border-t print:hidden">
                 <Button 
-                  variant="outline" 
-                  className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] border-none hover:bg-slate-800" 
+                  className="h-14 px-8 gap-3 bg-[#1A1C1E] hover:bg-[#2A2C2E] text-white rounded-xl shadow-xl transition-all" 
                   onClick={() => handleSendWhatsApp(selectedInvoice)}
                 >
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="font-bold uppercase tracking-[0.1em] text-[11px]">WHATSAPP</span>
                 </Button>
                 <Button 
-                  variant="outline" 
-                  className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] border-none hover:bg-slate-800" 
+                  className="h-14 px-8 gap-3 bg-[#1A1C1E] hover:bg-[#2A2C2E] text-white rounded-xl shadow-xl transition-all" 
                   onClick={handleDownload}
                 >
-                  <Download className="h-4 w-4" /> Télécharger
+                  <ArrowDown className="h-5 w-5" />
+                  <span className="font-bold uppercase tracking-[0.1em] text-[11px]">TÉLÉCHARGER</span>
                 </Button>
                 <Button 
-                  className="h-12 px-8 gap-2 bg-[#101419] hover:bg-black text-white font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200" 
+                  className="h-14 px-10 gap-3 bg-[#1A1C1E] hover:bg-[#000] text-white rounded-xl shadow-xl transition-all" 
                   onClick={handlePrint}
                 >
-                  <Printer className="h-4 w-4" /> Imprimer la Facture
+                  <Printer className="h-5 w-5" />
+                  <span className="font-bold uppercase tracking-[0.1em] text-[11px]">IMPRIMER LA FACTURE</span>
                 </Button>
               </div>
             </div>
