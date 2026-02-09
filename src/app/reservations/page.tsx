@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react";
@@ -66,6 +67,8 @@ import {
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
+type ActiveDialog = 'details' | 'cancel' | 'delete' | null;
+
 export default function ReservationsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
@@ -73,9 +76,8 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  // Isolated dialogue management to prevent blocking
   const [selectedRes, setSelectedRes] = useState<any>(null);
-  const [activeDialog, setActiveDialog] = useState<'details' | 'cancel' | 'delete' | null>(null);
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
@@ -100,11 +102,13 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  const handleOpenDialog = useCallback((res: any, type: 'details' | 'cancel' | 'delete') => {
+  const handleOpenActionDialog = (res: any, type: ActiveDialog) => {
     setSelectedRes(res);
-    // Slight delay to allow dropdown to close cleanly
-    setTimeout(() => setActiveDialog(type), 100);
-  }, []);
+    // Use a small delay to allow dropdown to close completely before opening dialog
+    setTimeout(() => {
+      setActiveDialog(type);
+    }, 100);
+  };
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
@@ -275,21 +279,21 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleOpenDialog(res, 'details'); }}>
-                              <CalendarDays className="h-4 w-4 mr-2" /> Détails & Suivi
+                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'details'); }}>
+                              <CalendarDays className="h-4 w-4 mr-2" /> Détails complets
                             </DropdownMenuItem>
                             <Separator className="my-1" />
                             <DropdownMenuItem 
-                              onSelect={(e) => { e.preventDefault(); handleOpenDialog(res, 'cancel'); }}
-                              className="text-rose-500"
+                              onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'cancel'); }}
+                              className="text-rose-500 font-bold"
                             >
                               <XCircle className="h-4 w-4 mr-2" /> Annuler séjour
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onSelect={(e) => { e.preventDefault(); handleOpenDialog(res, 'delete'); }}
-                              className="text-destructive font-bold"
+                              onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'delete'); }}
+                              className="text-destructive font-black"
                             >
-                              <Trash2 className="h-4 w-4 mr-2" /> Mettre à la corbeille
+                              <Trash2 className="h-4 w-4 mr-2" /> Supprimer définitif
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -370,7 +374,7 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ISOLATED DIALOGS FOR ACTIONS */}
+        {/* ISOLATED DIALOGS - MOVED OUTSIDE THE TABLE TO PREVENT FREEZING */}
         <Dialog open={activeDialog === 'details'} onOpenChange={(open) => !open && setActiveDialog(null)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
