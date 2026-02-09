@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -284,6 +285,7 @@ export default function ReservationsPage() {
                   <Input 
                     id="newGuestName" 
                     value={newBooking.guestName}
+                    placeholder=""
                     onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})}
                   />
                 </div>
@@ -293,6 +295,7 @@ export default function ReservationsPage() {
                     <Input 
                       id="newGuestEmail" 
                       type="email"
+                      placeholder=""
                       value={newBooking.guestEmail}
                       onChange={(e) => setNewBooking({...newBooking, guestEmail: e.target.value})}
                     />
@@ -301,6 +304,7 @@ export default function ReservationsPage() {
                     <Label htmlFor="newGuestPhone">N° de Téléphone</Label>
                     <Input 
                       id="newGuestPhone" 
+                      placeholder=""
                       value={newBooking.guestPhone}
                       onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})}
                     />
@@ -321,7 +325,7 @@ export default function ReservationsPage() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="" />
                       </SelectTrigger>
                       <SelectContent>
                         {availableRooms.map((room) => (
@@ -383,7 +387,7 @@ export default function ReservationsPage() {
                 <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full md:w-[180px] bg-background">
-                    <SelectValue />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">Tous</SelectItem>
@@ -401,7 +405,7 @@ export default function ReservationsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Client</TableHead>
+                    <TableHead>Nom du client</TableHead>
                     <TableHead>Chambre</TableHead>
                     <TableHead className="hidden sm:table-cell">Dates</TableHead>
                     <TableHead>Statut</TableHead>
@@ -525,7 +529,7 @@ export default function ReservationsPage() {
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Client</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Nom du client</span>
                     <p className="text-sm font-semibold truncate">{selectedRes.guestName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestEmail}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestPhone}</p>

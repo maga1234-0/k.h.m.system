@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -250,12 +251,12 @@ export default function RoomsPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="roomNumber" className="text-right">Numéro</Label>
-                  <Input id="roomNumber" value={newRoom.roomNumber} onChange={(e) => setNewRoom({...newRoom, roomNumber: e.target.value})} className="col-span-3" />
+                  <Input id="roomNumber" placeholder="" value={newRoom.roomNumber} onChange={(e) => setNewRoom({...newRoom, roomNumber: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">Type</Label>
                   <Select value={newRoom.roomType} onValueChange={(val) => setNewRoom({...newRoom, roomType: val})}>
-                    <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Standard">Standard</SelectItem>
                       <SelectItem value="Deluxe">Deluxe</SelectItem>
@@ -266,20 +267,21 @@ export default function RoomsPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="floor" className="text-right">Étage</Label>
-                  <Input id="floor" type="number" value={newRoom.floor} onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} className="col-span-3" />
+                  <Input id="floor" type="number" placeholder="" value={newRoom.floor} onChange={(e) => setNewRoom({...newRoom, floor: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="price" className="text-right">Prix</Label>
-                  <Input id="price" type="number" value={newRoom.pricePerNight} onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} className="col-span-3" />
+                  <Input id="price" type="number" placeholder="" value={newRoom.pricePerNight} onChange={(e) => setNewRoom({...newRoom, pricePerNight: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="capacity" className="text-right">Capacité</Label>
-                  <Input id="capacity" type="number" value={newRoom.capacity} onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} className="col-span-3" />
+                  <Input id="capacity" type="number" placeholder="" value={newRoom.capacity} onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="amenities" className="text-right">Équipements</Label>
                   <Input 
                     id="amenities" 
+                    placeholder=""
                     value={newRoom.amenities} 
                     onChange={(e) => setNewRoom({...newRoom, amenities: e.target.value})} 
                     className="col-span-3" 
@@ -299,7 +301,7 @@ export default function RoomsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher..." 
+                placeholder="" 
                 className="pl-9" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -366,12 +368,12 @@ export default function RoomsPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Numéro</Label>
-                  <Input value={editRoomData.roomNumber} onChange={(e) => setEditRoomData({...editRoomData, roomNumber: e.target.value})} className="col-span-3" />
+                  <Input placeholder="" value={editRoomData.roomNumber} onChange={(e) => setEditRoomData({...editRoomData, roomNumber: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Type</Label>
                   <Select value={editRoomData.roomType} onValueChange={(val) => setEditRoomData({...editRoomData, roomType: val})}>
-                    <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Standard">Standard</SelectItem>
                       <SelectItem value="Deluxe">Deluxe</SelectItem>
@@ -383,7 +385,7 @@ export default function RoomsPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Statut</Label>
                   <Select value={editRoomData.status} onValueChange={(val) => setEditRoomData({...editRoomData, status: val})}>
-                    <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Available">Disponible</SelectItem>
                       <SelectItem value="Occupied">Occupée</SelectItem>
@@ -394,19 +396,20 @@ export default function RoomsPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Prix</Label>
-                  <Input type="number" value={editRoomData.pricePerNight} onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: e.target.value})} className="col-span-3" />
+                  <Input type="number" placeholder="" value={editRoomData.pricePerNight} onChange={(e) => setEditRoomData({...editRoomData, pricePerNight: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Étage</Label>
-                  <Input type="number" value={editRoomData.floor} onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} className="col-span-3" />
+                  <Input type="number" placeholder="" value={editRoomData.floor} onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Capacité</Label>
-                  <Input type="number" value={editRoomData.capacity} onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} className="col-span-3" />
+                  <Input type="number" placeholder="" value={editRoomData.capacity} onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Équipements</Label>
                   <Input 
+                    placeholder=""
                     value={editRoomData.amenitiesString} 
                     onChange={(e) => setEditRoomData({...editRoomData, amenitiesString: e.target.value})} 
                     className="col-span-3" 
@@ -481,6 +484,7 @@ export default function RoomsPage() {
               <div className="space-y-1">
                 <Label>Nom du client</Label>
                 <Input 
+                  placeholder=""
                   value={bookingData.guestName} 
                   onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} 
                 />
@@ -493,17 +497,19 @@ export default function RoomsPage() {
                     <Input 
                       className="pl-9"
                       type="email"
+                      placeholder=""
                       value={bookingData.guestEmail} 
                       onChange={(e) => setBookingData({...bookingData, guestEmail: e.target.value})} 
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>N° de Téléphone</Label>
+                  <Label>WhatsApp / Téléphone</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
                       className="pl-9"
+                      placeholder=""
                       value={bookingData.guestPhone} 
                       onChange={(e) => setBookingData({...bookingData, guestPhone: e.target.value})} 
                     />
