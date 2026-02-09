@@ -78,17 +78,17 @@ export default function BillingPage() {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre Effacé", description: "Toutes les factures ont été supprimées." });
+    toast({ variant: "destructive", title: "Purger", description: "Toutes les factures supprimées." });
   };
 
   const handleSendWhatsApp = (invoice: any) => {
     if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Numéro Manquant", description: "Veuillez renseigner le téléphone du client." });
+      toast({ variant: "destructive", title: "Erreur", description: "Téléphone manquant." });
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const hotelName = settings?.hotelName || 'ImaraPMS';
-    const message = `*${hotelName.toUpperCase()} — FACTURATION*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture #INV-${invoice.id.slice(0, 8).toUpperCase()}*.\n\nCordialement,\nL'équipe ${hotelName}`;
+    const message = `*${hotelName.toUpperCase()} — FACTURATION*\n\nBonjour,\n\nVeuillez trouver ci-joint votre facture.\n\nCordialement.`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -107,7 +107,6 @@ export default function BillingPage() {
     const element = document.getElementById('invoice-printable');
     if (!element) {
       setIsGeneratingPdf(false);
-      toast({ variant: "destructive", title: "Erreur", description: "Document introuvable." });
       return;
     }
 
@@ -116,7 +115,6 @@ export default function BillingPage() {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
         windowWidth: 800
       });
       
@@ -128,10 +126,10 @@ export default function BillingPage() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`facture-${inv.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "PDF Prêt", description: "Le fichier a été enregistré." });
+      toast({ title: "PDF Prêt", description: "Le document a été téléchargé." });
     } catch (error) {
       console.error('PDF Error:', error);
-      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération PDF." });
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de la génération." });
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -195,8 +193,8 @@ export default function BillingPage() {
           <Card className="border-none shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="font-headline text-lg">Factures Émises</CardTitle>
-                <CardDescription>Consultez et envoyez les factures clients.</CardDescription>
+                <CardTitle className="font-headline text-lg">Factures</CardTitle>
+                <CardDescription>Visualisation et partage des documents.</CardDescription>
               </div>
               {invoices && invoices.length > 0 && (
                 <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
@@ -207,12 +205,12 @@ export default function BillingPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                      <AlertDialogDescription>Toutes les factures seront définitivement supprimées.</AlertDialogDescription>
+                      <AlertDialogTitle>Confirmer ?</AlertDialogTitle>
+                      <AlertDialogDescription>Action irréversible.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+                      <AlertDialogCancel>Retour</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive">Purger</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -228,27 +226,21 @@ export default function BillingPage() {
                   {invoices.map((inv) => (
                     <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border hover:bg-muted/10 transition-all gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0">
-                          <Receipt className="h-6 w-6" />
+                        <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0">
+                          <Receipt className="h-5 w-5" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-sm tracking-tight">INV-{inv.id.slice(0, 8).toUpperCase()}</span>
-                          <span className="text-xs text-muted-foreground font-medium">{inv.guestName} • {new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
+                          <span className="font-bold text-sm">#INV-{inv.id.slice(0, 5).toUpperCase()}</span>
+                          <span className="text-xs text-muted-foreground">{inv.guestName}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 ml-auto md:ml-0">
-                        <div className="flex flex-col items-end mr-4">
+                      <div className="flex items-center gap-4">
+                        <div className="text-right mr-4">
                           <span className="font-bold text-lg">{Number(inv.amountDue).toFixed(2)} $</span>
-                          <Badge variant={inv.status === 'Paid' ? 'default' : 'secondary'} className="text-[10px] py-0 px-2 h-4">
-                            {inv.status === 'Paid' ? 'Payée' : 'Impayée'}
-                          </Badge>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="outline" size="icon" className="h-9 w-9 text-[#25D366]" onClick={() => handleSendWhatsApp(inv)}>
                             <MessageCircle className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleDownloadPDF(inv)}>
-                            <Download className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="secondary" 
@@ -269,7 +261,7 @@ export default function BillingPage() {
               ) : (
                 <div className="text-center py-20 border-2 border-dashed rounded-2xl">
                   <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
-                  <p className="text-muted-foreground font-medium">Aucune facture émise.</p>
+                  <p className="text-muted-foreground font-medium">Aucune facture.</p>
                 </div>
               )}
             </CardContent>
@@ -280,8 +272,8 @@ export default function BillingPage() {
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white border-none shadow-2xl overflow-hidden rounded-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Aperçu de la facture</DialogTitle>
-            <DialogDescription>Détails de facturation pour le client.</DialogDescription>
+            <DialogTitle>Aperçu Facture</DialogTitle>
+            <DialogDescription>Document de facturation client.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
@@ -292,83 +284,61 @@ export default function BillingPage() {
                       <Hotel className="h-8 w-8" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-headline font-black text-2xl tracking-tighter text-primary">{settings?.hotelName || 'ImaraPMS'}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Hospitalité de Luxe</span>
+                      <span className="font-headline font-black text-2xl text-primary">{settings?.hotelName || 'ImaraPMS'}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Date: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                    <h1 className="text-xl font-black text-slate-900">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
+                    <p className="text-xs text-slate-400 mt-2">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-12 mb-16 px-4">
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] border-b-2 border-primary/10 pb-2">Client</p>
-                    <div>
-                      <h3 className="text-2xl font-black text-slate-900 mb-1">{selectedInvoice.guestName}</h3>
-                      <p className="text-sm text-slate-500 font-medium">{selectedInvoice.guestPhone}</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-12 mb-16">
+                  <div>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest border-b pb-2 mb-4">Client</p>
+                    <h3 className="text-xl font-black">{selectedInvoice.guestName}</h3>
+                    <p className="text-sm text-slate-500">{selectedInvoice.guestPhone}</p>
                   </div>
-                  <div className="space-y-4 text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b-2 border-slate-100 pb-2">Émetteur</p>
-                    <div className="text-sm font-medium text-slate-600">
-                      {settings?.hotelName || 'ImaraPMS'}<br />
-                      {settings?.address || 'Adresse non configurée'}<br />
-                      Tel: {settings?.phone || 'N/A'}
-                    </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Émetteur</p>
+                    <p className="text-sm font-medium">{settings?.hotelName || 'ImaraPMS'}</p>
+                    <p className="text-xs text-slate-500">{settings?.address || 'Adresse'}</p>
                   </div>
                 </div>
 
                 <div className="mb-20">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left">
                     <thead>
-                      <tr className="bg-slate-50 border-y border-slate-100">
-                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
-                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Montant ($)</th>
+                      <tr className="bg-slate-50 border-y">
+                        <th className="py-4 px-6 text-[10px] uppercase font-bold text-slate-400">Description</th>
+                        <th className="py-4 px-6 text-[10px] uppercase font-bold text-slate-400 text-right">Montant ($)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       <tr>
-                        <td className="py-8 px-6">
-                          <p className="font-bold text-slate-900 text-lg">Séjour Hôtelier & Services</p>
-                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement premium</p>
-                        </td>
-                        <td className="py-8 px-6 text-right">
-                          <span className="text-xl font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
-                        </td>
+                        <td className="py-8 px-6 font-bold text-lg">Services Hôteliers</td>
+                        <td className="py-8 px-6 text-right font-black text-xl">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                <div className="flex justify-end px-4">
-                  <div className="w-full max-w-[350px] space-y-4">
-                    <div className="flex justify-between items-center py-6 border-t-4 border-slate-900">
-                      <span className="text-sm font-black uppercase tracking-widest text-slate-900">Total Net à payer</span>
-                      <span className="text-4xl font-black font-headline text-primary tracking-tighter">
-                        {Number(selectedInvoice.amountDue).toFixed(2)} $
-                      </span>
-                    </div>
+                <div className="flex justify-end">
+                  <div className="w-full max-w-[300px] border-t-4 border-slate-900 pt-6 flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase">Total Net</span>
+                    <span className="text-3xl font-black text-primary">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t border-slate-200">
-                <Button 
-                  className="h-12 px-6 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl shadow-lg border-none" 
-                  onClick={() => handleSendWhatsApp(selectedInvoice)}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="font-bold text-[10px] uppercase tracking-widest">WhatsApp</span>
-                </Button>
+              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t">
                 <Button 
                   disabled={isGeneratingPdf}
-                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
+                  className="h-12 px-8 gap-2 bg-slate-900 text-white rounded-xl shadow-lg" 
                   onClick={() => handleDownloadPDF()}
                 >
                   {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger PDF</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger</span>
                 </Button>
               </div>
             </div>

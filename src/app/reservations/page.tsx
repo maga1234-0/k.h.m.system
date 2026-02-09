@@ -19,8 +19,6 @@ import {
   MoreHorizontal,
   CheckCircle,
   LogOut,
-  XCircle,
-  Trash2,
   CalendarDays
 } from "lucide-react";
 import { 
@@ -31,16 +29,6 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -61,13 +49,10 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   updateDocumentNonBlocking, 
-  deleteDocumentNonBlocking,
   useUser 
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
-
-type ActiveDialog = 'details' | 'cancel' | 'delete' | null;
 
 export default function ReservationsPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -75,9 +60,8 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  
+  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
   const [selectedRes, setSelectedRes] = useState<any>(null);
-  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
@@ -102,17 +86,17 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  const handleOpenActionDialog = (res: any, type: ActiveDialog) => {
+  const handleOpenManage = (res: any) => {
     setSelectedRes(res);
-    // On laisse un tick pour permettre au dropdown de se fermer et éviter le conflit de focus
+    // Timeout to prevent Radix UI focus trap conflicts between Dropdown and Dialog
     setTimeout(() => {
-      setActiveDialog(type);
+      setIsManageDialogOpen(true);
     }, 100);
   };
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ variant: "destructive", title: "Données manquantes", description: "Veuillez remplir les informations obligatoires." });
+      toast({ variant: "destructive", title: "Données manquantes", description: "Veuillez remplir les informations." });
       return;
     }
     
@@ -132,15 +116,13 @@ export default function ReservationsPage() {
     
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Réservation Enregistrée", description: `Dossier de ${reservationData.guestName} créé.` });
+    toast({ title: "Succès", description: "Réservation créée." });
   };
 
   const handleCheckIn = (res: any) => {
     const resRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resRef, { status: "Checked In" });
-    
-    const roomRef = doc(firestore, 'rooms', res.roomId);
-    updateDocumentNonBlocking(roomRef, { status: "Occupied" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Occupied" });
 
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
@@ -154,43 +136,16 @@ export default function ReservationsPage() {
       dueDate: new Date(Date.now() + 86400000).toISOString()
     });
 
-    setActiveDialog(null);
-    toast({ title: "Check-in Effectué", description: `${res.guestName} est maintenant enregistré.` });
+    setIsManageDialogOpen(false);
+    toast({ title: "Arrivée validée", description: "Client enregistré." });
   };
 
   const handleCheckOut = (res: any) => {
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, { status: "Checked Out" });
-    
-    const roomRef = doc(firestore, 'rooms', res.roomId);
-    updateDocumentNonBlocking(roomRef, { status: "Cleaning" });
+    updateDocumentNonBlocking(doc(firestore, 'reservations', res.id), { status: "Checked Out" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
 
-    setActiveDialog(null);
-    toast({ title: "Check-out Effectué", description: `La chambre ${res.roomNumber} est en cours de nettoyage.` });
-  };
-
-  const handleCancelRes = (res: any) => {
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, { status: "Cancelled" });
-    
-    const roomRef = doc(firestore, 'rooms', res.roomId);
-    updateDocumentNonBlocking(roomRef, { status: "Available" });
-
-    setActiveDialog(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "La chambre a été libérée." });
-  };
-
-  const handleDeleteRes = (res: any) => {
-    const resRef = doc(firestore, 'reservations', res.id);
-    deleteDocumentNonBlocking(resRef);
-    
-    if (res.status !== 'Checked Out' && res.status !== 'Cancelled') {
-      const roomRef = doc(firestore, 'rooms', res.roomId);
-      updateDocumentNonBlocking(roomRef, { status: "Available" });
-    }
-
-    setActiveDialog(null);
-    toast({ variant: "destructive", title: "Dossier Supprimé", description: "La réservation a été retirée du registre." });
+    setIsManageDialogOpen(false);
+    toast({ title: "Départ validé", description: "Chambre en cours de ménage." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -216,10 +171,10 @@ export default function ReservationsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Registre des Réservations</h1>
+            <h1 className="font-headline font-semibold text-xl">Réservations</h1>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2">
-            <Plus className="h-4 w-4" /> Nouvelle réservation
+            <Plus className="h-4 w-4" /> Nouvelle résa
           </Button>
         </header>
 
@@ -229,7 +184,7 @@ export default function ReservationsPage() {
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher Nom du client..." 
+                  placeholder="Rechercher client..." 
                   className="pl-9" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
@@ -240,12 +195,12 @@ export default function ReservationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom du client</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Chambre</TableHead>
-                  <TableHead>Arrivée / Départ</TableHead>
-                  <TableHead>Montant Total</TableHead>
+                  <TableHead>Dates</TableHead>
+                  <TableHead>Prix</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,7 +223,7 @@ export default function ReservationsPage() {
                       <TableCell className="font-bold text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                       <TableCell>
                         <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : 'outline'}>
-                          {res.status}
+                          {res.status === 'Checked In' ? 'En séjour' : res.status === 'Checked Out' ? 'Parti' : 'Confirmé'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -279,21 +234,8 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'details'); }}>
-                              <CalendarDays className="h-4 w-4 mr-2" /> Détails complets
-                            </DropdownMenuItem>
-                            <Separator className="my-1" />
-                            <DropdownMenuItem 
-                              onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'cancel'); }}
-                              className="text-rose-500 font-bold"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" /> Annuler séjour
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onSelect={(e) => { e.preventDefault(); handleOpenActionDialog(res, 'delete'); }}
-                              className="text-destructive font-black"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" /> Supprimer définitif
+                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleOpenManage(res); }}>
+                              <CalendarDays className="h-4 w-4 mr-2" /> Gérer Arrivée / Départ
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -303,7 +245,7 @@ export default function ReservationsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
-                      Aucun dossier trouvé.
+                      Aucune donnée.
                     </TableCell>
                   </TableRow>
                 )}
@@ -316,7 +258,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Saisissez le nom du client et les détails du séjour.</DialogDescription>
+              <DialogDescription>Remplissez les détails du séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -324,30 +266,30 @@ export default function ReservationsPage() {
                   <Label>Nom du client</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-9" placeholder="Nom du client" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
+                    <Input className="pl-9" placeholder="Nom complet" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Téléphone WhatsApp</Label>
+                  <Label>WhatsApp</Label>
                   <Input placeholder="+..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Date d'Arrivée</Label>
+                  <Label>Arrivée</Label>
                   <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date de Départ</Label>
+                  <Label>Départ</Label>
                   <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Chambre Disponible</Label>
+                  <Label>Chambre</Label>
                   <Select value={bookingForm.roomId} onValueChange={(val) => setBookingForm({...bookingForm, roomId: val})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir une chambre" />
+                      <SelectValue placeholder="Choisir..." />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRooms.map((room) => (
@@ -359,7 +301,7 @@ export default function ReservationsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Prix du séjour ($)</Label>
+                  <Label>Prix ($)</Label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input type="number" className="pl-9" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
@@ -374,46 +316,38 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialogues isolés de la table pour éviter le blocage du focus */}
-        <Dialog open={activeDialog === 'details'} onOpenChange={(open) => !open && setActiveDialog(null)}>
+        <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Gestion du Dossier</DialogTitle>
-              <DialogDescription className="sr-only">Visualisation et modification du statut de séjour.</DialogDescription>
+              <DialogTitle>Gestion du Séjour</DialogTitle>
+              <DialogDescription>Actions rapides pour le client sélectionné.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground text-[10px] uppercase font-bold">Client</Label>
-                    <p className="font-bold text-lg">{selectedRes.guestName}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Client</Label>
+                    <p className="font-bold">{selectedRes.guestName}</p>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground text-[10px] uppercase font-bold">Chambre</Label>
-                    <p className="font-bold text-lg">N° {selectedRes.roomNumber}</p>
+                  <div>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Chambre</Label>
+                    <p className="font-bold">N° {selectedRes.roomNumber}</p>
                   </div>
                 </div>
                 <Separator />
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <Label className="text-muted-foreground text-[10px] uppercase font-bold">Arrivée</Label>
-                    <p>{selectedRes.checkInDate}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-[10px] uppercase font-bold">Départ</Label>
-                    <p>{selectedRes.checkOutDate}</p>
-                  </div>
-                </div>
                 <div className="bg-muted/30 p-4 rounded-xl flex items-center justify-between">
-                  <span className="text-sm font-bold">Statut: <Badge>{selectedRes.status}</Badge></span>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Statut Actuel</span>
+                    <Badge className="w-fit mt-1">{selectedRes.status}</Badge>
+                  </div>
                   <div className="flex gap-2">
                     {selectedRes.status === 'Confirmée' && (
-                      <Button size="sm" onClick={() => handleCheckIn(selectedRes)} className="bg-emerald-600 hover:bg-emerald-700">
+                      <Button onClick={() => handleCheckIn(selectedRes)} className="bg-emerald-600 hover:bg-emerald-700">
                         <CheckCircle className="h-4 w-4 mr-2" /> Check-in
                       </Button>
                     )}
                     {selectedRes.status === 'Checked In' && (
-                      <Button size="sm" onClick={() => handleCheckOut(selectedRes)} className="bg-amber-600 hover:bg-amber-700">
+                      <Button onClick={() => handleCheckOut(selectedRes)} className="bg-amber-600 hover:bg-amber-700">
                         <LogOut className="h-4 w-4 mr-2" /> Check-out
                       </Button>
                     )}
@@ -422,36 +356,10 @@ export default function ReservationsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setActiveDialog(null)}>Fermer</Button>
+              <Button variant="outline" className="w-full" onClick={() => setIsManageDialogOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <AlertDialog open={activeDialog === 'cancel'} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Annuler cette réservation ?</AlertDialogTitle>
-              <AlertDialogDescription>La chambre sera immédiatement remise en disponibilité dans l'inventaire.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Retour</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleCancelRes(selectedRes)} className="bg-rose-500 hover:bg-rose-600 text-white">Confirmer l'annulation</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <AlertDialog open={activeDialog === 'delete'} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
-              <AlertDialogDescription>Cette action est irréversible et retirera le dossier du registre hôtelier.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Retour</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDeleteRes(selectedRes)} className="bg-destructive hover:bg-destructive/90">Supprimer le dossier</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </SidebarInset>
     </div>
   );

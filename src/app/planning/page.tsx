@@ -74,7 +74,7 @@ export default function PlanningPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Planning des Séjours</h1>
+            <h1 className="font-headline font-semibold text-xl">Planning</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
@@ -82,11 +82,11 @@ export default function PlanningPage() {
             </Button>
             <div className="flex items-center gap-2 font-medium bg-muted px-4 py-2 rounded-lg text-sm">
               <CalendarIcon className="h-4 w-4 text-primary" />
-              {weekDays.length > 0 && (
+              {weekDays.length > 0 ? (
                 <>
                   {format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
                 </>
-              )}
+              ) : 'Chargement...'}
             </div>
             <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
               <ChevronRight className="h-4 w-4" />
@@ -114,7 +114,7 @@ export default function PlanningPage() {
                   <div className="divide-y">
                     {isRoomsLoading ? (
                       <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement du plan...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
                       </div>
                     ) : sortedRooms.map((room) => (
                       <div key={room.id} className="grid grid-cols-[150px_repeat(7,1fr)] hover:bg-muted/5 transition-colors">
@@ -134,9 +134,6 @@ export default function PlanningPage() {
                                       ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}
                                     `}>
                                       <span className="truncate">{res.guestName}</span>
-                                      <span className="opacity-70 truncate">
-                                        {res.status === 'Checked In' ? 'Arrivé' : 'Confirmé'}
-                                      </span>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
@@ -158,20 +155,6 @@ export default function PlanningPage() {
               </div>
             </Card>
           </TooltipProvider>
-          
-          <div className="mt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex gap-6 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-primary" /> <span>En séjour</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-secondary" /> <span>Réservation confirmée</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" /> <span>Disponible</span>
-              </div>
-            </div>
-          </div>
         </main>
       </SidebarInset>
     </div>
