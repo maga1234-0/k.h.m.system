@@ -92,6 +92,7 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // Délai pour permettre la fermeture propre du menu dropdown avant d'ouvrir le dialogue
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -126,6 +127,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
+    // Création de la facture initiale
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
       reservationId: selectedRes.id,
@@ -202,7 +204,7 @@ export default function ReservationsPage() {
                     <TableHead>Client</TableHead>
                     <TableHead>Chambre</TableHead>
                     <TableHead className="hidden md:table-cell">Dates</TableHead>
-                    <TableHead>Prix</TableHead>
+                    <TableHead>Prix Total</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
@@ -249,7 +251,7 @@ export default function ReservationsPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic text-xs">
-                        Aucune réservation.
+                        Aucune réservation active.
                       </TableCell>
                     </TableRow>
                   )}
@@ -263,7 +265,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px] w-[95vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Enregistrer un nouveau dossier de séjour.</DialogDescription>
+              <DialogDescription>Enregistrer un nouveau dossier de séjour dans le registre.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -275,23 +277,23 @@ export default function ReservationsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">WhatsApp</Label>
+                  <Label className="text-xs">Téléphone WhatsApp</Label>
                   <Input className="h-9 text-sm" placeholder="+..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Arrivée</Label>
+                  <Label className="text-xs">Date d'arrivée</Label>
                   <Input className="h-9 text-xs sm:text-sm" type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Départ</Label>
+                  <Label className="text-xs">Date de départ</Label>
                   <Input className="h-9 text-xs sm:text-sm" type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Chambre</Label>
+                  <Label className="text-xs">Chambre assignée</Label>
                   <Select value={bookingForm.roomId} onValueChange={(val) => setBookingForm({...bookingForm, roomId: val})}>
                     <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="Choisir..." />
@@ -316,7 +318,7 @@ export default function ReservationsPage() {
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" className="h-9 text-xs" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button className="h-9 text-xs" onClick={handleSaveBooking}>Confirmer</Button>
+              <Button className="h-9 text-xs" onClick={handleSaveBooking}>Confirmer la résa</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -325,7 +327,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Effectuer l'arrivée ou le départ du client.</DialogDescription>
+              <DialogDescription>Effectuer l'arrivée ou le départ du client de sa chambre.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
@@ -355,7 +357,7 @@ export default function ReservationsPage() {
                   
                   {selectedRes.status === 'Checked Out' && (
                     <div className="p-4 text-center border-2 border-dashed rounded-xl text-muted-foreground text-sm">
-                      Ce séjour est déjà terminé.
+                      Ce séjour est déjà clôturé.
                     </div>
                   )}
                 </div>

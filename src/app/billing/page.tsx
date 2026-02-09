@@ -65,6 +65,9 @@ export default function BillingPage() {
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
   const { data: invoices, isLoading: isInvoicesLoading } = useCollection(invoicesRef);
 
+  const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
+  const { data: reservations } = useCollection(resRef);
+
   useEffect(() => {
     setMounted(true);
     if (!isAuthLoading && !user) {
@@ -144,6 +147,35 @@ export default function BillingPage() {
       setIsGeneratingPdf(false);
     }
   };
+
+  const parsedExtras = useMemo(() => {
+    if (!selectedInvoice || !reservations) return [];
+    const res = reservations.find(r => r.id === selectedInvoice.reservationId);
+    if (!res || !res.notes) return [];
+
+    const extras: { date: string, type: string, description: string, amount: string }[] = [];
+    const lines = res.notes.split('\n');
+    
+    const regex = /\[(.*?)\] (.*?): (.*?) \(\+(.*?) \$\)/;
+    lines.forEach(line => {
+      const match = line.match(regex);
+      if (match) {
+        extras.push({
+          date: match[1],
+          type: match[2],
+          description: match[3],
+          amount: match[4]
+        });
+      }
+    });
+    return extras;
+  }, [selectedInvoice, reservations]);
+
+  const basePrice = useMemo(() => {
+    if (!selectedInvoice) return 0;
+    const totalExtras = parsedExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+    return Math.max(0, Number(selectedInvoice.amountDue) - totalExtras);
+  }, [selectedInvoice, parsedExtras]);
 
   if (!mounted || isAuthLoading || !user) {
     return (
@@ -293,7 +325,6 @@ export default function BillingPage() {
         </main>
       </SidebarInset>
 
-      {/* Modal Encaissement */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
@@ -320,7 +351,7 @@ export default function BillingPage() {
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
           <DialogHeader className="p-6 md:p-8 bg-slate-50 border-b">
             <DialogTitle>Aperçu Facture Client</DialogTitle>
-            <DialogDescription>Document de facturation officiel pour impression et partage.</DialogDescription>
+            <DialogDescription>Document de facturation officiel incluant les services extras.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
@@ -362,17 +393,26 @@ export default function BillingPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td className="py-8 px-4 md:px-6 font-bold text-base md:text-lg">Services d'Hébergement & Frais Annexes</td>
-                        <td className="py-8 px-4 md:px-6 text-right font-black text-lg md:text-xl tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                      <tr className="border-b border-slate-50">
+                        <td className="py-4 px-4 md:px-6 font-bold text-sm">Services d'Hébergement (Base)</td>
+                        <td className="py-4 px-4 md:px-6 text-right font-black text-base tracking-tighter">{basePrice.toFixed(2)} $</td>
                       </tr>
+                      {parsedExtras.map((extra, idx) => (
+                        <tr key={idx} className="border-b border-slate-50 bg-slate-50/30">
+                          <td className="py-4 px-4 md:px-6">
+                            <span className="text-[10px] font-black uppercase text-primary block mb-0.5">{extra.type}</span>
+                            <span className="text-xs font-medium text-slate-600">{extra.description} ({extra.date})</span>
+                          </td>
+                          <td className="py-4 px-4 md:px-6 text-right font-bold text-sm tracking-tighter">+{parseFloat(extra.amount).toFixed(2)} $</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
 
                 <div className="flex justify-end">
                   <div className="w-full max-w-[300px] border-t-4 border-slate-900 pt-6 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest">Total Net</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Total Net à payer</span>
                     <span className="text-2xl md:text-3xl font-black text-primary tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                   </div>
                 </div>
