@@ -106,41 +106,50 @@
 }
 
 @media print {
-  /* Masquer tous les éléments SAUF le dialogue ou la facture */
-  body > *:not([role="dialog"]) {
-    display: none !important;
+  /* Masquer tout par défaut */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Afficher uniquement la zone de la facture */
+  #invoice-printable, #invoice-printable * {
+    visibility: visible !important;
   }
 
-  /* Dans le dialogue, ne garder que la facture */
-  [role="dialog"] button,
-  [role="dialog"] .bg-slate-50,
-  [role="dialog"] .print\:hidden {
-    display: none !important;
-  }
-
-  /* Forcer la facture à prendre toute la page */
+  /* Positionner la facture en haut à gauche pour l'impression */
   #invoice-printable {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: auto !important;
-    padding: 20mm !important;
+    padding: 10mm !important;
     margin: 0 !important;
     background: white !important;
     color: black !important;
-    display: block !important;
   }
 
-  /* Supprimer les ombres et arrondis pour l'impression */
+  /* Supprimer les fonds gris de Dialog et autres overlays */
   [role="dialog"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
     background: white !important;
     box-shadow: none !important;
     border: none !important;
   }
 
+  /* Masquer les éléments interactifs du dialogue */
+  [role="dialog"] button,
+  [role="dialog"] .bg-slate-50,
+  [role="dialog"] .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
   @page {
     size: A4;
-    margin: 0mm;
+    margin: 0;
   }
 }

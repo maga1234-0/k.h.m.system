@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/layout/AppSidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -29,7 +29,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -130,7 +129,10 @@ export default function BillingPage() {
 
   const handlePrintAction = () => {
     if (typeof window !== 'undefined') {
+      const originalTitle = document.title;
+      document.title = `Facture_${selectedInvoice?.guestName || 'Client'}_${selectedInvoice?.id?.slice(0, 8) || ''}`;
       window.print();
+      document.title = originalTitle;
     }
   };
 
