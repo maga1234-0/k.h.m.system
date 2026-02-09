@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -30,8 +31,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -104,7 +103,7 @@ export default function BillingPage() {
   };
 
   const handleSendWhatsApp = (invoice: any) => {
-    if (!invoice.guestPhone) {
+    if (!invoice || !invoice.guestPhone) {
       toast({
         variant: "destructive",
         title: "Numéro Manquant",
@@ -122,6 +121,11 @@ export default function BillingPage() {
   };
 
   const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = () => {
+    // In browser, print triggers PDF save options
     window.print();
   };
 
@@ -189,7 +193,7 @@ export default function BillingPage() {
           <Card className="border-none shadow-sm print:shadow-none print:border-none">
             <CardHeader className="flex flex-row items-center justify-between print:hidden">
               <div>
-                <CardTitle className="font-headline">Historique des Factures</CardTitle>
+                <CardTitle className="font-headline text-lg">Historique des Factures</CardTitle>
                 <CardDescription>Consultez et gérez les transactions de vos clients.</CardDescription>
               </div>
               <div className="flex gap-2">
@@ -312,14 +316,14 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Billing Info Grid - Styled to match screenshot */}
+                {/* Billing Info Grid */}
                 <div className="grid grid-cols-3 gap-12 mb-16">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Destinataire</p>
-                    <h3 className="text-3xl font-bold text-slate-900 mb-3">{selectedInvoice.guestName}</h3>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
                     <div className="space-y-1 text-sm text-slate-600">
                       <p className="flex items-center gap-2 font-medium"><Phone className="h-3 w-3" /> {selectedInvoice.guestPhone || "N/A"}</p>
-                      <p className="flex items-center gap-2 font-medium">Client ID: {selectedInvoice.guestId?.slice(0, 8).toUpperCase() || "REG-9912"}</p>
+                      <p className="flex items-center gap-2 font-medium">ID Client: {selectedInvoice.reservationId?.slice(0, 8).toUpperCase() || "REG-9912"}</p>
                     </div>
                   </div>
                   <div>
@@ -410,13 +414,24 @@ export default function BillingPage() {
 
               {/* Action Bar - Styled to match screenshot buttons */}
               <div className="bg-slate-50 p-6 flex justify-end gap-3 border-t print:hidden">
-                <Button variant="outline" className="h-12 px-8 gap-2 bg-white text-slate-900 font-bold uppercase tracking-widest text-[11px] border-slate-200 hover:bg-slate-100" onClick={() => handleSendWhatsApp(selectedInvoice)}>
+                <Button 
+                  variant="outline" 
+                  className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] border-none hover:bg-slate-800" 
+                  onClick={() => handleSendWhatsApp(selectedInvoice)}
+                >
                   <MessageCircle className="h-4 w-4" /> WhatsApp
                 </Button>
-                <Button variant="outline" className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] hover:bg-slate-800" onClick={() => window.print()}>
+                <Button 
+                  variant="outline" 
+                  className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] border-none hover:bg-slate-800" 
+                  onClick={handleDownload}
+                >
                   <Download className="h-4 w-4" /> Télécharger
                 </Button>
-                <Button className="h-12 px-8 gap-2 bg-[#101419] hover:bg-black text-white font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200" onClick={handlePrint}>
+                <Button 
+                  className="h-12 px-8 gap-2 bg-[#101419] hover:bg-black text-white font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200" 
+                  onClick={handlePrint}
+                >
                   <Printer className="h-4 w-4" /> Imprimer la Facture
                 </Button>
               </div>
