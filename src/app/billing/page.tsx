@@ -86,7 +86,8 @@ export default function BillingPage() {
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const message = `*${(settings?.hotelName || 'IMARAPMS').toUpperCase()}*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
+    const hotelName = settings?.hotelName || 'ImaraPMS';
+    const message = `*${hotelName.toUpperCase()} — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${hotelName}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -96,17 +97,18 @@ export default function BillingPage() {
 
     if (!invoiceToGen) setIsGeneratingPdf(true);
     
-    // Si on appelle ça depuis la liste, on s'assure que le dialogue est ouvert ou l'élément rendu
+    // Ensure dialog is open to render the printable element
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // Attendre un peu pour que le DOM se mette à jour
+      // Wait for React to render the dialog content
       await new Promise(r => setTimeout(r, 600));
     }
 
     const element = document.getElementById('invoice-printable');
     if (!element) {
       if (!invoiceToGen) setIsGeneratingPdf(false);
+      toast({ variant: "destructive", title: "Erreur", description: "Élément graphique introuvable." });
       return;
     }
 
@@ -115,7 +117,8 @@ export default function BillingPage() {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        windowWidth: 800
       });
       
       const imgData = canvas.toDataURL('image/png');
