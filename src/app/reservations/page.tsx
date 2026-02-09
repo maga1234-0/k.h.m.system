@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -18,8 +18,7 @@ import {
   CreditCard,
   MoreHorizontal,
   CheckCircle,
-  LogOut,
-  CalendarDays
+  LogOut
 } from "lucide-react";
 import { 
   Dialog, 
@@ -61,7 +60,7 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
-  const [selectedRes, setSelectedRes] = useState<any>(null);
+  const [selectedResId, setSelectedResId] = useState<string | null>(null);
   
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
@@ -86,9 +85,13 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  const handleOpenManage = (res: any) => {
-    setSelectedRes(res);
-    // Timeout to prevent Radix UI focus trap conflicts between Dropdown and Dialog
+  const selectedRes = useMemo(() => 
+    reservations?.find(r => r.id === selectedResId) || null
+  , [reservations, selectedResId]);
+
+  const handleOpenManage = (resId: string) => {
+    setSelectedResId(resId);
+    // Délai pour éviter le conflit de focus avec le menu Radix
     setTimeout(() => {
       setIsManageDialogOpen(true);
     }, 100);
@@ -119,17 +122,17 @@ export default function ReservationsPage() {
     toast({ title: "Succès", description: "Réservation créée." });
   };
 
-  const handleCheckIn = (res: any) => {
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, { status: "Checked In" });
-    updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Occupied" });
+  const handleCheckIn = () => {
+    if (!selectedRes) return;
+    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
-      reservationId: res.id,
-      guestName: res.guestName,
-      guestPhone: res.guestPhone,
-      amountDue: res.totalAmount,
+      reservationId: selectedRes.id,
+      guestName: selectedRes.guestName,
+      guestPhone: selectedRes.guestPhone,
+      amountDue: selectedRes.totalAmount,
       amountPaid: 0,
       status: 'Unpaid',
       invoiceDate: new Date().toISOString(),
@@ -140,9 +143,10 @@ export default function ReservationsPage() {
     toast({ title: "Arrivée validée", description: "Client enregistré." });
   };
 
-  const handleCheckOut = (res: any) => {
-    updateDocumentNonBlocking(doc(firestore, 'reservations', res.id), { status: "Checked Out" });
-    updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
+  const handleCheckOut = () => {
+    if (!selectedRes) return;
+    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked Out" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
 
     setIsManageDialogOpen(false);
     toast({ title: "Départ validé", description: "Chambre en cours de ménage." });
@@ -173,122 +177,124 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Réservations</h1>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2">
-            <Plus className="h-4 w-4" /> Nouvelle résa
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2 h-9 text-xs md:text-sm">
+            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nouvelle résa</span>
           </Button>
         </header>
 
-        <main className="p-6">
+        <main className="p-4 md:p-6">
           <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
             <div className="p-4 border-b bg-muted/20">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Rechercher client..." 
-                  className="pl-9" 
+                  className="pl-9 bg-background" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
               </div>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Chambre</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Prix</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isResLoading ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                    </TableCell>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Chambre</TableHead>
+                    <TableHead className="hidden md:table-cell">Dates</TableHead>
+                    <TableHead>Prix</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
-                ) : filteredReservations && filteredReservations.length > 0 ? (
-                  filteredReservations.map((res) => (
-                    <TableRow key={res.id}>
-                      <TableCell className="font-bold">{res.guestName}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-bold">N° {res.roomNumber}</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">
-                        {res.checkInDate} <span className="text-muted-foreground mx-1">→</span> {res.checkOutDate}
-                      </TableCell>
-                      <TableCell className="font-bold text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
-                      <TableCell>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : 'outline'}>
-                          {res.status === 'Checked In' ? 'En séjour' : res.status === 'Checked Out' ? 'Parti' : 'Confirmé'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleOpenManage(res); }}>
-                              <CalendarDays className="h-4 w-4 mr-2" /> Gérer Arrivée / Départ
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                </TableHeader>
+                <TableBody>
+                  {isResLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
-                      Aucune donnée.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredReservations && filteredReservations.length > 0 ? (
+                    filteredReservations.map((res) => (
+                      <TableRow key={res.id}>
+                        <TableCell className="font-bold text-xs md:text-sm">{res.guestName}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-bold text-[10px] md:text-xs">N° {res.roomNumber}</Badge>
+                        </TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium hidden md:table-cell">
+                          {res.checkInDate} <span className="text-muted-foreground mx-1">→</span> {res.checkOutDate}
+                        </TableCell>
+                        <TableCell className="font-bold text-primary text-xs md:text-sm">{Number(res.totalAmount).toFixed(2)} $</TableCell>
+                        <TableCell>
+                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : 'outline'} className="text-[10px]">
+                            {res.status === 'Checked In' ? 'En séjour' : res.status === 'Checked Out' ? 'Parti' : 'Confirmé'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => handleOpenManage(res.id)}>
+                                <CheckCircle className="h-4 w-4 mr-2" /> Gérer Séjour
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic text-xs">
+                        Aucune réservation.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] w-[95vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
               <DialogDescription>Remplissez les détails du séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nom du client</Label>
+                  <Label className="text-xs">Nom du client</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-9" placeholder="Nom complet" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
+                    <Input className="pl-9 h-9 text-sm" placeholder="Nom complet" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>WhatsApp</Label>
-                  <Input placeholder="+..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
+                  <Label className="text-xs">WhatsApp</Label>
+                  <Input className="h-9 text-sm" placeholder="+..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Arrivée</Label>
-                  <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
+                  <Label className="text-xs">Arrivée</Label>
+                  <Input className="h-9 text-xs sm:text-sm" type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Départ</Label>
-                  <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
+                  <Label className="text-xs">Départ</Label>
+                  <Input className="h-9 text-xs sm:text-sm" type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Chambre</Label>
+                  <Label className="text-xs">Chambre</Label>
                   <Select value={bookingForm.roomId} onValueChange={(val) => setBookingForm({...bookingForm, roomId: val})}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="Choisir..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -301,54 +307,54 @@ export default function ReservationsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Prix ($)</Label>
+                  <Label className="text-xs">Prix Total ($)</Label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="number" className="pl-9" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
+                    <Input type="number" className="pl-9 h-9 text-sm" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
                   </div>
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleSaveBooking}>Confirmer</Button>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" className="h-9 text-xs" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
+              <Button className="h-9 text-xs" onClick={handleSaveBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Actions rapides pour le client sélectionné.</DialogDescription>
+              <DialogTitle>Gestion de l'Arrivée / Départ</DialogTitle>
+              <DialogDescription>Actions rapides pour le séjour sélectionné.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Client</Label>
-                    <p className="font-bold">{selectedRes.guestName}</p>
+                    <p className="font-bold text-sm truncate">{selectedRes.guestName}</p>
                   </div>
                   <div>
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Chambre</Label>
-                    <p className="font-bold">N° {selectedRes.roomNumber}</p>
+                    <p className="font-bold text-sm">N° {selectedRes.roomNumber}</p>
                   </div>
                 </div>
                 <Separator />
-                <div className="bg-muted/30 p-4 rounded-xl flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Statut Actuel</span>
-                    <Badge className="w-fit mt-1">{selectedRes.status}</Badge>
+                <div className="bg-muted/30 p-4 rounded-xl flex items-center justify-between gap-4">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Statut</span>
+                    <Badge className="w-fit mt-1 text-[10px]">{selectedRes.status}</Badge>
                   </div>
                   <div className="flex gap-2">
                     {selectedRes.status === 'Confirmée' && (
-                      <Button onClick={() => handleCheckIn(selectedRes)} className="bg-emerald-600 hover:bg-emerald-700">
-                        <CheckCircle className="h-4 w-4 mr-2" /> Check-in
+                      <Button onClick={handleCheckIn} className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700">
+                        Check-in
                       </Button>
                     )}
                     {selectedRes.status === 'Checked In' && (
-                      <Button onClick={() => handleCheckOut(selectedRes)} className="bg-amber-600 hover:bg-amber-700">
-                        <LogOut className="h-4 w-4 mr-2" /> Check-out
+                      <Button onClick={handleCheckOut} className="h-9 text-xs bg-amber-600 hover:bg-amber-700">
+                        Check-out
                       </Button>
                     )}
                   </div>
@@ -356,7 +362,7 @@ export default function ReservationsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" className="w-full" onClick={() => setIsManageDialogOpen(false)}>Fermer</Button>
+              <Button variant="outline" className="w-full h-9 text-xs" onClick={() => setIsManageDialogOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
