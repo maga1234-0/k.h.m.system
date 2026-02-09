@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Utensils, 
   Shirt, 
@@ -21,7 +20,10 @@ import {
   Plus,
   Receipt,
   CheckCircle2,
-  AlertCircle
+  DollarSign,
+  Coffee,
+  GlassWater,
+  ChefHat
 } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
@@ -50,10 +52,14 @@ function ServicesContent() {
   const activeTab = searchParams.get('tab') || 'restaurant';
   
   const firestore = useFirestore();
-  const reservationsRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
-  const { data: reservations, isLoading: isResLoading } = useCollection(reservationsRef);
+  const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
+  const invRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
+  
+  const { data: reservations, isLoading: isResLoading } = useCollection(resRef);
+  const { data: invoices } = useCollection(invRef);
 
   const [isAddChargeOpen, setIsAddChargeOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [chargeData, setChargeData] = useState({
     reservationId: "",
     description: "",
@@ -67,8 +73,11 @@ function ServicesContent() {
   }, [user, isAuthLoading, router]);
 
   const activeReservations = useMemo(() => {
-    return reservations?.filter(r => r.status === 'Checked In') || [];
-  }, [reservations]);
+    return (reservations?.filter(r => r.status === 'Checked In') || []).filter(r => 
+      r.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      r.roomNumber?.includes(searchTerm)
+    );
+  }, [reservations, searchTerm]);
 
   const handleAddCharge = () => {
     if (!chargeData.reservationId || !chargeData.amount) return;
@@ -76,30 +85,39 @@ function ServicesContent() {
     const res = reservations?.find(r => r.id === chargeData.reservationId);
     if (!res) return;
 
-    const currentTotal = Number(res.totalAmount) || 0;
     const additionalAmount = Number(chargeData.amount) || 0;
     
-    const resRef = doc(firestore, 'reservations', res.id);
-    updateDocumentNonBlocking(resRef, {
-      totalAmount: currentTotal + additionalAmount,
-      notes: (res.notes || "") + `\n[${new Date().toLocaleDateString()}] ${chargeData.description || activeTab.toUpperCase()}: +${additionalAmount} $`
+    // 1. Update Reservation Notes & Total for record keeping
+    const resUpdateRef = doc(firestore, 'reservations', res.id);
+    updateDocumentNonBlocking(resUpdateRef, {
+      totalAmount: (Number(res.totalAmount) || 0) + additionalAmount,
+      notes: (res.notes || "") + `\n[${new Date().toLocaleDateString('fr-FR')}] ${getServiceTitle(activeTab).toUpperCase()}: ${chargeData.description} (+${additionalAmount} $)`
     });
+
+    // 2. Update Invoice amountDue (CRITICAL for billing page)
+    const invoice = invoices?.find(inv => inv.reservationId === res.id);
+    if (invoice) {
+      const invoiceUpdateRef = doc(firestore, 'invoices', invoice.id);
+      updateDocumentNonBlocking(invoiceUpdateRef, {
+        amountDue: (Number(invoice.amountDue) || 0) + additionalAmount
+      });
+    }
 
     setIsAddChargeOpen(false);
     setChargeData({ reservationId: "", description: "", amount: "" });
     
     toast({
-      title: "Service Ajouté",
-      description: `Frais de ${additionalAmount} $ ajoutés à la chambre ${res.roomNumber} (${res.guestName}).`,
+      title: "Consommation Enregistrée",
+      description: `Frais de ${additionalAmount} $ ajoutés à la facture de ${res.guestName}.`,
     });
   };
 
   const getServiceIcon = (tab: string) => {
     switch (tab) {
-      case 'restaurant': return <Utensils className="h-5 w-5" />;
-      case 'laundry': return <Shirt className="h-5 w-5" />;
-      case 'room-service': return <ConciergeBell className="h-5 w-5" />;
-      default: return <PlusCircle className="h-5 w-5" />;
+      case 'restaurant': return <ChefHat className="h-6 w-6" />;
+      case 'laundry': return <Shirt className="h-6 w-6" />;
+      case 'room-service': return <ConciergeBell className="h-6 w-6" />;
+      default: return <PlusCircle className="h-6 w-6" />;
     }
   };
 
@@ -108,9 +126,18 @@ function ServicesContent() {
       case 'restaurant': return "Restaurant & Bar";
       case 'laundry': return "Blanchisserie";
       case 'room-service': return "Room Service";
-      default: return "Autres Frais & Extras";
+      default: return "Autres Frais";
     }
   };
+
+  const serviceStats = useMemo(() => {
+    // Prototype static stats
+    return [
+      { label: "Ventes du Jour", value: "342.00 $", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" },
+      { label: "Commandes", value: "14", icon: Utensils, color: "text-blue-600", bg: "bg-blue-500/10" },
+      { label: "Populaire", value: "Dîner", icon: Coffee, color: "text-amber-600", bg: "bg-amber-500/10" },
+    ];
+  }, []);
 
   if (isAuthLoading || !user) {
     return (
@@ -123,133 +150,170 @@ function ServicesContent() {
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background">
+      <SidebarInset className="flex flex-col overflow-auto bg-background/50">
         <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Services & Extras</h1>
+            <h1 className="font-headline font-semibold text-xl">Point de Vente {getServiceTitle(activeTab)}</h1>
           </div>
           <Dialog open={isAddChargeOpen} onOpenChange={setIsAddChargeOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Ajouter des frais
+              <Button className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                <Plus className="h-4 w-4" /> Nouvelle Vente
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Facturer un Service</DialogTitle>
+                <DialogTitle>Facturer un service</DialogTitle>
+                <DialogDescription>Les frais seront ajoutés à la facture finale du client.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-6 py-4">
                 <div className="space-y-2">
-                  <Label>Client / Chambre</Label>
+                  <Label>Sélectionner le client</Label>
                   <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Choisir un client..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {activeReservations.map((res) => (
-                        <SelectItem key={res.id} value={res.id}>
-                          Ch. {res.roomNumber} - {res.guestName}
-                        </SelectItem>
-                      ))}
-                      {activeReservations.length === 0 && (
-                        <p className="p-2 text-xs text-muted-foreground text-center">Aucun client en séjour</p>
+                      {activeReservations.length > 0 ? (
+                        activeReservations.map((res) => (
+                          <SelectItem key={res.id} value={res.id}>
+                            Ch. {res.roomNumber} - {res.guestName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-xs text-muted-foreground italic">
+                          Aucun client actuellement en séjour.
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>Désignation du service</Label>
                   <Input 
+                    placeholder="Ex: Dîner Gourmet, Lavage express..."
+                    className="h-12"
                     value={chargeData.description}
                     onChange={(e) => setChargeData({...chargeData, description: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Montant ($)</Label>
-                  <Input 
-                    type="number" 
-                    value={chargeData.amount}
-                    onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
-                  />
+                  <Label>Montant à facturer ($)</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      type="number" 
+                      className="pl-9 h-12"
+                      value={chargeData.amount}
+                      onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
+                    />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Enregistrer</Button>
+                <Button variant="outline" className="h-12 px-6" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
+                <Button className="h-12 px-8 font-bold" onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer la Facturation</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </header>
 
-        <main className="p-6">
+        <main className="p-6 space-y-8">
+          {/* Dashboard Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {serviceStats.map((stat, i) => (
+              <Card key={i} className="border-none shadow-sm">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className={`h-12 w-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
+                    <stat.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</span>
+                    <span className="text-2xl font-bold font-headline">{stat.value}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <Card className="border-none shadow-sm">
-            <CardHeader className="flex flex-row items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                {getServiceIcon(activeTab)}
-              </div>
-              <div>
-                <CardTitle className="font-headline">{getServiceTitle(activeTab)}</CardTitle>
-                <CardDescription>Gérez les consommations.</CardDescription>
+            <CardHeader className="pb-0">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                  {getServiceIcon(activeTab)}
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-2xl">{getServiceTitle(activeTab)}</CardTitle>
+                  <CardDescription>Gérez les consommations et extras par chambre.</CardDescription>
+                </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div className="p-4 rounded-xl border bg-muted/20 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Revenus du Jour</span>
-                  <span className="text-xl font-bold">145.00 $</span>
-                </div>
-                <div className="p-4 rounded-xl border bg-muted/20 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Commandes</span>
-                  <span className="text-xl font-bold">12</span>
-                </div>
-                <div className="p-4 rounded-xl border bg-muted/20 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Temps Moyen</span>
-                  <span className="text-xl font-bold">15 min</span>
-                </div>
-                <div className="p-4 rounded-xl border bg-muted/20 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Rentabilité</span>
-                  <span className="text-xl font-bold text-emerald-600">+8%</span>
-                </div>
+            <CardContent className="pt-8 space-y-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Rechercher un client ou une chambre..." 
+                  className="pl-9 h-12 bg-muted/20 border-none shadow-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Receipt className="h-4 w-4" /> Opérations en cours
+                <h3 className="font-bold text-xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-4">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Clients en Séjour
                 </h3>
-                {activeReservations.length > 0 ? (
+                
+                {isResLoading ? (
+                  <div className="flex justify-center p-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : activeReservations.length > 0 ? (
                   <div className="grid gap-4">
-                    {activeReservations.slice(0, 5).map((res) => (
-                      <div key={res.id} className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/10 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-sm">Chambre {res.roomNumber}</span>
-                          <span className="text-xs text-muted-foreground">{res.guestName}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <span className="block text-xs font-bold text-emerald-600">Total Séjour</span>
-                            <span className="font-bold">{res.totalAmount} $</span>
+                    {activeReservations.map((res) => {
+                      const inv = invoices?.find(i => i.reservationId === res.id);
+                      return (
+                        <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border bg-card hover:bg-muted/5 transition-all group border-transparent hover:border-primary/20 shadow-sm">
+                          <div className="flex items-center gap-5">
+                            <div className="h-14 w-14 rounded-2xl bg-secondary flex items-center justify-center text-primary font-bold text-lg group-hover:scale-110 transition-transform">
+                              {res.roomNumber}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-lg leading-none mb-1">{res.guestName}</span>
+                              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                                {res.checkInDate} — {res.checkOutDate}
+                              </span>
+                            </div>
                           </div>
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            className="h-8 text-xs font-bold"
-                            onClick={() => {
-                              setChargeData({...chargeData, reservationId: res.id});
-                              setIsAddChargeOpen(true);
-                            }}
-                          >
-                            Facturer
-                          </Button>
+                          
+                          <div className="flex items-center gap-8 mt-4 md:mt-0">
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Encours Facture</span>
+                              <span className="text-2xl font-black font-headline text-primary">
+                                {Number(inv?.amountDue || 0).toLocaleString()} $
+                              </span>
+                            </div>
+                            <Button 
+                              variant="secondary" 
+                              className="h-12 px-8 font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all"
+                              onClick={() => {
+                                setChargeData({...chargeData, reservationId: res.id});
+                                setIsAddChargeOpen(true);
+                              }}
+                            >
+                              Facturer
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="py-12 text-center border-2 border-dashed rounded-xl opacity-40">
-                    <ConciergeBell className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Aucun client en séjour.</p>
+                  <div className="py-20 text-center border-2 border-dashed rounded-3xl opacity-30 bg-muted/10">
+                    <ConciergeBell className="h-16 w-16 mx-auto mb-4" />
+                    <p className="font-bold uppercase tracking-widest text-sm">Aucun client actif trouvé.</p>
                   </div>
                 )}
               </div>
