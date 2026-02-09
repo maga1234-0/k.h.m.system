@@ -21,7 +21,7 @@ import {
   Download,
   Hotel
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
@@ -54,6 +54,9 @@ export default function BillingPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
   const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'general'), [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
   const { data: invoices, isLoading: isInvoicesLoading } = useCollection(invoicesRef);
 
@@ -94,7 +97,7 @@ export default function BillingPage() {
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ImaraPMS`;
+    const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -127,12 +130,6 @@ export default function BillingPage() {
     }
   };
 
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
-  };
-
   if (!mounted || isAuthLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -144,15 +141,15 @@ export default function BillingPage() {
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background print:bg-white">
-        <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10 print:hidden">
+      <SidebarInset className="flex flex-col overflow-auto bg-background">
+        <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
           <h1 className="font-headline font-semibold text-xl">Finance & Facturation</h1>
         </header>
 
-        <main className="p-6 space-y-8 print:p-0">
-          <div className="grid gap-6 md:grid-cols-3 print:hidden">
+        <main className="p-6 space-y-8">
+          <div className="grid gap-6 md:grid-cols-3">
             <Card className="border-none shadow-sm bg-rose-500/5 border border-rose-500/10">
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
@@ -188,8 +185,8 @@ export default function BillingPage() {
             </Card>
           </div>
 
-          <Card className="border-none shadow-sm print:shadow-none print:border-none">
-            <CardHeader className="flex flex-row items-center justify-between print:hidden">
+          <Card className="border-none shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg">Historique des Factures</CardTitle>
                 <CardDescription>Gérez les transactions de vos clients.</CardDescription>
@@ -214,13 +211,13 @@ export default function BillingPage() {
                 </AlertDialog>
               )}
             </CardHeader>
-            <CardContent className="print:p-0">
+            <CardContent>
               {isInvoicesLoading ? (
                 <div className="flex justify-center p-12">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : invoices && invoices.length > 0 ? (
-                <div className="space-y-4 print:hidden">
+                <div className="space-y-4">
                   {invoices.map((inv) => (
                     <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border hover:bg-muted/10 transition-all gap-4">
                       <div className="flex items-center gap-4">
@@ -262,7 +259,7 @@ export default function BillingPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-20 border-2 border-dashed rounded-2xl print:hidden">
+                <div className="text-center py-20 border-2 border-dashed rounded-2xl">
                   <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
                   <p className="text-muted-foreground font-medium">Aucune facture enregistrée.</p>
                 </div>
@@ -287,7 +284,7 @@ export default function BillingPage() {
                       <Hotel className="h-8 w-8" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-headline font-black text-2xl tracking-tighter text-primary">ImaraPMS</span>
+                      <span className="font-headline font-black text-2xl tracking-tighter text-primary">{settings?.hotelName || 'ImaraPMS'}</span>
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Luxury Hospitality</span>
                     </div>
                   </div>
@@ -313,9 +310,9 @@ export default function BillingPage() {
                   <div className="space-y-4 text-right">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b-2 border-slate-100 pb-2">Émetteur</p>
                     <div className="text-sm font-medium text-slate-600">
-                      ImaraPMS Luxury Hotel Group<br />
-                      Département de Facturation Centrale<br />
-                      Contact: +1 234 567 890
+                      {settings?.hotelName || 'ImaraPMS'} Group<br />
+                      {settings?.address || 'Département de Facturation Centrale'}<br />
+                      Contact: {settings?.phone || '+1 234 567 890'}
                     </div>
                   </div>
                 </div>
@@ -351,13 +348,13 @@ export default function BillingPage() {
                       </span>
                     </div>
                     <div className="pt-8 text-center border-t border-slate-100">
-                      <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">Signature Direction ImaraPMS</p>
+                      <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">Signature Direction {settings?.hotelName || 'ImaraPMS'}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t border-slate-200 print:hidden">
+              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t border-slate-200">
                 <Button 
                   className="h-12 px-6 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl shadow-lg border-none" 
                   onClick={() => handleSendWhatsApp(selectedInvoice)}
@@ -372,13 +369,6 @@ export default function BillingPage() {
                 >
                   {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger PDF</span>
-                </Button>
-                <Button 
-                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
-                  onClick={handlePrint}
-                >
-                  <Printer className="h-4 w-4" />
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Imprimer</span>
                 </Button>
               </div>
             </div>

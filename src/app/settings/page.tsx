@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from "react";
@@ -25,9 +26,10 @@ import {
   Key,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  MapPin
 } from "lucide-react";
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking, useUser } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { updatePassword, updateEmail } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
@@ -47,14 +49,15 @@ function SettingsContent() {
   const { data: staffProfile } = useDoc(staffProfileRef);
 
   const [formData, setFormData] = useState({
-    hotelName: "ImaraPMS",
-    email: "contact@imarapms.com",
-    phone: "+1 234 567 890",
+    hotelName: "",
+    email: "",
+    phone: "",
+    address: "",
     checkInTime: "14:00",
     checkOutTime: "11:00",
     autoInvoicing: true,
     notificationsEnabled: true,
-    currency: "EUR",
+    currency: "USD",
   });
 
   const [accountData, setAccountData] = useState({
@@ -101,7 +104,7 @@ function SettingsContent() {
   };
 
   const handleUpdateAccount = async () => {
-    if (!user || !staffProfileRef) return;
+    if (!user) return;
     
     if (accountData.newPassword && accountData.newPassword !== accountData.confirmPassword) {
       toast({
@@ -114,12 +117,6 @@ function SettingsContent() {
 
     setIsUpdatingAccount(true);
     try {
-      updateDocumentNonBlocking(staffProfileRef, {
-        firstName: accountData.firstName,
-        lastName: accountData.lastName,
-        email: accountData.email 
-      });
-
       if (accountData.email !== user.email) {
         await updateEmail(user, accountData.email);
       }
@@ -135,14 +132,10 @@ function SettingsContent() {
       
       setAccountData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }));
     } catch (error: any) {
-      const message = error.code === 'auth/requires-recent-login'
-        ? "Le protocole de sécurité requiert une connexion récente pour changer les identifiants. Veuillez vous déconnecter et vous reconnecter."
-        : error.message || "Échec de la mise à jour des identifiants.";
-      
       toast({
         variant: "destructive",
         title: "Erreur de Sécurité",
-        description: message,
+        description: error.message || "Échec de la mise à jour.",
       });
     } finally {
       setIsUpdatingAccount(false);
@@ -199,6 +192,7 @@ function SettingsContent() {
                       <Hotel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         id="hotelName" 
+                        placeholder="Ex: ImaraPMS"
                         className="pl-9"
                         value={formData.hotelName}
                         onChange={(e) => setFormData({...formData, hotelName: e.target.value})}
@@ -213,6 +207,7 @@ function SettingsContent() {
                         <Input 
                           id="email" 
                           type="email"
+                          placeholder=""
                           className="pl-9"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -225,11 +220,25 @@ function SettingsContent() {
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                           id="phone" 
+                          placeholder=""
                           className="pl-9"
                           value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         />
                       </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="address">Adresse physique</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="address" 
+                        placeholder=""
+                        className="pl-9"
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -245,7 +254,7 @@ function SettingsContent() {
               <Card>
                 <CardHeader>
                   <CardTitle>Politiques de Réservation</CardTitle>
-                  <CardDescription>Définissez les horaires d'arrivée/départ et le comportement des réservations.</CardDescription>
+                  <CardDescription>Définissez les horaires et le comportement des réservations.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -287,113 +296,79 @@ function SettingsContent() {
             </TabsContent>
 
             <TabsContent value="account">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" /> Profil Administrateur
-                    </CardTitle>
-                    <CardDescription>Mettez à jour vos informations personnelles utilisées dans le système.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">Prénom</Label>
-                        <Input 
-                          id="firstName" 
-                          value={accountData.firstName} 
-                          onChange={(e) => setAccountData({...accountData, firstName: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Nom</Label>
-                        <Input 
-                          id="lastName" 
-                          value={accountData.lastName} 
-                          onChange={(e) => setAccountData({...accountData, lastName: e.target.value})}
-                        />
-                      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" /> Profil Administrateur
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input 
+                        id="firstName" 
+                        value={accountData.firstName} 
+                        onChange={(e) => setAccountData({...accountData, firstName: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="loginEmail">E-mail de Connexion</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="loginEmail" 
-                          type="email"
-                          className="pl-9"
-                          value={accountData.email} 
-                          onChange={(e) => setAccountData({...accountData, email: e.target.value})}
-                        />
-                      </div>
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input 
+                        id="lastName" 
+                        value={accountData.lastName} 
+                        onChange={(e) => setAccountData({...accountData, lastName: e.target.value})}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Key className="h-5 w-5 text-primary" /> Identifiants de Sécurité
-                    </CardTitle>
-                    <CardDescription>Mettez à jour votre mot de passe d'accès au système.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="newPass">Nouveau Mot de Passe</Label>
-                        <div className="relative">
-                          <Input 
-                            id="newPass" 
-                            type={showPasswords ? 'text' : 'password'} 
-                            value={accountData.newPassword}
-                            onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})}
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                            onClick={() => setShowPasswords(!showPasswords)}
-                          >
-                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPass">Confirmer Mot de Passe</Label>
-                        <div className="relative">
-                          <Input 
-                            id="confirmPass" 
-                            type={showPasswords ? 'text' : 'password'}
-                            value={accountData.confirmPassword}
-                            onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                            onClick={() => setShowPasswords(!showPasswords)}
-                          >
-                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="loginEmail">E-mail de Connexion</Label>
+                    <Input 
+                      id="loginEmail" 
+                      type="email"
+                      value={accountData.email} 
+                      onChange={(e) => setAccountData({...accountData, email: e.target.value})}
+                    />
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPass">Nouveau Mot de Passe</Label>
+                      <Input 
+                        id="newPass" 
+                        type={showPasswords ? 'text' : 'password'} 
+                        value={accountData.newPassword}
+                        onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})}
+                      />
                     </div>
-                  </CardContent>
-                  <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                    <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2">
-                      {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Synchroniser Identifiants
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPass">Confirmer</Label>
+                      <Input 
+                        id="confirmPass" 
+                        type={showPasswords ? 'text' : 'password'}
+                        value={accountData.confirmPassword}
+                        onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPasswords(!showPasswords)}>
+                    {showPasswords ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                    {showPasswords ? "Masquer" : "Afficher"} les mots de passe
+                  </Button>
+                </CardContent>
+                <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
+                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2">
+                    {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Mettre à jour le compte
+                  </Button>
+                </CardFooter>
+              </Card>
             </TabsContent>
 
             <TabsContent value="system">
               <Card>
                 <CardHeader>
                   <CardTitle>Système & Préférences</CardTitle>
-                  <CardDescription>Comportement global de l'application.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -401,7 +376,6 @@ function SettingsContent() {
                       <Label className="flex items-center gap-2">
                         <Bell className="h-4 w-4 text-accent" /> Notifications Push
                       </Label>
-                      <p className="text-xs text-muted-foreground">Recevoir des alertes pour les nouvelles réservations.</p>
                     </div>
                     <Switch 
                       checked={formData.notificationsEnabled}
@@ -411,12 +385,11 @@ function SettingsContent() {
                   <Separator />
                   <div className="grid gap-2">
                     <Label className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-accent" /> Devise de Base
+                      <Globe className="h-4 w-4 text-accent" /> Devise
                     </Label>
                     <Input 
                       value={formData.currency}
                       onChange={(e) => setFormData({...formData, currency: e.target.value.toUpperCase()})}
-                      placeholder="Ex: USD, EUR, CFA"
                     />
                   </div>
                 </CardContent>
@@ -436,11 +409,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto mt-20" />}>
       <SettingsContent />
     </Suspense>
   );
