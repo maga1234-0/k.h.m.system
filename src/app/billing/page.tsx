@@ -249,7 +249,6 @@ export default function BillingPage() {
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh] select-text">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
-                {/* Header Section - BUSINESS STYLE AS REQUESTED */}
                 <div className="text-center mb-8">
                   <h2 className="text-blue-600 font-bold text-2xl tracking-widest uppercase mb-1">BUSINESS</h2>
                   <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
@@ -259,7 +258,6 @@ export default function BillingPage() {
                   <Separator className="mt-6 mb-8 bg-slate-200" />
                 </div>
 
-                {/* Info Bar */}
                 <div className="flex justify-between items-start mb-16 px-4">
                   <div className="space-y-4">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DESTINATAIRE</p>
@@ -278,7 +276,6 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Items Table */}
                 <div className="mb-20 px-4">
                   <table className="w-full text-left">
                     <thead>
@@ -299,7 +296,6 @@ export default function BillingPage() {
                   </table>
                 </div>
 
-                {/* Totals Section */}
                 <div className="flex justify-end px-4">
                   <div className="w-full max-w-[320px] space-y-3">
                     <div className="flex justify-between items-center py-4 border-t-4 border-slate-900">
@@ -315,7 +311,6 @@ export default function BillingPage() {
                 </div>
               </div>
 
-              {/* Action Bar - Styled as black buttons */}
               <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t print:hidden">
                 <Button 
                   className="h-12 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg border-none" 

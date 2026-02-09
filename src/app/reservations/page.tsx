@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,30 +12,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
-  Calendar, 
   Plus, 
   MoreHorizontal,
   Info,
   Loader2,
   Trash2,
-  CalendarDays,
   User,
-  Bed,
   CreditCard,
-  Edit2
+  CheckCircle2
 } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger,
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
@@ -94,6 +91,7 @@ export default function ReservationsPage() {
   const firestore = useFirestore();
   const resCollection = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const roomsCollection = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
+  const invoicesCollection = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
   
   const { data: reservations, isLoading: isResLoading } = useCollection(resCollection);
   const { data: rooms } = useCollection(roomsCollection);
@@ -121,11 +119,34 @@ export default function ReservationsPage() {
     };
 
     addDocumentNonBlocking(resCollection, reservationData);
-    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
-
     setIsAddDialogOpen(false);
     setNewBooking({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
     toast({ title: "Réservation Enregistrée", description: `Dossier créé pour ${reservationData.guestName}.` });
+  };
+
+  const handleCheckIn = (res: any) => {
+    if (!res || !invoicesCollection) return;
+    
+    const resRef = doc(firestore, 'reservations', res.id);
+    updateDocumentNonBlocking(resRef, { status: "Checked In" });
+    
+    if (res.roomId) {
+      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Occupied" });
+    }
+
+    const invoiceData = {
+      reservationId: res.id,
+      guestName: res.guestName,
+      guestPhone: res.guestPhone,
+      invoiceDate: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      amountDue: res.totalAmount,
+      amountPaid: 0,
+      status: "Unpaid"
+    };
+    addDocumentNonBlocking(invoicesCollection, invoiceData);
+
+    toast({ title: "Check-in Réussi", description: `${res.guestName} est maintenant enregistré.` });
   };
 
   const handleDeleteConfirm = () => {
@@ -175,7 +196,7 @@ export default function ReservationsPage() {
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher par nom du client ou chambre..." 
+                  placeholder="Rechercher par Nom du client..." 
                   className="pl-9 bg-background" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
@@ -197,8 +218,8 @@ export default function ReservationsPage() {
               <TableBody>
                 {isResLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
-                      Chargement des réservations...
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
                 ) : filteredReservations && filteredReservations.length > 0 ? (
@@ -224,11 +245,17 @@ export default function ReservationsPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setSelectedRes(res); setIsDetailsDialogOpen(true); }}>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onSelect={() => { setSelectedRes(res); setTimeout(() => setIsDetailsDialogOpen(true), 100); }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onSelect={() => { setResToDelete(res); setIsDeleteDialogOpen(true); }}>
+                            {res.status !== 'Checked In' && (
+                              <DropdownMenuItem onSelect={() => handleCheckIn(res)}>
+                                <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" /> Marquer l'arrivée
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onSelect={() => { setResToDelete(res); setTimeout(() => setIsDeleteDialogOpen(true), 100); }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -248,7 +275,6 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        {/* Dialog Ajout Réservation */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
@@ -284,7 +310,7 @@ export default function ReservationsPage() {
                   <Label>Chambre disponible</Label>
                   <Select value={newBooking.roomId} onValueChange={(val) => setNewBooking({...newBooking, roomId: val})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir une chambre" />
+                      <SelectValue placeholder="Choisir..." />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRooms.length > 0 ? (
@@ -310,12 +336,11 @@ export default function ReservationsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreateBooking}>Confirmer la réservation</Button>
+              <Button onClick={handleCreateBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Dialog Détails */}
         <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -324,19 +349,19 @@ export default function ReservationsPage() {
             {selectedRes && (
               <div className="space-y-4 py-4">
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Nom du client</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Nom du client</span>
                   <span className="text-sm font-black">{selectedRes.guestName}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Chambre</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Chambre</span>
                   <span className="text-sm font-black">N° {selectedRes.roomNumber}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Période</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Période</span>
                   <span className="text-sm font-bold">{selectedRes.checkInDate} au {selectedRes.checkOutDate}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Statut</span>
+                  <span className="text-sm text-muted-foreground font-bold uppercase">Statut</span>
                   <Badge>{selectedRes.status}</Badge>
                 </div>
                 <div className="flex justify-between items-center pt-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
@@ -356,13 +381,13 @@ export default function ReservationsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer cette réservation ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action annulera le séjour de <strong>{resToDelete?.guestName}</strong> et libérera la chambre.
+                Cette action annulera le séjour et libérera la chambre.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setResToDelete(null)}>Conserver</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer définitivement
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
