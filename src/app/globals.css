@@ -107,10 +107,12 @@
 }
 
 @media print {
+  /* Masquer absolument tout par défaut */
   body * {
     visibility: hidden !important;
   }
   
+  /* Afficher uniquement le conteneur de la facture */
   #invoice-printable, #invoice-printable * {
     visibility: visible !important;
   }
@@ -119,8 +121,8 @@
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
+    width: 210mm !important; /* Largeur A4 */
+    height: 297mm !important; /* Hauteur A4 */
     padding: 20mm !important;
     margin: 0 !important;
     background: white !important;
@@ -130,6 +132,7 @@
     border: none !important;
   }
 
+  /* Masquer l'interface de la modale qui pourrait déborder */
   [role="dialog"] {
     position: absolute !important;
     top: 0 !important;
@@ -140,6 +143,7 @@
     border: none !important;
   }
 
+  /* Masquer les boutons et la barre d'action lors de l'impression */
   [role="dialog"] button,
   [role="dialog"] .bg-slate-50,
   [role="dialog"] .print\:hidden {
@@ -147,6 +151,7 @@
     visibility: hidden !important;
   }
 
+  /* Forcer le rendu A4 sans marges de navigateur */
   @page {
     size: A4;
     margin: 0;

@@ -113,17 +113,12 @@ export default function BillingPage() {
     
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
-    const date = new Date(invoice.invoiceDate).toLocaleDateString('fr-FR');
-    const amount = Number(invoice.amountDue).toFixed(2);
     
     const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\n` +
-      `*FACTURE OFFICIELLE N° #INV-${invoiceId}*\n\n` +
-      `👤 *NOM DU CLIENT :* ${invoice.guestName.toUpperCase()}\n` +
-      `📅 *DATE D'ÉMISSION :* ${date}\n` +
-      `💰 *MONTANT TOTAL :* ${amount} $\n` +
-      `✅ *STATUT :* ${invoice.status === 'Paid' ? 'RÉGLÉE' : 'À PAYER'}\n\n` +
-      `Nous vous remercions de votre confiance.\n` +
-      `_L'équipe ImaraPMS_`;
+      `Bonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoiceId}* au format PDF.\n\n` +
+      `Nous restons à votre disposition pour toute information complémentaire.\n\n` +
+      `Cordialement,\n` +
+      `L'équipe ImaraPMS`;
     
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
