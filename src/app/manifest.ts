@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'K.H.M.System Hotelier',
-    short_name: 'KHM System',
+    name: 'ImaraPMS Hotelier',
+    short_name: 'ImaraPMS',
     description: 'Modern Hotel Management Platform',
     start_url: '/',
     display: 'standalone',

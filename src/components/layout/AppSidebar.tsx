@@ -112,7 +112,7 @@ export function AppSidebar() {
           <Logo size={32} />
         </div>
         <div className="flex flex-col">
-          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">K.H.M.System</span>
+          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">ImaraPMS</span>
           <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Gestion Hôtelière</span>
         </div>
       </SidebarHeader>

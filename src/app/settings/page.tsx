@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, Suspense } from "react";
@@ -48,8 +47,8 @@ function SettingsContent() {
   const { data: staffProfile } = useDoc(staffProfileRef);
 
   const [formData, setFormData] = useState({
-    hotelName: "K.H.M.System",
-    email: "contact@khmsystem.com",
+    hotelName: "ImaraPMS",
+    email: "contact@imarapms.com",
     phone: "+1 234 567 890",
     checkInTime: "14:00",
     checkOutTime: "11:00",

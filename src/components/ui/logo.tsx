@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface LogoProps {
@@ -19,7 +18,7 @@ export function Logo({ className, size = 100 }: LogoProps) {
       {/* Arrière-plan optionnel pour le contraste */}
       <circle cx="50" cy="50" r="48" fill="white" fillOpacity="0.05" />
       
-      {/* Tours stylisées (Tours K.H.M.) */}
+      {/* Tours stylisées (Tours ImaraPMS) */}
       <path d="M30 80V35L40 25V80H30Z" fill="currentColor" />
       <path d="M70 80V35L60 25V80H70Z" fill="currentColor" />
       

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -104,7 +103,7 @@ export default function BillingPage() {
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
     
-    const message = `*RÉSUMÉ DE FACTURE - K.H.M.SYSTEM*\n-----------------------------\n*Client:* ${invoice.guestName}\n*Facture:* #INV-${invoiceId}\n*Montant Dû:* ${Number(invoice.amountDue).toFixed(2)} $\n*Échéance:* ${new Date(invoice.dueDate).toLocaleDateString('fr-FR')}\n*Statut:* ${invoice.status === 'Paid' ? 'Payée' : 'Impayée'}\n-----------------------------\nMerci d'avoir choisi K.H.M.System. Contactez-nous pour toute question !`;
+    const message = `*RÉSUMÉ DE FACTURE - IMARAPMS*\n-----------------------------\n*Client:* ${invoice.guestName}\n*Facture:* #INV-${invoiceId}\n*Montant Dû:* ${Number(invoice.amountDue).toFixed(2)} $\n*Échéance:* ${new Date(invoice.dueDate).toLocaleDateString('fr-FR')}\n*Statut:* ${invoice.status === 'Paid' ? 'Payée' : 'Impayée'}\n-----------------------------\nMerci d'avoir choisi ImaraPMS. Contactez-nous pour toute question !`;
     
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -276,7 +275,7 @@ export default function BillingPage() {
                       <Hotel className="h-7 w-7" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-headline leading-none">K.H.M.System</h2>
+                      <h2 className="text-2xl font-bold font-headline leading-none">ImaraPMS</h2>
                       <p className="text-[10px] uppercase tracking-widest font-bold text-primary mt-1">Hospitalité de Luxe</p>
                     </div>
                   </div>
@@ -297,7 +296,7 @@ export default function BillingPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">De la part de</p>
-                      <p className="text-sm font-medium">K.H.M.System Hotelier</p>
+                      <p className="text-sm font-medium">ImaraPMS Hotelier</p>
                       <p className="text-xs text-slate-500">123 Avenue de l'Hospitalité<br />Grand Central, GC 10023</p>
                     </div>
                   </div>
@@ -374,11 +373,11 @@ export default function BillingPage() {
                   <h4 className="font-bold text-sm mb-2 uppercase tracking-widest text-slate-900">Conditions de Paiement</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Veuillez effectuer le paiement avant le {new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR')}. 
-                    Les chèques doivent être libellés à l'ordre de K.H.M.System Hotelier. 
+                    Les chèques doivent être libellés à l'ordre de ImaraPMS Hotelier. 
                     Tout retard de paiement peut faire l'objet d'un intérêt mensuel de 2%.
                   </p>
                   <div className="mt-8 text-center border-2 border-dashed border-slate-100 p-4 rounded-xl">
-                    <p className="text-xs font-medium text-slate-400">Merci d'avoir choisi K.H.M.System. Nous espérons vous revoir bientôt !</p>
+                    <p className="text-xs font-medium text-slate-400">Merci d'avoir choisi ImaraPMS. Nous espérons vous revoir bientôt !</p>
                   </div>
                 </div>
               </div>

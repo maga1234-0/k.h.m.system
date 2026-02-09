@@ -116,7 +116,7 @@ export default function LoginPage() {
             <Logo size={80} />
           </div>
           <div className="space-y-1">
-            <CardTitle className="font-headline text-3xl font-bold tracking-tight">K.H.M.System</CardTitle>
+            <CardTitle className="font-headline text-3xl font-bold tracking-tight">ImaraPMS</CardTitle>
             <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Console de Gestion</CardDescription>
           </div>
         </CardHeader>
@@ -173,7 +173,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="text-center pt-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full text-center">
-            K.H.M.System Group • Console de Sécurité
+            ImaraPMS Group • Console de Sécurité
           </p>
         </CardFooter>
       </Card>

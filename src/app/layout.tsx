@@ -6,12 +6,12 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'K.H.M.System - Modern Hotel Management',
+  title: 'ImaraPMS - Modern Hotel Management',
   description: 'Manage your hotel operations with ease and real-time insights.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'K.H.M.System',
+    title: 'ImaraPMS',
   },
   formatDetection: {
     telephone: false,

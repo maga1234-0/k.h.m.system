@@ -1,6 +1,6 @@
-# K.H.M.System - Modern Hotel Management
+# ImaraPMS - Modern Hotel Management
 
-K.H.M.System is a professional, high-performance hotel management platform built with Next.js, Firebase, and GenAI. It streamlines hotel operations from front-desk reservations to financial reporting and AI-powered insights.
+ImaraPMS is a professional, high-performance hotel management platform built with Next.js, Firebase, and GenAI. It streamlines hotel operations from front-desk reservations to financial reporting and AI-powered insights.
 
 ## 🚀 Features
 
@@ -58,8 +58,8 @@ K.H.M.System is a professional, high-performance hotel management platform built
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/maga1234-0/k.h.m.system.git
-   cd k.h.m.system
+   git clone https://github.com/maga1234-0/imara-pms.git
+   cd imara-pms
    ```
 
 2. Install dependencies:
@@ -80,4 +80,4 @@ K.H.M.System is a professional, high-performance hotel management platform built
 
 ## 📄 License
 
-Proprietary system of K.H.M.System Group. All rights reserved.
+Proprietary system of ImaraPMS Group. All rights reserved.

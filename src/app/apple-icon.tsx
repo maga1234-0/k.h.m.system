@@ -45,7 +45,7 @@ export default function Icon() {
           <circle cx="50" cy="53" r="5" fill="white" />
           <path d="M47 53L53 53L55 63L45 63Z" fill="white" />
           
-          {/* Waves at bottom like the logo */}
+          {/* Waves at bottom */}
           <path d="M20 85Q35 80 50 85T80 85" stroke="#66D3B2" strokeWidth="2" fill="none" />
         </svg>
       </div>

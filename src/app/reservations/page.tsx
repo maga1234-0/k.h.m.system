@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -462,7 +461,7 @@ export default function ReservationsPage() {
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent>
                                   <DropdownMenuItem onSelect={() => {
-                                    const message = `Bonjour ${res.guestName}, ceci est une confirmation de votre réservation pour la chambre ${res.roomNumber} à K.H.M.System. Au plaisir de vous accueillir !`;
+                                    const message = `Bonjour ${res.guestName}, ceci est une confirmation de votre réservation pour la chambre ${res.roomNumber} à ImaraPMS. Au plaisir de vous accueillir !`;
                                     window.open(`https://wa.me/${res.guestPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
                                   }}>
                                     <Phone className="mr-2 h-4 w-4" /> WhatsApp
