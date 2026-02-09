@@ -13,22 +13,10 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, 
   Plus, 
-  MoreHorizontal,
-  Info,
   Loader2,
-  Trash2,
   User,
-  CreditCard,
-  CheckCircle2,
-  LogOut
+  CreditCard
 } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
 import { 
   Dialog, 
   DialogContent, 
@@ -37,16 +25,6 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -61,7 +39,6 @@ import {
   useMemoFirebase, 
   addDocumentNonBlocking, 
   updateDocumentNonBlocking, 
-  deleteDocumentNonBlocking,
   useUser 
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
@@ -72,17 +49,8 @@ export default function ReservationsPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Dialog States - Decoupled from table
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  // Selection States
-  const [selectedRes, setSelectedRes] = useState<any>(null);
-  const [resToDelete, setResToDelete] = useState<any>(null);
-  
-  // Form State for new booking
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
     guestEmail: "",
@@ -131,32 +99,6 @@ export default function ReservationsPage() {
     toast({ title: "Opération Réussie", description: `Dossier de ${reservationData.guestName} créé.` });
   };
 
-  const handleDeleteConfirm = () => {
-    if (!resToDelete) return;
-    
-    deleteDocumentNonBlocking(doc(firestore, 'reservations', resToDelete.id));
-    if (resToDelete.roomId) {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', resToDelete.roomId), { status: "Available" });
-    }
-    
-    setIsDeleteDialogOpen(false);
-    setResToDelete(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "Dossier supprimé et chambre libérée." });
-  };
-
-  const handleUpdateStatus = (resId: string, roomId: string, newStatus: string) => {
-    const resRef = doc(firestore, 'reservations', resId);
-    updateDocumentNonBlocking(resRef, { status: newStatus });
-
-    // Automation: libérer la chambre en mode nettoyage si check-out
-    if (newStatus === 'Checked Out' && roomId) {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', roomId), { status: 'Cleaning' });
-    }
-
-    toast({ title: "Statut Mis à Jour", description: `Le séjour est désormais: ${newStatus}` });
-    setIsDetailsDialogOpen(false);
-  };
-
   const filteredReservations = reservations?.filter(res => 
     res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     res.roomNumber?.includes(searchTerm)
@@ -182,10 +124,7 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Registre des Réservations</h1>
           </div>
-          <Button onClick={() => {
-            setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-            setIsAddDialogOpen(true);
-          }} className="bg-primary gap-2">
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2">
             <Plus className="h-4 w-4" /> Nouvelle réservation
           </Button>
         </header>
@@ -212,13 +151,12 @@ export default function ReservationsPage() {
                   <TableHead>Arrivée / Départ</TableHead>
                   <TableHead>Montant</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isResLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
@@ -236,37 +174,11 @@ export default function ReservationsPage() {
                       <TableCell>
                         <Badge variant="secondary">{res.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onSelect={(e) => { 
-                              e.preventDefault();
-                              setSelectedRes(res);
-                              setTimeout(() => setIsDetailsDialogOpen(true), 150);
-                            }}>
-                              <Info className="mr-2 h-4 w-4" /> Détails complets
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onSelect={(e) => { 
-                              e.preventDefault();
-                              setResToDelete(res); 
-                              setTimeout(() => setIsDeleteDialogOpen(true), 150);
-                            }}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
                       Aucune réservation trouvée.
                     </TableCell>
                   </TableRow>
@@ -337,71 +249,6 @@ export default function ReservationsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Détails de la Réservation</DialogTitle>
-            </DialogHeader>
-            {selectedRes && (
-              <div className="space-y-4 py-4">
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Client</span>
-                  <span className="text-sm font-black">{selectedRes.guestName}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Chambre</span>
-                  <span className="text-sm font-black">N° {selectedRes.roomNumber}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Séjour</span>
-                  <span className="text-sm font-bold">{selectedRes.checkInDate} au {selectedRes.checkOutDate}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-sm text-muted-foreground font-bold uppercase">Statut</span>
-                  <Badge>{selectedRes.status}</Badge>
-                </div>
-                <div className="flex justify-between items-center pt-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
-                  <span className="text-xs font-bold uppercase">Total Dossier</span>
-                  <span className="text-xl font-black text-primary">{Number(selectedRes.totalAmount).toFixed(2)} $</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  {selectedRes.status !== 'Checked In' && selectedRes.status !== 'Checked Out' && (
-                    <Button className="gap-2" onClick={() => handleUpdateStatus(selectedRes.id, selectedRes.roomId, 'Checked In')}>
-                      <CheckCircle2 className="h-4 w-4" /> Arrivée
-                    </Button>
-                  )}
-                  {selectedRes.status === 'Checked In' && (
-                    <Button variant="destructive" className="gap-2" onClick={() => handleUpdateStatus(selectedRes.id, selectedRes.roomId, 'Checked Out')}>
-                      <LogOut className="h-4 w-4" /> Départ (Libérer)
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button className="w-full" variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>Fermer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer cette réservation ?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Cette action retirera définitivement le dossier de <strong>{resToDelete?.guestName}</strong> du registre et libérera la chambre.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </SidebarInset>
     </div>
   );

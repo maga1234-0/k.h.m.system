@@ -24,7 +24,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import jsPDF from 'jsPDF'
 import {
   Dialog,
   DialogContent,
