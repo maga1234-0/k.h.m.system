@@ -164,9 +164,10 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resRef, { status: "Checked Out" });
     if (res.roomId) {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Available" });
+      // Automatiquement libérer la chambre et la placer en nettoyage
+      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
     }
-    toast({ title: "Check-out Réussi", description: `${res.guestName} a libéré la chambre.` });
+    toast({ title: "Check-out Réussi", description: `${res.guestName} a libéré la chambre. Elle est maintenant en attente de nettoyage.` });
   };
 
   const handleDeleteConfirm = () => {
@@ -177,7 +178,7 @@ export default function ReservationsPage() {
     }
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été supprimé." });
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été supprimé et la chambre libérée." });
   };
 
   const filteredReservations = reservations?.filter(res => 

@@ -96,7 +96,7 @@ export default function BillingPage() {
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const message = `*${(settings?.hotelName || 'IMARAPMS').toUpperCase()} — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
+    const message = `*${(settings?.hotelName || 'IMARAPMS').toUpperCase()}*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ${settings?.hotelName || 'ImaraPMS'}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -109,6 +109,9 @@ export default function BillingPage() {
       // Ensure element is visible for capture and give it a fixed width for stability
       const originalStyle = element.style.cssText;
       element.style.width = '800px'; 
+      element.style.position = 'relative';
+      element.style.left = '0';
+      element.style.top = '0';
       
       // Small delay to ensure all images/styles are applied
       await new Promise(r => setTimeout(r, 500));
