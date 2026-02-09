@@ -17,8 +17,7 @@ import {
   Monitor,
   Calendar,
   Sparkles,
-  BarChart3,
-  BrainCircuit
+  BarChart3
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -52,10 +51,6 @@ const mainMenuItems = [
   { title: "Tableau de bord", icon: LayoutDashboard, url: "/" },
   { title: "Planning", icon: Calendar, url: "/planning" },
   { title: "Réservations", icon: CalendarCheck, url: "/reservations" },
-]
-
-const aiItems = [
-  { title: "Prévisions IA", icon: BrainCircuit, url: "/forecasting" },
 ]
 
 const inventoryItems = [
@@ -128,24 +123,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Intelligence</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {aiItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url}>
@@ -235,7 +212,8 @@ export function AppSidebar() {
               <DropdownMenuContent side="right" align="end" className="w-32">
                 <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
                   <Sun className="h-4 w-4 text-amber-500" /> Clair
-                </DropdownMenuItem(onClick={() => setTheme("dark")} className="gap-2">
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
                   <Moon className="h-4 w-4 text-blue-400" /> Sombre
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
