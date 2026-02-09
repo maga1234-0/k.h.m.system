@@ -462,7 +462,7 @@ export default function ReservationsPage() {
                                 <DropdownMenuSubContent>
                                   <DropdownMenuItem onSelect={() => {
                                     const message = `Bonjour ${res.guestName}, ceci est une confirmation de votre réservation pour la chambre ${res.roomNumber} à ImaraPMS.`;
-                                    window.open(`https://wa.me/${res.guestPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+                                    window.open(`https://wa.me/${res.guestPhone?.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
                                   }}>
                                     <Phone className="mr-2 h-4 w-4" /> WhatsApp
                                   </DropdownMenuItem>

@@ -149,7 +149,7 @@ export default function RoomsPage() {
       ...dataToSave,
       amenities: amenitiesArray,
       pricePerNight: Number(editRoomData.pricePerNight),
-      capacity: Number(editRoomData.capacity),
+      capacity: Number(editStaffData.capacity),
       floor: Number(editRoomData.floor),
     });
 
