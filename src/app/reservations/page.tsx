@@ -21,8 +21,7 @@ import {
   CreditCard,
   CheckCircle2,
   Edit2,
-  LogOut,
-  CalendarDays
+  LogOut
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -75,14 +74,17 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Dialog States
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  // Selection States
   const [selectedRes, setSelectedRes] = useState<any>(null);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
+  // Form State
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
     guestEmail: "",
@@ -159,7 +161,7 @@ export default function ReservationsPage() {
     };
     addDocumentNonBlocking(invoicesCollection, invoiceData);
 
-    toast({ title: "Check-in Réussi", description: `${res.guestName} est maintenant enregistré. Facture générée.` });
+    toast({ title: "Arrivée Confirmée", description: `${res.guestName} est maintenant enregistré. Facture générée.` });
   };
 
   const handleCheckOut = (res: any) => {
@@ -188,6 +190,8 @@ export default function ReservationsPage() {
     res.roomNumber?.includes(searchTerm)
   );
 
+  const availableRooms = rooms?.filter(r => r.status === 'Available' || (selectedRes && r.id === selectedRes.roomId)) || [];
+
   if (!mounted || isAuthLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -195,8 +199,6 @@ export default function ReservationsPage() {
       </div>
     );
   }
-
-  const availableRooms = rooms?.filter(r => r.status === 'Available' || (selectedRes && r.id === selectedRes.roomId)) || [];
 
   return (
     <div className="flex h-screen w-full">
@@ -332,11 +334,11 @@ export default function ReservationsPage() {
           </div>
         </main>
 
+        {/* MODALS DEFINED OUTSIDE TO PREVENT FREEZING */}
         <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
           if (!open) {
             setIsAddDialogOpen(false);
             setIsEditDialogOpen(false);
-            setSelectedRes(null);
           }
         }}>
           <DialogContent className="sm:max-w-[550px]">
@@ -376,15 +378,11 @@ export default function ReservationsPage() {
                       <SelectValue placeholder="Choisir..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableRooms.length > 0 ? (
-                        availableRooms.map((room) => (
-                          <SelectItem key={room.id} value={room.id}>
-                            N° {room.roomNumber} - {room.roomType}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-xs text-center text-muted-foreground">Aucune chambre libre</div>
-                      )}
+                      {availableRooms.map((room) => (
+                        <SelectItem key={room.id} value={room.id}>
+                          N° {room.roomNumber} - {room.roomType}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

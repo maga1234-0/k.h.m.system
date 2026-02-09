@@ -20,7 +20,7 @@ import {
   Download,
   Hotel
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
@@ -97,11 +97,11 @@ export default function BillingPage() {
 
     if (!invoiceToGen) setIsGeneratingPdf(true);
     
-    // Ensure dialog is open to render the printable element
+    // Si on appelle le téléchargement directement depuis la liste
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // Wait for React to render the dialog content
+      // On attend que le dialogue s'affiche pour capturer
       await new Promise(r => setTimeout(r, 600));
     }
 
