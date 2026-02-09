@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -104,10 +104,10 @@ export default function ReservationsPage() {
 
   const handleOpenActionDialog = (res: any, type: ActiveDialog) => {
     setSelectedRes(res);
-    // Use a small delay to allow dropdown to close completely before opening dialog
+    // On laisse un tick pour permettre au dropdown de se fermer
     setTimeout(() => {
       setActiveDialog(type);
-    }, 100);
+    }, 50);
   };
 
   const handleSaveBooking = () => {
@@ -374,7 +374,7 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ISOLATED DIALOGS - MOVED OUTSIDE THE TABLE TO PREVENT FREEZING */}
+        {/* Dialogues isolés pour éviter le blocage du focus */}
         <Dialog open={activeDialog === 'details'} onOpenChange={(open) => !open && setActiveDialog(null)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
