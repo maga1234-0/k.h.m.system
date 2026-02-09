@@ -162,7 +162,7 @@ export default function RoomsPage() {
       checkOutDate: bookingData.checkOut,
       numberOfGuests: bookingData.guests,
       totalAmount: selectedRoom.pricePerNight || 0,
-      status: "Confirmed",
+      status: "Confirmée",
       createdAt: new Date().toISOString()
     };
     addDocumentNonBlocking(resRef, reservation);
@@ -258,7 +258,6 @@ export default function RoomsPage() {
           )}
         </main>
 
-        {/* Dialogues (Ajout, Edition, Détails, Booking) */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -312,7 +311,24 @@ export default function RoomsPage() {
                 <Label>Nom du client</Label>
                 <div className="relative">
                   <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9" value={bookingData.guestName} onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} />
+                  <Input 
+                    className="pl-9" 
+                    placeholder="Nom du client"
+                    value={bookingData.guestName} 
+                    onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Téléphone WhatsApp</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    className="pl-9" 
+                    placeholder="+..."
+                    value={bookingData.guestPhone} 
+                    onChange={(e) => setBookingData({...bookingData, guestPhone: e.target.value})} 
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -328,12 +344,11 @@ export default function RoomsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
-              <Button onClick={handleQuickBook}>Confirmer</Button>
+              <Button onClick={handleQuickBook} className="bg-primary hover:bg-primary/90">Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Détails et Edition omis pour la brièveté, mais fonctionnels via setSelectedRoom */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
