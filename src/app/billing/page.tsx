@@ -75,23 +75,23 @@ export default function BillingPage() {
       amountPaid: invoice.amountDue,
       paymentDate: new Date().toISOString()
     });
-    toast({ title: "Paiement Confirmé", description: `La facture de ${invoice.guestName} a été marquée comme payée.` });
+    toast({ title: "Paiement Confirmé", description: `La facture pour ${invoice.guestName} a été réglée.` });
   };
 
   const handleClearRegistry = () => {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre Effacé", description: "Toutes les archives de factures ont été supprimées." });
+    toast({ variant: "destructive", title: "Registre Effacé", description: "Toutes les factures ont été supprimées." });
   };
 
   const handleSendWhatsApp = (invoice: any) => {
     if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Numéro Manquant", description: "Impossible d'envoyer le message sans numéro de téléphone." });
+      toast({ variant: "destructive", title: "Numéro Manquant", description: "Veuillez renseigner le téléphone du client." });
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const message = `Bonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ImaraPMS`;
+    const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\nBonjour,\n\nVeuillez trouver ci-joint votre *facture officielle #INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF.\n\nCordialement,\nL'équipe ImaraPMS`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -125,7 +125,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Encours Client</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Encours Client</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.unpaid.toLocaleString('fr-FR')} $</h3>
                   </div>
                   <AlertCircle className="h-5 w-5 text-rose-600" />
@@ -136,7 +136,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Chiffre d'Affaires</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Chiffre d'Affaires</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.revenue.toLocaleString('fr-FR')} $</h3>
                   </div>
                   <CreditCard className="h-5 w-5 text-primary" />
@@ -147,7 +147,7 @@ export default function BillingPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-accent mb-1">Total Factures</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1">Total Factures</p>
                     <h3 className="text-3xl font-bold font-headline">{stats.totalCount}</h3>
                   </div>
                   <FileText className="h-5 w-5 text-accent" />
@@ -160,7 +160,7 @@ export default function BillingPage() {
             <CardHeader className="flex flex-row items-center justify-between print:hidden">
               <div>
                 <CardTitle className="font-headline text-lg">Historique des Factures</CardTitle>
-                <CardDescription>Consultez et gérez les transactions de vos clients.</CardDescription>
+                <CardDescription>Gérez les transactions de vos clients.</CardDescription>
               </div>
               {invoices && invoices.length > 0 && (
                 <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
@@ -249,25 +249,31 @@ export default function BillingPage() {
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh] select-text">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
-                {/* Header Section - BUSINESS STYLE */}
+                {/* Header Section - BUSINESS STYLE AS REQUESTED */}
                 <div className="text-center mb-8">
                   <h2 className="text-blue-600 font-bold text-2xl tracking-widest uppercase mb-1">BUSINESS</h2>
-                  <p className="text-xs text-slate-500 font-medium">Tél: +1 234 567 890</p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
+                    <Phone className="h-3 w-3" />
+                    <span>Tél: +1 234 567 890</span>
+                  </div>
                   <Separator className="mt-6 mb-8 bg-slate-200" />
                 </div>
 
                 {/* Info Bar */}
                 <div className="flex justify-between items-start mb-16 px-4">
                   <div className="space-y-4">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FACTURÉ À</p>
-                    <h3 className="text-2xl font-black text-slate-900">{selectedInvoice.guestName}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DESTINATAIRE</p>
+                    <h3 className="text-2xl font-black text-slate-900 border-b-2 border-slate-100 pb-2">{selectedInvoice.guestName}</h3>
                   </div>
                   
                   <div className="text-right space-y-4">
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">FACTURE</h1>
+                    <div className="relative">
+                      <h1 className="text-xl font-bold text-slate-900 tracking-tight">FACTURE</h1>
+                      <span className="absolute -top-4 right-0 text-4xl font-black text-slate-100/50 pointer-events-none select-none uppercase tracking-tighter">FACTURE</span>
+                    </div>
                     <div className="text-[11px] text-slate-500 font-bold leading-tight">
                       #INV-{selectedInvoice.id.slice(0, 16).toUpperCase()}<br />
-                      {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}
+                      Émise le: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
                 </div>
@@ -276,15 +282,16 @@ export default function BillingPage() {
                 <div className="mb-20 px-4">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-slate-900">
-                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900">DESCRIPTION</th>
-                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900 text-right">TOTAL</th>
+                      <tr className="border-b-2 border-slate-900">
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900">DESCRIPTION DES SERVICES</th>
+                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900 text-right">TOTAL HT</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       <tr>
                         <td className="py-8">
-                          <p className="font-bold text-slate-900 text-base">Services d'Hébergement & Frais</p>
+                          <p className="font-bold text-slate-900 text-base">Séjour Hôtelier & Prestations Annexes</p>
+                          <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Hébergement premium ImaraPMS</p>
                         </td>
                         <td className="py-8 text-right text-lg font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
                       </tr>
@@ -294,39 +301,42 @@ export default function BillingPage() {
 
                 {/* Totals Section */}
                 <div className="flex justify-end px-4">
-                  <div className="w-full max-w-[280px] space-y-3">
-                    <div className="flex justify-between items-center py-2 border-t-2 border-slate-900">
-                      <span className="text-xs font-black uppercase tracking-widest">TOTAL À PAYER</span>
+                  <div className="w-full max-w-[320px] space-y-3">
+                    <div className="flex justify-between items-center py-4 border-t-4 border-slate-900">
+                      <span className="text-xs font-black uppercase tracking-widest">MONTANT TOTAL À RÉGLER</span>
                       <span className="text-3xl font-black font-headline text-slate-900 tracking-tighter">
                         {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>
+                    </div>
+                    <div className="text-center pt-8">
+                      <p className="text-[9px] text-slate-400 uppercase tracking-[0.3em] font-bold">Merci de votre confiance</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Action Bar */}
+              {/* Action Bar - Styled as black buttons */}
               <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t print:hidden">
                 <Button 
-                  className="h-12 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg" 
+                  className="h-12 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg border-none" 
                   onClick={() => handleSendWhatsApp(selectedInvoice)}
                 >
                   <MessageCircle className="h-4 w-4" />
-                  <span className="font-bold text-xs">WHATSAPP</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">WhatsApp</span>
                 </Button>
                 <Button 
-                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg" 
+                  className="h-12 px-6 gap-2 bg-black hover:bg-zinc-800 text-white rounded-xl shadow-lg border-none" 
                   onClick={handlePrintAction}
                 >
                   <Download className="h-4 w-4" />
-                  <span className="font-bold text-xs uppercase">Télécharger</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger</span>
                 </Button>
                 <Button 
-                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg" 
+                  className="h-12 px-6 gap-2 bg-black hover:bg-zinc-800 text-white rounded-xl shadow-lg border-none" 
                   onClick={handlePrintAction}
                 >
                   <Printer className="h-4 w-4" />
-                  <span className="font-bold text-xs uppercase">Imprimer la facture</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Imprimer</span>
                 </Button>
               </div>
             </div>
