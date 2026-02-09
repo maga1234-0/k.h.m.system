@@ -18,7 +18,6 @@ import {
   Trash2, 
   AlertCircle, 
   FileText, 
-  Phone,
   Download,
   Hotel
 } from "lucide-react"
