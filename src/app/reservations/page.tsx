@@ -282,7 +282,7 @@ export default function ReservationsPage() {
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="space-y-2">
-                  <Label htmlFor="newGuestName">Nom du voyageur</Label>
+                  <Label htmlFor="newGuestName">Nom du client</Label>
                   <Input 
                     id="newGuestName" 
                     placeholder="Ex: Jean Dupont"
@@ -530,7 +530,7 @@ export default function ReservationsPage() {
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Voyageur</span>
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Client</span>
                     <p className="text-sm font-semibold truncate">{selectedRes.guestName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestEmail}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedRes.guestPhone}</p>

@@ -473,7 +473,7 @@ export default function RoomsPage() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-1">
-                <Label>Nom du voyageur</Label>
+                <Label>Nom du client</Label>
                 <Input value={bookingData.guestName} onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
