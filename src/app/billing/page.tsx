@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/layout/AppSidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -117,7 +117,7 @@ export default function BillingPage() {
     
     const message = `*IMARAPMS — LUXURY HOSPITALITY*\n\n` +
       `*FACTURE OFFICIELLE N° #INV-${invoiceId}*\n\n` +
-      `👤 *CLIENT :* ${invoice.guestName.toUpperCase()}\n` +
+      `👤 *NOM DU CLIENT :* ${invoice.guestName.toUpperCase()}\n` +
       `📅 *DATE D'ÉMISSION :* ${date}\n` +
       `💰 *MONTANT TOTAL :* ${amount} $\n` +
       `✅ *STATUT :* ${invoice.status === 'Paid' ? 'RÉGLÉE' : 'À PAYER'}\n\n` +
