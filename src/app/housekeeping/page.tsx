@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from "react";
@@ -9,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
-  Broom, 
   CheckCircle2, 
   Clock, 
   Wrench, 
@@ -79,7 +77,7 @@ export default function HousekeepingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-none shadow-sm bg-blue-500/5 border border-blue-500/10">
               <CardContent className="p-4 flex flex-col items-center text-center">
-                <Broom className="h-8 w-8 text-blue-500 mb-2" />
+                <Sparkles className="h-8 w-8 text-blue-500 mb-2" />
                 <span className="text-2xl font-bold font-headline">{stats.cleaning}</span>
                 <span className="text-xs font-bold uppercase text-blue-600">En Nettoyage</span>
               </CardContent>
@@ -133,7 +131,7 @@ export default function HousekeepingPage() {
                         )}
                         {(status === 'Occupied' || status === 'Available') && (
                           <Button size="icon" variant="outline" className="h-8 w-8 text-blue-600" onClick={() => handleUpdateStatus(room.id, room.roomNumber, 'Cleaning')}>
-                            <Broom className="h-4 w-4" />
+                            <Sparkles className="h-4 w-4" />
                           </Button>
                         )}
                         {status !== 'Maintenance' && (

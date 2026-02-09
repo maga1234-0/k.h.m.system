@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -16,7 +15,7 @@ import {
   Moon,
   Monitor,
   Calendar,
-  Broom,
+  Sparkles,
   BarChart3
 } from "lucide-react"
 import Link from "next/link"
@@ -55,7 +54,7 @@ const mainMenuItems = [
 
 const inventoryItems = [
   { title: "Chambres", icon: Bed, url: "/rooms" },
-  { title: "Gouvernance", icon: Broom, url: "/housekeeping" },
+  { title: "Gouvernance", icon: Sparkles, url: "/housekeeping" },
 ]
 
 const businessItems = [
