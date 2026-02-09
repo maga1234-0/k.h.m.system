@@ -147,7 +147,7 @@ export default function BillingPage() {
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto print:bg-white">
+      <SidebarInset className="flex flex-col overflow-auto bg-background print:bg-white">
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10 print:hidden">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
