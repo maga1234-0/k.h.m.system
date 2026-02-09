@@ -80,6 +80,7 @@ export default function RoomsPage() {
     capacity: "2",
     pricePerNight: "",
     floor: "",
+    amenities: "Wi-Fi, TV, Climatisation",
   });
 
   const [bookingData, setBookingData] = useState({
@@ -101,11 +102,15 @@ export default function RoomsPage() {
     const roomId = doc(collection(firestore, 'rooms')).id;
     const roomRef = doc(firestore, 'rooms', roomId);
 
+    const amenitiesArray = newRoom.amenities
+      ? newRoom.amenities.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "")
+      : [];
+
     const roomData = {
       ...newRoom,
       id: roomId,
       status: "Available",
-      amenities: ["Wi-Fi", "TV", "Climatisation"],
+      amenities: amenitiesArray,
       pricePerNight: Number(newRoom.pricePerNight) || 0,
       capacity: Number(newRoom.capacity) || 1,
       floor: Number(newRoom.floor) || 0,
@@ -119,6 +124,7 @@ export default function RoomsPage() {
       capacity: "2",
       pricePerNight: "",
       floor: "",
+      amenities: "Wi-Fi, TV, Climatisation",
     });
     toast({
       title: "Chambre Ajoutée",
@@ -129,9 +135,16 @@ export default function RoomsPage() {
   const handleUpdateRoom = () => {
     if (!editRoomData || !editRoomData.id) return;
 
+    const amenitiesArray = editRoomData.amenitiesString
+      ? editRoomData.amenitiesString.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "")
+      : [];
+
+    const { amenitiesString, ...dataToSave } = editRoomData;
+
     const roomRef = doc(firestore, 'rooms', editRoomData.id);
     updateDocumentNonBlocking(roomRef, {
-      ...editRoomData,
+      ...dataToSave,
+      amenities: amenitiesArray,
       pricePerNight: Number(editRoomData.pricePerNight),
       capacity: Number(editRoomData.capacity),
       floor: Number(editRoomData.floor),
@@ -253,6 +266,16 @@ export default function RoomsPage() {
                   <Label htmlFor="capacity" className="text-right">Capacité</Label>
                   <Input id="capacity" type="number" value={newRoom.capacity} onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})} className="col-span-3" />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amenities" className="text-right">Équipements</Label>
+                  <Input 
+                    id="amenities" 
+                    placeholder="Wi-Fi, TV, Climatisation..." 
+                    value={newRoom.amenities} 
+                    onChange={(e) => setNewRoom({...newRoom, amenities: e.target.value})} 
+                    className="col-span-3" 
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
@@ -308,7 +331,7 @@ export default function RoomsPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditRoomData({...room}); setIsEditDialogOpen(true); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditRoomData({...room, amenitiesString: room.amenities?.join(', ') || ""}); setIsEditDialogOpen(true); }}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button variant="secondary" size="sm" className="h-8 text-xs" onClick={() => { setSelectedRoom(room); setIsDetailsOpen(true); }}>
@@ -374,6 +397,15 @@ export default function RoomsPage() {
                   <Label className="text-right">Capacité</Label>
                   <Input type="number" value={editRoomData.capacity} onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} className="col-span-3" />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Équipements</Label>
+                  <Input 
+                    placeholder="Wi-Fi, TV, Climatisation..." 
+                    value={editRoomData.amenitiesString} 
+                    onChange={(e) => setEditRoomData({...editRoomData, amenitiesString: e.target.value})} 
+                    className="col-span-3" 
+                  />
+                </div>
               </div>
             )}
             <DialogFooter>
@@ -416,9 +448,13 @@ export default function RoomsPage() {
                 <div className="space-y-2 pt-2">
                   <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Équipements</span>
                   <div className="flex flex-wrap gap-2">
-                    {selectedRoom.amenities?.map((a: string) => (
-                      <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
-                    ))}
+                    {selectedRoom.amenities && selectedRoom.amenities.length > 0 ? (
+                      selectedRoom.amenities.map((a: string) => (
+                        <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Aucun équipement renseigné</span>
+                    )}
                   </div>
                 </div>
               </div>
