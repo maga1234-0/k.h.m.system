@@ -73,16 +73,6 @@ export default function BillingPage() {
     return { unpaid, revenue, totalCount: invoices.length };
   }, [invoices]);
 
-  const handleMarkAsPaid = (invoice: any) => {
-    const invRef = doc(firestore, 'invoices', invoice.id);
-    updateDocumentNonBlocking(invRef, {
-      status: "Paid",
-      amountPaid: invoice.amountDue,
-      paymentDate: new Date().toISOString()
-    });
-    toast({ title: "Paiement Confirmé", description: `La facture pour ${invoice.guestName} a été réglée.` });
-  };
-
   const handleClearRegistry = () => {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
@@ -106,12 +96,12 @@ export default function BillingPage() {
 
     if (!invoiceToGen) setIsGeneratingPdf(true);
     
-    // Si on appelle ça depuis la liste, on ouvre le dialogue d'abord pour avoir l'élément dans le DOM
+    // Si on appelle ça depuis la liste, on s'assure que le dialogue est ouvert ou l'élément rendu
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // Attendre que le dialogue s'ouvre
-      await new Promise(r => setTimeout(r, 500));
+      // Attendre un peu pour que le DOM se mette à jour
+      await new Promise(r => setTimeout(r, 600));
     }
 
     const element = document.getElementById('invoice-printable');
@@ -125,6 +115,7 @@ export default function BillingPage() {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false
       });
       
       const imgData = canvas.toDataURL('image/png');
