@@ -116,7 +116,7 @@ export default function BillingPage() {
     const phone = invoice.guestPhone.replace(/\D/g, '');
     const invoiceId = invoice.id.slice(0, 8).toUpperCase();
     
-    const message = `*IMARAPMS - VOTRE FACTURE*\n\nCher(e) ${invoice.guestName},\n\nVoici le résumé de votre facture #INV-${invoiceId} :\n- Montant : ${Number(invoice.amountDue).toFixed(2)} $\n- Statut : ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\nMerci de votre confiance.\nL'équipe ImaraPMS.`;
+    const message = `*IMARAPMS - FACTURE OFFICIELLE*\n\n📄 *N° de Facture :* #INV-${invoiceId}\n👤 *Client :* ${invoice.guestName}\n📅 *Date :* ${new Date(invoice.invoiceDate).toLocaleDateString('fr-FR')}\n💰 *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n✅ *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE DE RÈGLEMENT'}\n\nMerci de votre confiance.\nCordialement,\n*L'équipe ImaraPMS*`;
     
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -303,36 +303,36 @@ export default function BillingPage() {
                       +1 234 567 890
                     </div>
                   </div>
-                  <div className="text-right space-y-2">
-                    <h1 className="text-6xl font-bold tracking-tighter text-slate-200 opacity-50 absolute right-12 top-10 pointer-events-none uppercase">Facture</h1>
-                    <div className="pt-8 relative z-10">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Numéro de Facture</p>
+                  <div className="text-right">
+                    <h1 className="text-6xl font-bold tracking-tighter text-slate-100 opacity-30 uppercase absolute right-12 top-10 pointer-events-none">Facture</h1>
+                    <div className="pt-8 relative z-10 space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Numéro de Facture</p>
                       <p className="text-xl font-bold font-mono">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Billing Info Grid */}
-                <div className="grid grid-cols-2 gap-20 mb-16">
+                {/* Billing Info Grid - Styled to match screenshot */}
+                <div className="grid grid-cols-3 gap-12 mb-16">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Destinataire</p>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedInvoice.guestName}</h3>
+                    <h3 className="text-3xl font-bold text-slate-900 mb-3">{selectedInvoice.guestName}</h3>
                     <div className="space-y-1 text-sm text-slate-600">
-                      <p className="flex items-center gap-2"><Phone className="h-3 w-3" /> {selectedInvoice.guestPhone || "N/A"}</p>
-                      <p className="flex items-center gap-2">Client ID: {selectedInvoice.guestId?.slice(0, 6).toUpperCase() || "REG-9912"}</p>
+                      <p className="flex items-center gap-2 font-medium"><Phone className="h-3 w-3" /> {selectedInvoice.guestPhone || "N/A"}</p>
+                      <p className="flex items-center gap-2 font-medium">Client ID: {selectedInvoice.guestId?.slice(0, 8).toUpperCase() || "REG-9912"}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Émission</p>
-                      <p className="text-sm font-bold text-slate-900">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Échéance</p>
-                      <p className="text-sm font-bold text-slate-900">{new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Émission</p>
+                    <p className="text-base font-bold text-slate-900">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Échéance</p>
+                    <p className="text-base font-bold text-slate-900">{new Date(selectedInvoice.dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                   </div>
                 </div>
+
+                <Separator className="mb-12" />
 
                 {/* Items Table */}
                 <div className="mb-12">
@@ -350,17 +350,11 @@ export default function BillingPage() {
                         <tr>
                           <td className="px-8 py-8">
                             <p className="font-bold text-slate-900 mb-1">Services d'Hébergement</p>
-                            <p className="text-xs text-slate-500 italic">Séjour hôtelier complet (Nuitées et services de base inclus).</p>
+                            <p className="text-xs text-slate-500 italic">Séjour hôtelier complet incluant l'accès à toutes les installations de l'hôtel.</p>
                           </td>
                           <td className="px-8 py-8 text-center text-sm font-medium">1</td>
                           <td className="px-8 py-8 text-right text-sm font-medium">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
                           <td className="px-8 py-8 text-right text-sm font-bold text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                        </tr>
-                        {/* Extras placeholder */}
-                        <tr className="bg-slate-50/50">
-                          <td colSpan={4} className="px-8 py-4 text-[10px] text-slate-400 italic text-center uppercase tracking-widest">
-                            Aucun frais de service additionnel enregistré
-                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -407,26 +401,22 @@ export default function BillingPage() {
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Conditions de Règlement</h4>
                       <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tighter">
-                        Le paiement est dû dès réception. Tout retard de paiement au-delà de 30 jours fera l'objet d'une pénalité de retard égale à 3 fois le taux d'intérêt légal. 
-                        Escompte pour paiement anticipé : aucun.
+                        Le paiement est dû dès réception. Tout retard de paiement au-delà de 30 jours fera l'objet d'une pénalité de retard égale à 3 fois le taux d'intérêt légal.
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Action Bar */}
+              {/* Action Bar - Styled to match screenshot buttons */}
               <div className="bg-slate-50 p-6 flex justify-end gap-3 border-t print:hidden">
-                <DialogClose asChild>
-                  <Button variant="ghost" className="h-11 px-6 font-bold uppercase tracking-widest text-[10px]">Fermer</Button>
-                </DialogClose>
-                <Button variant="outline" className="h-11 px-6 gap-2 font-bold uppercase tracking-widest text-[10px]" onClick={() => handleSendWhatsApp(selectedInvoice)}>
+                <Button variant="outline" className="h-12 px-8 gap-2 bg-white text-slate-900 font-bold uppercase tracking-widest text-[11px] border-slate-200 hover:bg-slate-100" onClick={() => handleSendWhatsApp(selectedInvoice)}>
                   <MessageCircle className="h-4 w-4" /> WhatsApp
                 </Button>
-                <Button variant="outline" className="h-11 px-6 gap-2 font-bold uppercase tracking-widest text-[10px]" onClick={() => window.print()}>
+                <Button variant="outline" className="h-12 px-8 gap-2 bg-[#1A1C1E] text-white font-bold uppercase tracking-widest text-[11px] hover:bg-slate-800" onClick={() => window.print()}>
                   <Download className="h-4 w-4" /> Télécharger
                 </Button>
-                <Button className="h-11 px-8 gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-slate-200" onClick={handlePrint}>
+                <Button className="h-12 px-8 gap-2 bg-[#101419] hover:bg-black text-white font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200" onClick={handlePrint}>
                   <Printer className="h-4 w-4" /> Imprimer la Facture
                 </Button>
               </div>
