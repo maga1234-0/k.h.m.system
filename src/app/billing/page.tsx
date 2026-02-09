@@ -100,33 +100,32 @@ export default function BillingPage() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const handleDownloadPDF = async () => {
-    const element = document.getElementById('invoice-printable');
-    if (!element || !selectedInvoice) return;
+  const handleDownloadPDF = async (invoiceToGen?: any) => {
+    const inv = invoiceToGen || selectedInvoice;
+    if (!inv) return;
 
-    setIsGeneratingPdf(true);
-    try {
-      // Ensure element is visible for capture and give it a fixed width for stability
-      const originalStyle = element.style.cssText;
-      element.style.width = '800px'; 
-      element.style.position = 'relative';
-      element.style.left = '0';
-      element.style.top = '0';
-      
-      // Small delay to ensure all images/styles are applied
+    if (!invoiceToGen) setIsGeneratingPdf(true);
+    
+    // Si on appelle ça depuis la liste, on ouvre le dialogue d'abord pour avoir l'élément dans le DOM
+    if (invoiceToGen) {
+      setSelectedInvoice(inv);
+      setIsInvoiceDialogOpen(true);
+      // Attendre que le dialogue s'ouvre
       await new Promise(r => setTimeout(r, 500));
-      
+    }
+
+    const element = document.getElementById('invoice-printable');
+    if (!element) {
+      if (!invoiceToGen) setIsGeneratingPdf(false);
+      return;
+    }
+
+    try {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
-        width: 800,
-        windowWidth: 800,
       });
-      
-      // Restore original style
-      element.style.cssText = originalStyle;
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -135,14 +134,14 @@ export default function BillingPage() {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`facture-${selectedInvoice.guestName.replace(/\s+/g, '-')}-${selectedInvoice.id.slice(0, 8).toUpperCase()}.pdf`);
+      pdf.save(`facture-${inv.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "Téléchargement Réussi", description: "La facture a été enregistrée dans vos fichiers." });
+      toast({ title: "PDF Généré", description: "Le fichier a été enregistré dans votre explorateur." });
     } catch (error) {
-      console.error('PDF Generation Error:', error);
-      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le fichier complet." });
+      console.error('PDF Error:', error);
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de générer le PDF." });
     } finally {
-      setIsGeneratingPdf(false);
+      if (!invoiceToGen) setIsGeneratingPdf(false);
     }
   };
 
@@ -245,19 +244,20 @@ export default function BillingPage() {
                           <span className="text-xs text-muted-foreground font-medium">{inv.guestName} • {new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 ml-auto md:ml-0">
-                        <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-4 ml-auto md:ml-0">
+                        <div className="flex flex-col items-end mr-2">
                           <span className="font-bold text-lg">{Number(inv.amountDue).toFixed(2)} $</span>
                           <Badge variant={inv.status === 'Paid' ? 'default' : 'secondary'} className="text-[10px] py-0 px-2 h-4">
                             {inv.status === 'Paid' ? 'Payée' : 'Impayée'}
                           </Badge>
                         </div>
                         <div className="flex gap-2">
-                          {inv.status !== 'Paid' && (
-                            <Button variant="outline" size="sm" className="h-9 px-3 gap-2" onClick={() => handleMarkAsPaid(inv)}>
-                              <CreditCard className="h-4 w-4" /> Encaisser
-                            </Button>
-                          )}
+                          <Button variant="outline" size="icon" className="h-9 w-9 text-[#25D366]" onClick={() => handleSendWhatsApp(inv)}>
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleDownloadPDF(inv)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
                           <Button 
                             variant="secondary" 
                             size="sm" 
@@ -381,7 +381,7 @@ export default function BillingPage() {
                 <Button 
                   disabled={isGeneratingPdf}
                   className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
-                  onClick={handleDownloadPDF}
+                  onClick={() => handleDownloadPDF()}
                 >
                   {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger PDF</span>

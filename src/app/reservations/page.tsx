@@ -21,7 +21,8 @@ import {
   CreditCard,
   CheckCircle2,
   Edit2,
-  LogOut
+  LogOut,
+  MessageCircle
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -156,7 +157,7 @@ export default function ReservationsPage() {
     };
     addDocumentNonBlocking(invoicesCollection, invoiceData);
 
-    toast({ title: "Check-in Réussi", description: `${res.guestName} est maintenant enregistré.` });
+    toast({ title: "Check-in Réussi", description: `${res.guestName} est maintenant enregistré. Facture générée.` });
   };
 
   const handleCheckOut = (res: any) => {
@@ -164,10 +165,9 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resRef, { status: "Checked Out" });
     if (res.roomId) {
-      // Automatiquement libérer la chambre et la placer en nettoyage
       updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
     }
-    toast({ title: "Check-out Réussi", description: `${res.guestName} a libéré la chambre. Elle est maintenant en attente de nettoyage.` });
+    toast({ title: "Départ Enregistré", description: `${res.guestName} a libéré la chambre. Statut: Nettoyage.` });
   };
 
   const handleDeleteConfirm = () => {
@@ -178,7 +178,7 @@ export default function ReservationsPage() {
     }
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été supprimé et la chambre libérée." });
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "Dossier supprimé." });
   };
 
   const filteredReservations = reservations?.filter(res => 
