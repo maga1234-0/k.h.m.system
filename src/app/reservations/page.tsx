@@ -246,7 +246,7 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onSelect={() => { setSelectedRes(res); setTimeout(() => setIsDetailsDialogOpen(true), 100); }}>
+                            <DropdownMenuItem onSelect={() => { setSelectedRes(res); setTimeout(() => setIsDetailsDialogOpen(true), 150); }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
                             {res.status !== 'Checked In' && (
@@ -255,7 +255,7 @@ export default function ReservationsPage() {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onSelect={() => { setResToDelete(res); setTimeout(() => setIsDeleteDialogOpen(true), 100); }}>
+                            <DropdownMenuItem className="text-destructive" onSelect={() => { setResToDelete(res); setTimeout(() => setIsDeleteDialogOpen(true), 150); }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -287,12 +287,12 @@ export default function ReservationsPage() {
                   <Label>Nom du client</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-9" value={newBooking.guestName} onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})} />
+                    <Input className="pl-9" placeholder="" value={newBooking.guestName} onChange={(e) => setNewBooking({...newBooking, guestName: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>WhatsApp / Téléphone</Label>
-                  <Input value={newBooking.guestPhone} onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})} />
+                  <Input placeholder="" value={newBooking.guestPhone} onChange={(e) => setNewBooking({...newBooking, guestPhone: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -329,7 +329,7 @@ export default function ReservationsPage() {
                   <Label>Montant du séjour ($)</Label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="number" className="pl-9" value={newBooking.totalAmount} onChange={(e) => setNewBooking({...newBooking, totalAmount: e.target.value})} />
+                    <Input type="number" className="pl-9" placeholder="" value={newBooking.totalAmount} onChange={(e) => setNewBooking({...newBooking, totalAmount: e.target.value})} />
                   </div>
                 </div>
               </div>

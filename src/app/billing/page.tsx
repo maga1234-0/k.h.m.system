@@ -19,7 +19,8 @@ import {
   AlertCircle, 
   FileText, 
   Phone,
-  Download
+  Download,
+  Hotel
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -249,85 +250,99 @@ export default function BillingPage() {
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh] select-text">
               <div className="flex-1 overflow-auto p-12 bg-white text-slate-900" id="invoice-printable">
-                <div className="text-center mb-8">
-                  <h2 className="text-blue-600 font-bold text-2xl tracking-widest uppercase mb-1">BUSINESS</h2>
-                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
-                    <Phone className="h-3 w-3" />
-                    <span>Tél: +1 234 567 890</span>
+                <div className="flex justify-between items-start mb-16">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-white">
+                      <Hotel className="h-8 w-8" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-headline font-black text-2xl tracking-tighter text-primary">ImaraPMS</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Luxury Hospitality</span>
+                    </div>
                   </div>
-                  <Separator className="mt-6 mb-8 bg-slate-200" />
+                  <div className="text-right">
+                    <div className="relative inline-block">
+                      <h1 className="text-5xl font-black text-slate-100 uppercase tracking-tighter leading-none pointer-events-none select-none">Facture</h1>
+                      <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
+                        <p className="text-xl font-black text-slate-900 tracking-tight">INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Date: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-start mb-16 px-4">
+                <div className="grid grid-cols-2 gap-12 mb-16 px-4">
                   <div className="space-y-4">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DESTINATAIRE</p>
-                    <h3 className="text-2xl font-black text-slate-900 border-b-2 border-slate-100 pb-2">{selectedInvoice.guestName}</h3>
-                  </div>
-                  
-                  <div className="text-right space-y-4">
-                    <div className="relative">
-                      <h1 className="text-xl font-bold text-slate-900 tracking-tight">FACTURE</h1>
-                      <span className="absolute -top-4 right-0 text-4xl font-black text-slate-100/50 pointer-events-none select-none uppercase tracking-tighter">FACTURE</span>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] border-b-2 border-primary/10 pb-2">Destinataire</p>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-1">{selectedInvoice.guestName}</h3>
+                      <p className="text-sm text-slate-500 font-medium">{selectedInvoice.guestPhone}</p>
                     </div>
-                    <div className="text-[11px] text-slate-500 font-bold leading-tight">
-                      #INV-{selectedInvoice.id.slice(0, 16).toUpperCase()}<br />
-                      Émise le: {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}
+                  </div>
+                  <div className="space-y-4 text-right">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] border-b-2 border-slate-100 pb-2">Émetteur</p>
+                    <div className="text-sm font-medium text-slate-600">
+                      ImaraPMS Luxury Hotel Group<br />
+                      Département de Facturation Centrale<br />
+                      Contact: +1 234 567 890
                     </div>
                   </div>
                 </div>
 
-                <div className="mb-20 px-4">
-                  <table className="w-full text-left">
+                <div className="mb-20">
+                  <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b-2 border-slate-900">
-                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900">DESCRIPTION DES SERVICES</th>
-                        <th className="py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900 text-right">TOTAL HT</th>
+                      <tr className="bg-slate-50 border-y border-slate-100">
+                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400">Prestation</th>
+                        <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Montant ($)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       <tr>
-                        <td className="py-8">
-                          <p className="font-bold text-slate-900 text-base">Séjour Hôtelier & Prestations Annexes</p>
-                          <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Hébergement premium ImaraPMS</p>
+                        <td className="py-8 px-6">
+                          <p className="font-bold text-slate-900 text-lg">Séjour Hôtelier & Services Premium</p>
+                          <p className="text-xs text-slate-400 mt-1 italic">Hébergement tout inclus, room service et blanchisserie</p>
                         </td>
-                        <td className="py-8 text-right text-lg font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                        <td className="py-8 px-6 text-right">
+                          <span className="text-xl font-black text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
                 <div className="flex justify-end px-4">
-                  <div className="w-full max-w-[320px] space-y-3">
-                    <div className="flex justify-between items-center py-4 border-t-4 border-slate-900">
-                      <span className="text-xs font-black uppercase tracking-widest">MONTANT TOTAL À RÉGLER</span>
-                      <span className="text-3xl font-black font-headline text-slate-900 tracking-tighter">
+                  <div className="w-full max-w-[350px] space-y-4">
+                    <div className="flex justify-between items-center py-6 border-t-4 border-slate-900">
+                      <span className="text-sm font-black uppercase tracking-widest text-slate-900">Total à Régler</span>
+                      <span className="text-4xl font-black font-headline text-primary tracking-tighter">
                         {Number(selectedInvoice.amountDue).toFixed(2)} $
                       </span>
                     </div>
-                    <div className="text-center pt-8">
-                      <p className="text-[9px] text-slate-400 uppercase tracking-[0.3em] font-bold">Merci de votre confiance</p>
+                    <div className="pt-8 text-center border-t border-slate-100">
+                      <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">Signature Direction ImaraPMS</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t print:hidden">
+              <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t border-slate-200 print:hidden">
                 <Button 
-                  className="h-12 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg border-none" 
+                  className="h-12 px-6 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl shadow-lg border-none" 
                   onClick={() => handleSendWhatsApp(selectedInvoice)}
                 >
                   <MessageCircle className="h-4 w-4" />
                   <span className="font-bold text-[10px] uppercase tracking-widest">WhatsApp</span>
                 </Button>
                 <Button 
-                  className="h-12 px-6 gap-2 bg-black hover:bg-zinc-800 text-white rounded-xl shadow-lg border-none" 
+                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
                   onClick={handlePrintAction}
                 >
                   <Download className="h-4 w-4" />
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger PDF</span>
                 </Button>
                 <Button 
-                  className="h-12 px-6 gap-2 bg-black hover:bg-zinc-800 text-white rounded-xl shadow-lg border-none" 
+                  className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
                   onClick={handlePrintAction}
                 >
                   <Printer className="h-4 w-4" />
