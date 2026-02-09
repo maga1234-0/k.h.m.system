@@ -24,6 +24,8 @@ import {
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
@@ -49,6 +51,7 @@ export default function BillingPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
   const firestore = useFirestore();
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
@@ -95,7 +98,36 @@ export default function BillingPage() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const handlePrintAction = () => {
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('invoice-printable');
+    if (!element || !selectedInvoice) return;
+
+    setIsGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`facture-${selectedInvoice.guestName.replace(/\s+/g, '-')}-${selectedInvoice.id.slice(0, 8).toUpperCase()}.pdf`);
+      
+      toast({ title: "Téléchargement Réussi", description: "La facture a été enregistrée dans vos fichiers." });
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le fichier." });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print();
     }
@@ -334,15 +366,16 @@ export default function BillingPage() {
                   <span className="font-bold text-[10px] uppercase tracking-widest">WhatsApp</span>
                 </Button>
                 <Button 
+                  disabled={isGeneratingPdf}
                   className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
-                  onClick={handlePrintAction}
+                  onClick={handleDownloadPDF}
                 >
-                  <Download className="h-4 w-4" />
+                  {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   <span className="font-bold text-[10px] uppercase tracking-widest">Télécharger PDF</span>
                 </Button>
                 <Button 
                   className="h-12 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg border-none" 
-                  onClick={handlePrintAction}
+                  onClick={handlePrint}
                 >
                   <Printer className="h-4 w-4" />
                   <span className="font-bold text-[10px] uppercase tracking-widest">Imprimer</span>

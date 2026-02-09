@@ -120,7 +120,7 @@ export default function ReservationsPage() {
       createdAt: selectedRes ? selectedRes.createdAt : new Date().toISOString() 
     };
 
-    if (selectedRes) {
+    if (selectedRes && isEditDialogOpen) {
       updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), reservationData);
       setIsEditDialogOpen(false);
     } else {
@@ -259,10 +259,15 @@ export default function ReservationsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onSelect={() => { setSelectedRes(res); setTimeout(() => setIsDetailsDialogOpen(true), 150); }}>
+                            <DropdownMenuItem onSelect={(e) => { 
+                              e.preventDefault();
+                              setSelectedRes(res); 
+                              setTimeout(() => setIsDetailsDialogOpen(true), 150); 
+                            }}>
                               <Info className="mr-2 h-4 w-4" /> Détails complets
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { 
+                            <DropdownMenuItem onSelect={(e) => { 
+                              e.preventDefault();
                               setSelectedRes(res); 
                               setBookingForm({
                                 guestName: res.guestName,
@@ -284,7 +289,11 @@ export default function ReservationsPage() {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onSelect={() => { setResToDelete(res); setTimeout(() => setIsDeleteDialogOpen(true), 150); }}>
+                            <DropdownMenuItem className="text-destructive" onSelect={(e) => { 
+                              e.preventDefault();
+                              setResToDelete(res); 
+                              setTimeout(() => setIsDeleteDialogOpen(true), 150); 
+                            }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Annuler résa
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -304,7 +313,6 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        {/* Add/Edit Dialog */}
         <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
           if (!open) {
             setIsAddDialogOpen(false);
@@ -431,7 +439,7 @@ export default function ReservationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </SidebarInset>
+      </main>
     </div>
   );
 }
