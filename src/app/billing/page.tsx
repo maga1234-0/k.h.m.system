@@ -18,9 +18,11 @@ import {
   AlertCircle, 
   FileText, 
   Download,
-  Hotel
+  Hotel,
+  CheckCircle2,
+  DollarSign
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, useUser, useDoc } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
@@ -31,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -52,6 +55,8 @@ export default function BillingPage() {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [invoiceForPayment, setInvoiceForPayment] = useState<any>(null);
   
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'general'), [firestore]);
@@ -79,6 +84,19 @@ export default function BillingPage() {
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
     toast({ variant: "destructive", title: "Action effectuée", description: "Le registre des factures a été purgé." });
+  };
+
+  const handleCollectPayment = () => {
+    if (!invoiceForPayment) return;
+    const invRef = doc(firestore, 'invoices', invoiceForPayment.id);
+    updateDocumentNonBlocking(invRef, {
+      amountPaid: Number(invoiceForPayment.amountDue),
+      status: 'Paid',
+      paymentDate: new Date().toISOString()
+    });
+    setIsPaymentDialogOpen(false);
+    setInvoiceForPayment(null);
+    toast({ title: "Paiement Enregistré", description: "La facture a été marquée comme réglée." });
   };
 
   const handleSendWhatsApp = (invoice: any) => {
@@ -186,7 +204,7 @@ export default function BillingPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg">Registre des Factures</CardTitle>
-                <CardDescription>Visualisation et partage des documents de paiement.</CardDescription>
+                <CardDescription>Visualisation et encaissement des règlements.</CardDescription>
               </div>
               {invoices && invoices.length > 0 && (
                 <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
@@ -218,8 +236,8 @@ export default function BillingPage() {
                   {invoices.map((inv) => (
                     <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0">
-                          <Receipt className="h-5 w-5" />
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-secondary text-primary'}`}>
+                          {inv.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-xs md:text-sm">#INV-{inv.id.slice(0, 5).toUpperCase()}</span>
@@ -229,8 +247,22 @@ export default function BillingPage() {
                       <div className="flex items-center justify-between md:justify-end gap-6">
                         <div className="text-right">
                           <span className="font-bold text-sm md:text-lg">{Number(inv.amountDue).toFixed(2)} $</span>
+                          {inv.status === 'Paid' && <p className="text-[10px] text-emerald-600 font-bold uppercase">Réglé</p>}
                         </div>
                         <div className="flex gap-2">
+                          {inv.status !== 'Paid' && (
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="h-9 px-4 gap-2 text-[10px] font-bold uppercase rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => {
+                                setInvoiceForPayment(inv);
+                                setIsPaymentDialogOpen(true);
+                              }}
+                            >
+                              <DollarSign className="h-4 w-4" /> Encaisser
+                            </Button>
+                          )}
                           <Button variant="outline" size="icon" className="h-9 w-9 text-[#25D366] rounded-lg" onClick={() => handleSendWhatsApp(inv)}>
                             <MessageCircle className="h-4 w-4" />
                           </Button>
@@ -260,6 +292,29 @@ export default function BillingPage() {
           </Card>
         </main>
       </SidebarInset>
+
+      {/* Modal Encaissement */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Valider l'Encaissement</DialogTitle>
+            <DialogDescription>Confirmez la réception du paiement pour ce client.</DialogDescription>
+          </DialogHeader>
+          {invoiceForPayment && (
+            <div className="py-6 space-y-4">
+              <div className="p-4 bg-muted/50 rounded-xl border">
+                <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Total à encaisser</p>
+                <h3 className="text-3xl font-black text-primary tracking-tighter">{Number(invoiceForPayment.amountDue).toFixed(2)} $</h3>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">Cette action marquera la facture de <strong>{invoiceForPayment.guestName}</strong> comme réglée.</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleCollectPayment}>Confirmer le paiement</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">

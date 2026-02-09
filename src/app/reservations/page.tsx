@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -60,7 +60,6 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  // Gestion d'état isolée pour les dialogues
   const [activeResId, setActiveResId] = useState<string | null>(null);
   const [activeDialog, setActiveDialog] = useState<"manage" | null>(null);
   
@@ -93,7 +92,6 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    // Délai asynchrone pour éviter le Focus Trap conflict avec le dropdown
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -117,8 +115,6 @@ export default function ReservationsPage() {
     };
 
     addDocumentNonBlocking(resCollection, reservationData);
-    // On ne bloque pas la chambre tant que le check-in n'est pas fait (politique hôtelière flexible)
-    // Mais on peut la marquer comme réservée si on veut.
     
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
@@ -263,7 +259,6 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        {/* Modal Ajouter */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[550px] w-[95vw] rounded-2xl">
             <DialogHeader>
@@ -326,7 +321,6 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Modal Gestion Séjour (Isolé pour éviter le freeze) */}
         <Dialog open={activeDialog === "manage"} onOpenChange={(open) => !open && setActiveDialog(null)}>
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
