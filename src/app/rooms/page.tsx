@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -63,7 +62,7 @@ export default function RoomsPage() {
   const [newRoom, setNewRoom] = useState<any>({
     roomNumber: "",
     roomType: "Standard",
-    capacity: "",
+    capacity: "2",
     pricePerNight: "",
     floor: "",
   });
@@ -102,13 +101,13 @@ export default function RoomsPage() {
     setNewRoom({
       roomNumber: "",
       roomType: "Standard",
-      capacity: "",
+      capacity: "2",
       pricePerNight: "",
       floor: "",
     });
     toast({
       title: "Chambre Ajoutée",
-      description: `La chambre ${roomData.roomNumber} a été créée.`,
+      description: `La chambre ${roomData.roomNumber} a été créée avec succès.`,
     });
   };
 
@@ -125,8 +124,8 @@ export default function RoomsPage() {
 
     setIsEditDialogOpen(false);
     toast({
-      title: "Chambre Mise à Jour",
-      description: `La chambre ${editRoomData.roomNumber} a été mise à jour avec succès.`,
+      title: "Mise à jour réussie",
+      description: `Les informations de la chambre ${editRoomData.roomNumber} ont été modifiées.`,
     });
   };
 
@@ -195,7 +194,7 @@ export default function RoomsPage() {
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Nouvelle Chambre</DialogTitle>
-                <DialogDescription>Définissez les caractéristiques techniques de la chambre.</DialogDescription>
+                <DialogDescription>Définissez les caractéristiques de la chambre.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -293,14 +292,26 @@ export default function RoomsPage() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Modifier la Chambre</DialogTitle>
-              <DialogDescription>Mettez à jour les informations et le statut opérationnel.</DialogDescription>
+              <DialogTitle>Modifier la Chambre {editRoomData?.roomNumber}</DialogTitle>
+              <DialogDescription>Mettez à jour les informations de la chambre.</DialogDescription>
             </DialogHeader>
             {editRoomData && (
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Numéro</Label>
                   <Input value={editRoomData.roomNumber} onChange={(e) => setEditRoomData({...editRoomData, roomNumber: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Type</Label>
+                  <Select value={editRoomData.roomType} onValueChange={(val) => setEditRoomData({...editRoomData, roomType: val})}>
+                    <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Deluxe">Deluxe</SelectItem>
+                      <SelectItem value="Suite">Suite</SelectItem>
+                      <SelectItem value="Penthouse">Penthouse</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Statut</Label>
@@ -321,6 +332,10 @@ export default function RoomsPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Étage</Label>
                   <Input type="number" value={editRoomData.floor} onChange={(e) => setEditRoomData({...editRoomData, floor: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Capacité</Label>
+                  <Input type="number" value={editRoomData.capacity} onChange={(e) => setEditRoomData({...editRoomData, capacity: e.target.value})} className="col-span-3" />
                 </div>
               </div>
             )}
@@ -362,7 +377,7 @@ export default function RoomsPage() {
                   </div>
                 </div>
                 <div className="space-y-2 pt-2">
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Équipements Standards</span>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Équipements</span>
                   <div className="flex flex-wrap gap-2">
                     {selectedRoom.amenities?.map((a: string) => (
                       <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
