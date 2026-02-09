@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
@@ -266,6 +267,10 @@ export default function BillingPage() {
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl p-0 bg-white overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Détails de la Facture</DialogTitle>
+            <DialogDescription>Aperçu de la facture pour impression ou partage.</DialogDescription>
+          </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col">
               <div className="p-8 print:p-0">

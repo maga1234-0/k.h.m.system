@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from "react";
@@ -154,15 +153,6 @@ export default function PlanningPage() {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm border border-muted-foreground/20" /> <span>Disponible</span>
               </div>
-            </div>
-            <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 flex items-center gap-3">
-              <Info className="h-4 w-4 text-primary" />
-              <p className="text-[10px] font-medium text-slate-600">
-                Saviez-vous que vous pouvez générer des <strong>prévisions d'occupation IA</strong> basées sur ce planning ?
-              </p>
-              <Button size="sm" variant="ghost" className="h-7 text-[10px] font-bold text-primary" asChild>
-                <a href="/forecasting">Voir l'IA</a>
-              </Button>
             </div>
           </div>
         </main>
