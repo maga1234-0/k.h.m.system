@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -95,11 +94,9 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     
-    // Si on génère depuis la liste, on ouvre d'abord l'aperçu
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // On attend un peu que le DOM se rende
       await new Promise(r => setTimeout(r, 600));
     }
 

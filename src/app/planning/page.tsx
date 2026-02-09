@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from "date-fns";
@@ -21,19 +21,25 @@ import {
 export default function PlanningPage() {
   const { user } = useUser();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const firestore = useFirestore();
+  const [mounted, setMounted] = useState(false);
   
+  const firestore = useFirestore();
   const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const weekDays = useMemo(() => {
+    if (!mounted) return [];
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
     const end = endOfWeek(currentDate, { weekStartsOn: 1 });
     return eachDayOfInterval({ start, end });
-  }, [currentDate]);
+  }, [currentDate, mounted]);
 
   const sortedRooms = useMemo(() => {
     if (!rooms) return [];
@@ -51,6 +57,14 @@ export default function PlanningPage() {
     );
   };
 
+  if (!mounted) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full">
       <AppSidebar />
@@ -67,7 +81,11 @@ export default function PlanningPage() {
             </Button>
             <div className="flex items-center gap-2 font-medium bg-muted px-4 py-2 rounded-lg text-sm">
               <CalendarIcon className="h-4 w-4 text-primary" />
-              {format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
+              {weekDays.length > 0 && (
+                <>
+                  {format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
+                </>
+              )}
             </div>
             <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
               <ChevronRight className="h-4 w-4" />
@@ -80,7 +98,6 @@ export default function PlanningPage() {
             <Card className="border-none shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="min-w-[1000px]">
-                  {/* Header Grid */}
                   <div className="grid grid-cols-[150px_repeat(7,1fr)] bg-muted/50 border-b">
                     <div className="p-4 font-bold text-xs uppercase tracking-widest text-muted-foreground border-r">Chambre</div>
                     {weekDays.map((day) => (
@@ -93,7 +110,6 @@ export default function PlanningPage() {
                     ))}
                   </div>
 
-                  {/* Body Grid */}
                   <div className="divide-y">
                     {isRoomsLoading ? (
                       <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2">
