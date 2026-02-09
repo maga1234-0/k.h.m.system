@@ -75,13 +75,11 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  // Selection states
   const [selectedRes, setSelectedRes] = useState<any>(null);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
@@ -169,7 +167,6 @@ export default function ReservationsPage() {
     const resRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resRef, { status: "Checked Out" });
     if (res.roomId) {
-      // Automatiquement mettre en nettoyage lors de la libération
       updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Cleaning" });
     }
     toast({ title: "Départ Enregistré", description: `${res.guestName} a libéré la chambre. Statut: Nettoyage.` });
@@ -335,9 +332,6 @@ export default function ReservationsPage() {
           </div>
         </main>
 
-        {/* Dialogs outside of the table structure to avoid focus issues */}
-        
-        {/* ADD / EDIT DIALOG */}
         <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
           if (!open) {
             setIsAddDialogOpen(false);
@@ -413,7 +407,6 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* DETAILS DIALOG */}
         <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -449,7 +442,6 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* DELETE ALERT */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -466,7 +458,6 @@ export default function ReservationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
       </SidebarInset>
     </div>
   );
