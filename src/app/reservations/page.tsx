@@ -20,7 +20,8 @@ import {
   User,
   CreditCard,
   CheckCircle2,
-  Edit2
+  Edit2,
+  LogOut
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -115,7 +116,7 @@ export default function ReservationsPage() {
     const reservationData = { 
       ...bookingForm, 
       roomNumber: selectedRoom.roomNumber, 
-      status: selectedRes ? selectedRes.status : "Confirmed", 
+      status: selectedRes ? selectedRes.status : "Confirmée", 
       totalAmount: Number(bookingForm.totalAmount) || 0,
       createdAt: selectedRes ? selectedRes.createdAt : new Date().toISOString() 
     };
@@ -156,6 +157,16 @@ export default function ReservationsPage() {
     addDocumentNonBlocking(invoicesCollection, invoiceData);
 
     toast({ title: "Check-in Réussi", description: `${res.guestName} est maintenant enregistré.` });
+  };
+
+  const handleCheckOut = (res: any) => {
+    if (!res) return;
+    const resRef = doc(firestore, 'reservations', res.id);
+    updateDocumentNonBlocking(resRef, { status: "Checked Out" });
+    if (res.roomId) {
+      updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Available" });
+    }
+    toast({ title: "Check-out Réussi", description: `${res.guestName} a libéré la chambre.` });
   };
 
   const handleDeleteConfirm = () => {
@@ -247,7 +258,7 @@ export default function ReservationsPage() {
                       </TableCell>
                       <TableCell className="font-bold text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                       <TableCell>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : 'secondary'}>
+                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'outline' : 'secondary'}>
                           {res.status === 'Checked In' ? 'Arrivé' : res.status}
                         </Badge>
                       </TableCell>
@@ -283,9 +294,14 @@ export default function ReservationsPage() {
                             }}>
                               <Edit2 className="mr-2 h-4 w-4" /> Modifier le dossier
                             </DropdownMenuItem>
-                            {res.status !== 'Checked In' && (
+                            {res.status !== 'Checked In' && res.status !== 'Checked Out' && (
                               <DropdownMenuItem onSelect={() => handleCheckIn(res)}>
                                 <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" /> Marquer l'arrivée
+                              </DropdownMenuItem>
+                            )}
+                            {res.status === 'Checked In' && (
+                              <DropdownMenuItem onSelect={() => handleCheckOut(res)}>
+                                <LogOut className="mr-2 h-4 w-4 text-rose-600" /> Marquer le départ
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
@@ -439,7 +455,7 @@ export default function ReservationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </main>
+      </SidebarInset>
     </div>
   );
 }
