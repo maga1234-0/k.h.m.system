@@ -95,12 +95,10 @@ export default function BillingPage() {
 
     setIsGeneratingPdf(true);
     
-    // Si appelé depuis la liste, on s'assure que les données sont là
     if (invoiceToGen) {
       setSelectedInvoice(inv);
       setIsInvoiceDialogOpen(true);
-      // Laisser le temps au dialogue de se rendre pour la capture
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 600));
     }
 
     const element = document.getElementById('invoice-printable');
@@ -116,9 +114,7 @@ export default function BillingPage() {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        windowWidth: 800,
-        height: element.scrollHeight,
-        windowHeight: element.scrollHeight
+        windowWidth: 800
       });
       
       const imgData = canvas.toDataURL('image/png');
