@@ -263,7 +263,7 @@ export default function BillingPage() {
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
-          <DialogHeader className="sr-only">
+          <DialogHeader className="p-6 md:p-8 bg-slate-50 border-b">
             <DialogTitle>Aperçu Facture Client</DialogTitle>
             <DialogDescription>Document de facturation officiel pour impression et partage.</DialogDescription>
           </DialogHeader>
