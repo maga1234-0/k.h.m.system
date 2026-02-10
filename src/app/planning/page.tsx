@@ -52,6 +52,7 @@ export default function PlanningPage() {
   const getReservationForDay = (roomId: string, date: Date) => {
     if (!reservations) return null;
     const dateStr = format(date, 'yyyy-MM-dd');
+    // Simple logic: if date is within range [checkIn, checkOut]
     return reservations.find(r => 
       r.roomId === roomId && 
       r.status !== 'Cancelled' &&
@@ -61,7 +62,11 @@ export default function PlanningPage() {
   };
 
   if (!mounted) {
-    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -95,6 +100,7 @@ export default function PlanningPage() {
             <Card className="border-none shadow-sm overflow-hidden rounded-xl">
               <div className="overflow-x-auto">
                 <div className="min-w-[800px]">
+                  {/* Calendar Header */}
                   <div className="grid grid-cols-[100px_repeat(7,1fr)] bg-muted/50 border-b">
                     <div className="p-3 font-bold text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
                     {weekDays.map((day) => (
@@ -107,6 +113,7 @@ export default function PlanningPage() {
                     ))}
                   </div>
 
+                  {/* Calendar Body */}
                   <div className="divide-y">
                     {sortedRooms.map((room) => (
                       <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] hover:bg-muted/5">
@@ -126,9 +133,13 @@ export default function PlanningPage() {
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p className="font-bold text-xs">{res.guestName}</p>
-                                    <p className="text-[10px]">{res.checkInDate} → {res.checkOutDate}</p>
-                                    <p className="text-[10px] uppercase font-black text-primary">{res.status}</p>
+                                    <div className="p-1">
+                                      <p className="font-bold text-xs">{res.guestName}</p>
+                                      <p className="text-[10px] text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</p>
+                                      <div className="mt-1 flex items-center gap-1">
+                                        <Badge className="h-4 text-[8px] uppercase">{res.status}</Badge>
+                                      </div>
+                                    </div>
                                   </TooltipContent>
                                 </Tooltip>
                               )}

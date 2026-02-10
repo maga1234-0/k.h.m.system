@@ -88,6 +88,7 @@ export default function BillingPage() {
 
     const extras: { date: string, type: string, description: string, amount: string }[] = [];
     const lines = res.notes.split('\n');
+    // Regex matches: [DATE] TYPE: DESC (+AMOUNT $)
     const regex = /\[(.*?)\] (.*?): (.*?) \(\+(.*?) \$\)/;
     lines.forEach(line => {
       const match = line.match(regex);
@@ -125,7 +126,7 @@ export default function BillingPage() {
 
   const handleSendWhatsApp = (invoice: any) => {
     if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant." });
+      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant pour ce client." });
       return;
     }
     
@@ -164,33 +165,43 @@ export default function BillingPage() {
     }
 
     try {
+      // PDF initialization
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      // Page 1
-      const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      // Page 1 Capture
+      const canvas1 = await html2canvas(page1, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
       const img1 = canvas1.toDataURL('image/png');
       const height1 = (canvas1.height * pdfWidth) / canvas1.width;
       pdf.addImage(img1, 'PNG', 0, 0, pdfWidth, height1);
 
-      // Page 2
+      // Page 2 Capture
       pdf.addPage();
-      const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas2 = await html2canvas(page2, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
       const img2 = canvas2.toDataURL('image/png');
       const height2 = (canvas2.height * pdfWidth) / canvas2.width;
       pdf.addImage(img2, 'PNG', 0, 0, pdfWidth, height2);
 
       pdf.save(`facture-${selectedInvoice.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "Document Prêt", description: "La facture en 2 pages a été générée." });
+      toast({ title: "Document Prêt", description: "La facture en 2 pages a été générée avec succès." });
       
+      // Auto-trigger WhatsApp with details after a small delay
       setTimeout(() => {
         handleSendWhatsApp(selectedInvoice);
       }, 1000);
 
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération." });
+      toast({ variant: "destructive", title: "Échec", description: "Une erreur est survenue lors de la génération du PDF." });
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -274,7 +285,7 @@ export default function BillingPage() {
                   <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                      <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                      <AlertDialogDescription>Cette action est irréversible. Toutes les factures seront supprimées du registre.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -342,7 +353,7 @@ export default function BillingPage() {
               ) : (
                 <div className="text-center py-20 border-2 border-dashed rounded-3xl">
                   <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-10" />
-                  <p className="text-muted-foreground font-medium text-sm">Aucun document.</p>
+                  <p className="text-muted-foreground font-medium text-sm">Aucun document dans le registre.</p>
                 </div>
               )}
             </CardContent>
@@ -354,7 +365,7 @@ export default function BillingPage() {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>Valider l'Encaissement</DialogTitle>
-            <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
+            <DialogDescription>Confirmez la réception du paiement intégral pour cette facture.</DialogDescription>
           </DialogHeader>
           {invoiceForPayment && (
             <div className="py-6 space-y-4">
@@ -471,7 +482,7 @@ export default function BillingPage() {
                         </tr>
                       )) : (
                         <tr>
-                          <td colSpan={4} className="py-12 text-center text-slate-300 italic">Aucune consommation supplémentaire enregistrée.</td>
+                          <td colSpan={4} className="py-12 text-center text-slate-300 italic">Aucune consommation supplémentaire enregistrée durant le séjour.</td>
                         </tr>
                       )}
                     </tbody>
@@ -480,8 +491,8 @@ export default function BillingPage() {
                   <div className="mt-auto pt-20 border-t border-dashed border-slate-200">
                     <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Conditions de Séjour</p>
                     <p className="text-[10px] text-slate-400 leading-relaxed font-bold">
-                      Toute facture est payable à réception. En cas de retard de paiement, des pénalités peuvent être appliquées. 
-                      Les tarifs incluent les taxes locales en vigueur. Merci d'avoir choisi {settings?.hotelName || 'notre établissement'}.
+                      Toute facture est payable à réception. En cas de retard de paiement, des pénalités peuvent être appliquées conformément à la législation en vigueur. 
+                      Les tarifs incluent les taxes locales et services. Merci d'avoir choisi {settings?.hotelName || 'notre établissement'} pour votre séjour.
                     </p>
                   </div>
                 </div>

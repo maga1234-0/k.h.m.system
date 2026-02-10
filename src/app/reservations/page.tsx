@@ -94,9 +94,10 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // Timeout to ensure dropdown closes properly before dialog opens
     setTimeout(() => {
       setActiveDialog("manage");
-    }, 100);
+    }, 150);
   };
 
   const handleSaveBooking = () => {
@@ -172,7 +173,11 @@ export default function ReservationsPage() {
   );
 
   if (!mounted || isAuthLoading || !user) {
-    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -196,16 +201,16 @@ export default function ReservationsPage() {
                 <AlertDialogContent className="rounded-2xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                    <AlertDialogDescription>Ceci supprimera définitivement tout l'historique.</AlertDialogDescription>
+                    <AlertDialogDescription>Ceci supprimera définitivement tout l'historique des réservations. Cette action est irréversible.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive">Tout supprimer</AlertDialogAction>
+                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Tout supprimer</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2 h-9 text-xs">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-9 text-xs">
               <Plus className="h-4 w-4" /> Nouvelle résa
             </Button>
           </div>
@@ -216,7 +221,12 @@ export default function ReservationsPage() {
             <div className="p-4 border-b bg-muted/20">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input placeholder="Rechercher..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 pl-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input 
+                  placeholder="Rechercher par nom ou chambre..." 
+                  className="pl-9 bg-background" 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                />
               </div>
             </div>
             
@@ -226,24 +236,26 @@ export default function ReservationsPage() {
                   <TableRow>
                     <TableHead>Client</TableHead>
                     <TableHead>Chambre</TableHead>
-                    <TableHead>Prix</TableHead>
+                    <TableHead>Séjour</TableHead>
+                    <TableHead>Prix Total</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isResLoading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
                   ) : filteredReservations?.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Aucun dossier.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Aucun dossier de réservation trouvé.</TableCell></TableRow>
                   ) : filteredReservations?.map((res) => (
                     <TableRow key={res.id}>
                       <TableCell className="font-bold text-xs">{res.guestName}</TableCell>
                       <TableCell><Badge variant="outline">N° {res.roomNumber}</Badge></TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</TableCell>
                       <TableCell className="font-bold text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                       <TableCell>
                         <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'destructive' : 'outline'}>
-                          {res.status}
+                          {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Checked Out' ? 'Départ' : res.status === 'Cancelled' ? 'Annulé' : res.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -251,8 +263,10 @@ export default function ReservationsPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => handleOpenManage(res.id)}>Gérer séjour</DropdownMenuItem>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onSelect={() => handleOpenManage(res.id)}>
+                              Gérer le séjour
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -268,19 +282,56 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Remplissez les informations du client.</DialogDescription>
+              <DialogDescription>Remplissez les informations du client et les dates de séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <Input placeholder="Nom" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
-              <Input placeholder="Téléphone" value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Client</label>
+                <Input placeholder="Nom complet" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
-                <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Téléphone</label>
+                  <Input placeholder="+243..." value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">E-mail</label>
+                  <Input placeholder="client@exemple.com" value={bookingForm.guestEmail} onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Arrivée</label>
+                  <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Départ</label>
+                  <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Chambre</label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    value={bookingForm.roomId} 
+                    onChange={(e) => setBookingForm({...bookingForm, roomId: e.target.value})}
+                  >
+                    <option value="">Sélectionner...</option>
+                    {rooms?.filter(r => r.status === 'Available').map(r => (
+                      <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Prix Total ($)</label>
+                  <Input type="number" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
+                </div>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleSaveBooking}>Confirmer</Button>
+              <Button onClick={handleSaveBooking} className="bg-primary text-primary-foreground">Confirmer la réservation</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -289,26 +340,40 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Action sur l'occupation.</DialogDescription>
+              <DialogDescription>Actions rapides pour l'arrivée ou le départ du client.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl">
-                  <div><p className="text-[10px] uppercase font-bold">Voyageur</p><p className="font-bold">{selectedRes.guestName}</p></div>
-                  <div><p className="text-[10px] uppercase font-bold">Chambre</p><p className="font-bold">N° {selectedRes.roomNumber}</p></div>
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl border">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Voyageur</p>
+                    <p className="font-bold text-sm">{selectedRes.guestName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Chambre</p>
+                    <p className="font-bold text-sm">N° {selectedRes.roomNumber}</p>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   {selectedRes.status === 'Confirmée' && (
-                    <Button onClick={handleCheckIn} className="h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white">Check-in</Button>
+                    <Button onClick={handleCheckIn} className="h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-500/20">
+                      Valider le Check-in
+                    </Button>
                   )}
                   {selectedRes.status === 'Checked In' && (
-                    <Button onClick={handleCheckOut} className="h-12 bg-primary hover:bg-primary/90 font-bold text-white">Check-out</Button>
+                    <Button onClick={handleCheckOut} className="h-12 bg-primary hover:bg-primary/90 font-bold text-white shadow-lg shadow-primary/20">
+                      Valider le Check-out
+                    </Button>
                   )}
-                  <Button variant="outline" onClick={handleCancelReservation} className="h-12 text-destructive border-destructive/20 hover:bg-destructive/10 font-bold">Annuler</Button>
+                  <Button variant="outline" onClick={handleCancelReservation} className="h-12 text-destructive border-destructive/20 hover:bg-destructive/10 font-bold">
+                    Annuler la réservation
+                  </Button>
                 </div>
               </div>
             )}
-            <DialogFooter><Button variant="ghost" className="w-full" onClick={() => setActiveDialog(null)}>Fermer</Button></DialogFooter>
+            <DialogFooter>
+              <Button variant="ghost" className="w-full" onClick={() => setActiveDialog(null)}>Fermer</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </SidebarInset>

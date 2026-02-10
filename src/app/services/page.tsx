@@ -81,7 +81,7 @@ function ServicesContent() {
     );
   }, [reservations, searchTerm]);
 
-  // Calcul dynamique des statistiques basé sur les notes des réservations
+  // Statistics from reservation notes
   const dynamicStats = useMemo(() => {
     if (!reservations || !mounted) return { dailySales: 0, orders: 0, popular: "N/A" };
     
@@ -94,7 +94,6 @@ function ServicesContent() {
       if (!res.notes) return;
       const lines = res.notes.split('\n');
       lines.forEach(line => {
-        // Format attendu: [DATE] TYPE: DESC (+AMOUNT $)
         if (line.includes(`[${todayStr}]`)) {
           countToday++;
           const amountMatch = line.match(/\(\+(\d+(?:\.\d+)?)\s*\$\)/);
@@ -137,12 +136,14 @@ function ServicesContent() {
     const serviceType = getServiceTitle(activeTab).toUpperCase();
     const dateStr = new Date().toLocaleDateString('fr-FR');
     
+    // Update Reservation Notes for Billing Page Extraction
     const resUpdateRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resUpdateRef, {
       totalAmount: (Number(res.totalAmount) || 0) + additionalAmount,
       notes: (res.notes || "") + (res.notes ? "\n" : "") + `[${dateStr}] ${serviceType}: ${chargeData.description} (+${additionalAmount} $)`
     });
 
+    // Sync with Invoice amountDue
     const invoice = invoices?.find(inv => inv.reservationId === res.id);
     if (invoice) {
       const invoiceUpdateRef = doc(firestore, 'invoices', invoice.id);
@@ -205,11 +206,11 @@ function ServicesContent() {
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Facturer un service</DialogTitle>
-                <DialogDescription>Ajout de frais au dossier client.</DialogDescription>
+                <DialogDescription>Ajout de frais au dossier client pour le service {getServiceTitle(activeTab).toLowerCase()}.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="space-y-2">
-                  <Label>Nom du client</Label>
+                  <Label>Nom du client (Résidents uniquement)</Label>
                   <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choisir un client..." />
@@ -223,16 +224,16 @@ function ServicesContent() {
                         ))
                       ) : (
                         <div className="p-4 text-center text-xs text-muted-foreground italic">
-                          Aucun client actif.
+                          Aucun client actuellement en séjour.
                         </div>
                       )}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Désignation</Label>
+                  <Label>Désignation (ex: Diner, Lavage chemise)</Label>
                   <Input 
-                    placeholder=""
+                    placeholder="Entrez la description..."
                     value={chargeData.description}
                     onChange={(e) => setChargeData({...chargeData, description: e.target.value})}
                   />
@@ -241,7 +242,7 @@ function ServicesContent() {
                   <Label>Montant ($)</Label>
                   <Input 
                     type="number" 
-                    placeholder=""
+                    placeholder="0.00"
                     value={chargeData.amount}
                     onChange={(e) => setChargeData({...chargeData, amount: e.target.value})}
                   />
@@ -249,14 +250,13 @@ function ServicesContent() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer</Button>
+                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer la vente</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </header>
 
         <main className="p-6 space-y-8">
-          {/* Stats Section - Design identique à la capture d'écran */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-[#141414] border-none shadow-xl">
               <CardContent className="p-6 flex items-center gap-5">
@@ -295,7 +295,7 @@ function ServicesContent() {
                   <Coffee className="h-7 w-7" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Populaire</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Service Populaire</span>
                   <span className="text-xl font-black font-headline text-white truncate max-w-[150px]">
                     {dynamicStats.popular === 'N/A' ? 'Aucun' : dynamicStats.popular}
                   </span>
@@ -312,7 +312,7 @@ function ServicesContent() {
                 </div>
                 <div>
                   <CardTitle className="font-headline text-xl">{getServiceTitle(activeTab)}</CardTitle>
-                  <CardDescription className="text-zinc-500">Facturation directe par chambre</CardDescription>
+                  <CardDescription className="text-zinc-500">Facturation directe par chambre (Résidents uniquement)</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -320,7 +320,7 @@ function ServicesContent() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <Input 
-                  placeholder="Rechercher Nom du client..." 
+                  placeholder="Rechercher par nom ou numéro de chambre..." 
                   className="pl-9 bg-zinc-900 border-none text-white placeholder:text-zinc-600"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -344,7 +344,7 @@ function ServicesContent() {
                           <div className="flex flex-col">
                             <span className="font-bold text-lg">{res.guestName}</span>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                              Arrivé: {res.checkInDate}
+                              Arrivé le: {res.checkInDate}
                             </span>
                           </div>
                         </div>
@@ -353,17 +353,17 @@ function ServicesContent() {
                           <div className="text-right">
                             <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Encours Facture</span>
                             <span className="text-xl font-black font-headline text-primary">
-                              {Number(inv?.amountDue || 0).toLocaleString()} $
+                              {Number(inv?.amountDue || 0).toLocaleString('fr-FR')} $
                             </span>
                           </div>
                           <Button 
-                            className="bg-white text-black hover:bg-zinc-200 font-bold text-[10px] uppercase tracking-widest h-10 px-6 rounded-lg"
+                            className="bg-white text-black hover:bg-zinc-200 font-bold text-[10px] uppercase tracking-widest h-10 px-6 rounded-lg shadow-lg"
                             onClick={() => {
                               setChargeData({...chargeData, reservationId: res.id});
                               setIsAddChargeOpen(true);
                             }}
                           >
-                            Facturer
+                            Ajouter Frais
                           </Button>
                         </div>
                       </div>
@@ -372,7 +372,7 @@ function ServicesContent() {
                 ) : (
                   <div className="py-20 text-center opacity-20 border-2 border-dashed border-zinc-800 rounded-3xl">
                     <ConciergeBell className="h-16 w-16 mx-auto mb-4" />
-                    <p className="font-bold uppercase tracking-widest text-sm">Aucun client en séjour.</p>
+                    <p className="font-bold uppercase tracking-widest text-sm">Aucun client actuellement en séjour.</p>
                   </div>
                 )}
               </div>
