@@ -352,64 +352,99 @@ export default function BillingPage() {
                     <div className="scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top transform-gpu">
                       <div id="invoice-page-1" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm]">
                         <div className="flex justify-between items-start mb-16 gap-8">
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shrink-0"><Hotel className="h-10 w-10" /></div>
-                            <span className="font-headline font-black text-4xl text-primary tracking-tighter leading-tight truncate">{settings?.hotelName || 'Fiesta hotel'}</span>
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <div className="h-20 w-20 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shrink-0"><Hotel className="h-12 w-12" /></div>
+                            <span className="font-headline font-black text-5xl text-primary tracking-tighter leading-tight truncate">{settings?.hotelName || 'Fiesta hotel'}</span>
                           </div>
-                          <div className="text-right flex flex-col items-end shrink-0">
-                            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-tight mb-2">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
-                            <p className="text-sm text-slate-400 font-bold leading-none">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-12 mb-16">
-                          <div className="flex flex-col gap-3">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/20 pb-1 w-fit pr-8">CLIENT</p>
-                            <h3 className="text-2xl font-black text-slate-900 leading-tight break-words">{selectedInvoice.guestName}</h3>
-                            <p className="text-sm text-slate-500 font-bold leading-none">{selectedInvoice.guestPhone}</p>
-                          </div>
-                          <div className="text-right flex flex-col items-end gap-3">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-900 pb-1 w-fit pl-8">ÉMETTEUR</p>
-                            <h3 className="text-xl font-black text-slate-900 leading-tight">{settings?.hotelName || 'Fiesta hotel'}</h3>
-                            <p className="text-[11px] text-slate-400 font-bold leading-snug max-w-[200px]">{settings?.address || 'Adresse'}</p>
+                          <div className="text-right flex flex-col items-end shrink-0 pt-2">
+                            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-tight mb-2">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
+                            <p className="text-base text-slate-400 font-bold leading-none">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                           </div>
                         </div>
-                        <div className="mb-20">
+
+                        <div className="grid grid-cols-2 gap-16 mb-20">
+                          <div className="flex flex-col gap-4 border-l-4 border-primary/20 pl-6">
+                            <p className="text-[12px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/10 pb-2 w-fit pr-12">DESTINATAIRE</p>
+                            <h3 className="text-3xl font-black text-slate-900 leading-tight">{selectedInvoice.guestName}</h3>
+                            <p className="text-lg text-slate-500 font-bold leading-none">{selectedInvoice.guestPhone}</p>
+                          </div>
+                          <div className="text-right flex flex-col items-end gap-4 border-r-4 border-slate-200 pr-6">
+                            <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-900 pb-2 w-fit pl-12">ÉMETTEUR</p>
+                            <h3 className="text-2xl font-black text-slate-900 leading-tight">{settings?.hotelName || 'Fiesta hotel'}</h3>
+                            <p className="text-[13px] text-slate-400 font-bold leading-relaxed max-w-[250px]">{settings?.address || 'Adresse'}</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-24">
                           <table className="w-full border-collapse">
-                            <thead><tr className="bg-slate-50 border-b border-slate-200"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-left tracking-widest">DESCRIPTION</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right tracking-widest">TOTAL ($)</th></tr></thead>
+                            <thead>
+                              <tr className="bg-slate-50 border-b-2 border-slate-200">
+                                <th className="py-5 px-8 text-[12px] font-black text-slate-400 uppercase text-left tracking-[0.15em]">SERVICES RENDUS</th>
+                                <th className="py-5 px-8 text-[12px] font-black text-slate-400 uppercase text-right tracking-[0.15em]">TOTAL ($)</th>
+                              </tr>
+                            </thead>
                             <tbody className="divide-y divide-slate-100">
-                              <tr><td className="py-8 px-6 font-black text-slate-800 leading-relaxed">Hébergement & Services de base</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900 tabular-nums">{basePrice.toFixed(2)} $</td></tr>
-                              <tr><td className="py-8 px-6 font-black text-slate-500 leading-relaxed">Total Consommations & Extras (Page 2)</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900 tabular-nums">+{totalExtras.toFixed(2)} $</td></tr>
+                              <tr>
+                                <td className="py-10 px-8 font-black text-slate-800 text-lg leading-relaxed pr-32">Frais d'Hébergement & Services Inclus</td>
+                                <td className="py-10 px-8 text-right font-black text-2xl text-slate-900 tabular-nums whitespace-nowrap">{basePrice.toFixed(2)} $</td>
+                              </tr>
+                              <tr>
+                                <td className="py-10 px-8 font-black text-slate-500 text-lg leading-relaxed pr-32">Extras & Consommations Annexes (Page 2)</td>
+                                <td className="py-10 px-8 text-right font-black text-2xl text-slate-900 tabular-nums whitespace-nowrap">+{totalExtras.toFixed(2)} $</td>
+                              </tr>
                             </tbody>
                           </table>
                         </div>
-                        <div className="flex justify-between items-end border-t-4 border-slate-900 pt-10 mt-auto">
-                          <div className="text-left space-y-4">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Signature & Cachet</p>
-                            <div className="min-h-[120px] flex flex-col justify-end">
-                              {settings?.signatureUrl ? <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-3 block" /> : <div className="h-16 w-48 border-b-2 border-dashed border-slate-200 mb-2" />}
-                              <p className="text-sm font-black uppercase tracking-wider">{settings?.managerName || 'Le Manager'}</p>
+
+                        <div className="flex justify-between items-end border-t-4 border-slate-900 pt-12 mt-auto">
+                          <div className="text-left space-y-6">
+                            <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest border-l-2 border-primary pl-4">Signature Autorisée</p>
+                            <div className="min-h-[140px] flex flex-col justify-end">
+                              {settings?.signatureUrl ? (
+                                <img src={settings.signatureUrl} alt="Signature" className="h-28 w-auto object-contain mb-4 block mix-blend-multiply" />
+                              ) : (
+                                <div className="h-20 w-56 border-b-2 border-dashed border-slate-200 mb-4" />
+                              )}
+                              <p className="text-lg font-black uppercase tracking-wider text-slate-900">{settings?.managerName || 'Le Manager Général'}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">TOTAL NET À PAYER</p>
-                            <span className="text-5xl font-black text-slate-900 tracking-tighter tabular-nums leading-none">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                            <p className="text-[12px] font-black text-slate-400 uppercase mb-4 tracking-[0.2em]">MONTANT NET À RÉGLER</p>
+                            <span className="text-6xl font-black text-slate-900 tracking-tighter tabular-nums leading-none block">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                           </div>
                         </div>
                       </div>
+
                       <div id="invoice-page-2" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm] mt-8">
-                        <h2 className="text-xl font-black uppercase tracking-widest border-b-2 border-primary pb-4 mb-10 text-primary">Détail des Consommations</h2>
-                        <table className="w-full text-left mb-20">
-                          <thead><tr className="bg-slate-50"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">DATE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">SERVICE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right tracking-widest">MONTANT</th></tr></thead>
+                        <div className="flex items-center gap-4 mb-12">
+                          <div className="h-12 w-1 rounded-full bg-primary" />
+                          <h2 className="text-2xl font-black uppercase tracking-[0.1em] text-primary">Détail des Consommations</h2>
+                        </div>
+                        <table className="w-full text-left mb-24 border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                              <th className="py-5 px-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">DATE</th>
+                              <th className="py-5 px-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">DESCRIPTION DU SERVICE</th>
+                              <th className="py-5 px-8 text-[11px] font-black text-slate-400 uppercase text-right tracking-widest">MONTANT</th>
+                            </tr>
+                          </thead>
                           <tbody className="divide-y divide-slate-100">
                             {extras.length > 0 ? extras.map((e, i) => (
                               <tr key={i}>
-                                <td className="py-6 px-6 text-sm font-bold text-slate-500 tabular-nums">{e.date}</td>
-                                <td className="py-6 px-6 text-sm font-black text-primary leading-snug">{e.type} ({e.description})</td>
-                                <td className="py-6 px-6 text-right font-black text-slate-900 tabular-nums">+{parseFloat(e.amount).toFixed(2)} $</td>
+                                <td className="py-8 px-8 text-sm font-bold text-slate-500 tabular-nums">{e.date}</td>
+                                <td className="py-8 px-8 text-base font-black text-primary/80 leading-relaxed pr-24">{e.type} - {e.description}</td>
+                                <td className="py-8 px-8 text-right font-black text-xl text-slate-900 tabular-nums whitespace-nowrap">+{parseFloat(e.amount).toFixed(2)} $</td>
                               </tr>
-                            )) : <tr><td colSpan={3} className="py-12 text-center text-slate-300 italic">Aucune consommation supplémentaire.</td></tr>}
+                            )) : (
+                              <tr>
+                                <td colSpan={3} className="py-20 text-center text-slate-300 font-bold italic text-lg uppercase tracking-widest opacity-50">Aucune consommation supplémentaire</td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
+                        <div className="mt-auto pt-10 border-t border-slate-100 text-center">
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">ImaraPMS - Système de Gestion Officiel</p>
+                        </div>
                       </div>
                     </div>
                   </div>

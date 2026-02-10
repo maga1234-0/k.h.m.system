@@ -102,6 +102,7 @@ function SettingsContent() {
   };
 
   const startDrawing = (e: any) => {
+    if (e.type === 'touchstart') e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -114,6 +115,7 @@ function SettingsContent() {
 
   const draw = (e: any) => {
     if (!isDrawing) return;
+    if (e.type === 'touchmove') e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -220,8 +222,8 @@ function SettingsContent() {
                             ref={canvasRef} width={300} height={120}
                             className="w-full h-[120px] bg-slate-50 border border-dashed rounded-lg cursor-crosshair touch-none"
                             onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
-                            onTouchStart={(e) => { e.preventDefault(); startDrawing(e); }}
-                            onTouchMove={(e) => { e.preventDefault(); draw(e); }}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
                             onTouchEnd={stopDrawing}
                           />
                           <div className="flex gap-2">
