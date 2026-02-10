@@ -355,11 +355,11 @@ export default function BillingPage() {
                           <div className="flex items-center gap-4 flex-1 min-w-0">
                             <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-headline font-black text-3xl text-primary leading-tight truncate">{settings?.hotelName || 'ImaraPMS'}</span>
+                              <span className="font-headline font-black text-3xl text-primary leading-tight">{settings?.hotelName || 'ImaraPMS'}</span>
                               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Excellence Hôtelière</span>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
+                          <div className="text-right shrink-0 ml-8">
                             <h1 className="text-3xl font-black uppercase mb-1">FACTURE</h1>
                             <div className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</div>
                             <p className="text-xs text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
@@ -397,14 +397,14 @@ export default function BillingPage() {
                                   <span className="font-black text-lg block leading-tight">Hébergement & Frais de Séjour</span>
                                   <span className="text-xs text-slate-400">Services standards inclus pour la durée du séjour</span>
                                 </td>
-                                <td className="py-8 px-6 text-right font-black text-xl">{basePrice.toFixed(2)} $</td>
+                                <td className="py-8 px-6 text-right font-black text-xl whitespace-nowrap">{basePrice.toFixed(2)} $</td>
                               </tr>
                               <tr className="bg-slate-50">
                                 <td className="py-8 px-6">
                                   <span className="font-black text-slate-500 text-lg block leading-tight">Extras & Consommations</span>
                                   <span className="text-xs text-slate-400">Voir le détail exhaustif en page 2</span>
                                 </td>
-                                <td className="py-8 px-6 text-right font-black text-xl text-slate-500">+{totalExtras.toFixed(2)} $</td>
+                                <td className="py-8 px-6 text-right font-black text-xl text-slate-500 whitespace-nowrap">+{totalExtras.toFixed(2)} $</td>
                               </tr>
                             </tbody>
                           </table>
@@ -455,7 +455,7 @@ export default function BillingPage() {
                                   <span className="font-bold block text-sm leading-tight">{e.type}</span>
                                   <span className="text-[10px] text-slate-400 uppercase leading-none">{e.description}</span>
                                 </td>
-                                <td className="py-6 px-6 text-right font-bold">+{parseFloat(e.amount).toFixed(2)} $</td>
+                                <td className="py-6 px-6 text-right font-bold whitespace-nowrap">+{parseFloat(e.amount).toFixed(2)} $</td>
                               </tr>
                             )) : (
                               <tr><td colSpan={3} className="py-24 text-center text-slate-300 font-bold italic">Aucun extra enregistré pour ce séjour.</td></tr>
@@ -484,4 +484,3 @@ export default function BillingPage() {
     </div>
   );
 }
-    
