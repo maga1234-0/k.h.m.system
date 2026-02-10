@@ -20,8 +20,7 @@ import {
   CheckCircle2,
   Clock,
   Wrench,
-  Phone,
-  LayoutGrid
+  Phone
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -29,7 +28,6 @@ import {
   useMemoFirebase, 
   setDocumentNonBlocking,
   updateDocumentNonBlocking,
-  addDocumentNonBlocking,
   deleteDocumentNonBlocking
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
@@ -38,7 +36,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger,
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
@@ -66,7 +63,6 @@ export default function RoomsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [editRoomData, setEditRoomData] = useState<any>(null);
@@ -82,57 +78,25 @@ export default function RoomsPage() {
     amenities: "",
   });
 
-  const [bookingData, setBookingData] = useState({
-    guestName: "",
-    guestEmail: "",
-    guestPhone: "",
-    checkIn: "",
-    checkOut: "",
-    guests: 1
-  });
-
   const firestore = useFirestore();
   const roomsCollection = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
   const { data: rooms, isLoading } = useCollection(roomsCollection);
 
   const handleAddRoom = () => {
     if (!newRoom.roomNumber) return;
-
     const roomId = doc(collection(firestore, 'rooms')).id;
     const roomRef = doc(firestore, 'rooms', roomId);
-
-    const amenitiesArray = newRoom.amenities
-      ? newRoom.amenities.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "")
-      : [];
-
-    const roomData = {
-      ...newRoom,
-      id: roomId,
-      status: "Available",
-      amenities: amenitiesArray,
-      pricePerNight: Number(newRoom.pricePerNight) || 0,
-      capacity: Number(newRoom.capacity) || 1,
-      floor: Number(newRoom.floor) || 0,
-    };
-
+    const amenitiesArray = newRoom.amenities ? newRoom.amenities.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "") : [];
+    const roomData = { ...newRoom, id: roomId, status: "Available", amenities: amenitiesArray, pricePerNight: Number(newRoom.pricePerNight) || 0, capacity: Number(newRoom.capacity) || 1, floor: Number(newRoom.floor) || 0 };
     setDocumentNonBlocking(roomRef, roomData, { merge: true });
     setIsAddDialogOpen(false);
-    setNewRoom({
-      roomNumber: "",
-      roomType: "Standard",
-      capacity: "2",
-      pricePerNight: "",
-      floor: "1",
-      amenities: "",
-    });
+    setNewRoom({ roomNumber: "", roomType: "Standard", capacity: "2", pricePerNight: "", floor: "1", amenities: "" });
     toast({ title: "Chambre Créée", description: `La chambre ${roomData.roomNumber} est disponible.` });
   };
 
   const handleUpdateRoom = () => {
     if (!editRoomData || !editRoomData.id) return;
-    const amenitiesArray = editRoomData.amenitiesString
-      ? editRoomData.amenitiesString.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "")
-      : [];
+    const amenitiesArray = editRoomData.amenitiesString ? editRoomData.amenitiesString.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "") : [];
     const { amenitiesString, ...dataToSave } = editRoomData;
     const roomRef = doc(firestore, 'rooms', editRoomData.id);
     updateDocumentNonBlocking(roomRef, { ...dataToSave, amenities: amenitiesArray });
@@ -148,29 +112,6 @@ export default function RoomsPage() {
     toast({ variant: "destructive", title: "Supprimée", description: "Chambre retirée de l'inventaire." });
   };
 
-  const handleQuickBook = () => {
-    if (!selectedRoom || !bookingData.guestName) return;
-    const resRef = collection(firestore, 'reservations');
-    const reservation = {
-      roomId: selectedRoom.id,
-      roomNumber: selectedRoom.roomNumber,
-      guestName: bookingData.guestName,
-      guestEmail: bookingData.guestEmail,
-      guestPhone: bookingData.guestPhone,
-      checkInDate: bookingData.checkIn,
-      checkOutDate: bookingData.checkOut,
-      numberOfGuests: bookingData.guests,
-      totalAmount: selectedRoom.pricePerNight || 0,
-      status: "Confirmée",
-      createdAt: new Date().toISOString()
-    };
-    addDocumentNonBlocking(resRef, reservation);
-    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
-    setIsBookingOpen(false);
-    setBookingData({ guestName: "", guestEmail: "", guestPhone: "", checkIn: "", checkOut: "", guests: 1 });
-    toast({ title: "Réservée", description: `Chambre ${selectedRoom.roomNumber} pour ${reservation.guestName}.` });
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Available": return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1"><CheckCircle2 className="h-3 w-3" /> Disponible</Badge>;
@@ -181,10 +122,7 @@ export default function RoomsPage() {
     }
   };
 
-  const filteredRooms = rooms?.filter(room => 
-    room.roomNumber.includes(searchTerm) || 
-    room.roomType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRooms = rooms?.filter(room => room.roomNumber.includes(searchTerm) || room.roomType.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="flex h-screen w-full">
@@ -204,18 +142,12 @@ export default function RoomsPage() {
         <main className="p-6">
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Rechercher par numéro ou type..." 
-              className="pl-9 bg-background max-w-md" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Input placeholder="Rechercher par numéro ou type..." className="pl-9 bg-background max-w-md" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              Accès à l'inventaire...
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" /> Accès à l'inventaire...
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -245,11 +177,6 @@ export default function RoomsPage() {
                     <Button variant="secondary" size="sm" className="h-8 text-[10px] font-bold uppercase" onClick={() => { setSelectedRoom(room); setIsDetailsOpen(true); }}>
                       Détails
                     </Button>
-                    {room.status === 'Available' && (
-                      <Button size="sm" className="h-8 text-[10px] font-bold uppercase" onClick={() => { setSelectedRoom(room); setIsBookingOpen(true); }}>
-                        Réserver
-                      </Button>
-                    )}
                   </CardFooter>
                 </Card>
               ))}
@@ -257,12 +184,11 @@ export default function RoomsPage() {
           )}
         </main>
 
-        {/* Modal Ajouter */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Nouvelle Chambre</DialogTitle>
-              <DialogDescription>Ajouter une nouvelle chambre à l'inventaire hôtelier.</DialogDescription>
+              <DialogDescription>Ajouter une nouvelle chambre à l'inventaire.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -305,12 +231,11 @@ export default function RoomsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Modal Modifier */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Modifier Chambre {editRoomData?.roomNumber}</DialogTitle>
-              <DialogDescription>Mettre à jour les informations de la chambre.</DialogDescription>
+              <DialogTitle>Modifier Chambre</DialogTitle>
+              <DialogDescription>Mettre à jour les informations.</DialogDescription>
             </DialogHeader>
             {editRoomData && (
               <div className="grid gap-4 py-4">
@@ -322,7 +247,7 @@ export default function RoomsPage() {
                   <div className="space-y-1">
                     <Label>Type</Label>
                     <Select value={editRoomData.roomType} onValueChange={(val) => setEditRoomData({...editRoomData, roomType: val})}>
-                      <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Standard">Standard</SelectItem>
                         <SelectItem value="Deluxe">Deluxe</SelectItem>
@@ -343,7 +268,7 @@ export default function RoomsPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>Équipements (séparés par virgule)</Label>
+                  <Label>Équipements</Label>
                   <Input value={editRoomData.amenitiesString} onChange={(e) => setEditRoomData({...editRoomData, amenitiesString: e.target.value})} />
                 </div>
               </div>
@@ -355,12 +280,11 @@ export default function RoomsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Modal Détails */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Détails Chambre {selectedRoom?.roomNumber}</DialogTitle>
-              <DialogDescription>Fiche technique et statut actuel.</DialogDescription>
+              <DialogTitle>Détails Chambre</DialogTitle>
+              <DialogDescription>Fiche technique.</DialogDescription>
             </DialogHeader>
             {selectedRoom && (
               <div className="space-y-4 py-4">
@@ -381,10 +305,7 @@ export default function RoomsPage() {
                 <div className="space-y-2">
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Équipements</p>
                   <div className="flex flex-wrap gap-2">
-                    {selectedRoom.amenities?.map((a: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>
-                    ))}
-                    {!selectedRoom.amenities?.length && <p className="text-xs italic text-muted-foreground">Aucun équipement listé.</p>}
+                    {selectedRoom.amenities?.map((a: string, i: number) => <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>)}
                   </div>
                 </div>
               </div>
@@ -395,66 +316,15 @@ export default function RoomsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Modal Réservation Rapide */}
-        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Réservation Rapide</DialogTitle>
-              <DialogDescription>Chambre N° {selectedRoom?.roomNumber}</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label>Nom du client</Label>
-                <div className="relative">
-                  <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-9" 
-                    placeholder="Nom complet"
-                    value={bookingData.guestName} 
-                    onChange={(e) => setBookingData({...bookingData, guestName: e.target.value})} 
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Téléphone WhatsApp</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-9" 
-                    placeholder="+..."
-                    value={bookingData.guestPhone} 
-                    onChange={(e) => setBookingData({...bookingData, guestPhone: e.target.value})} 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label>Arrivée</Label>
-                  <Input type="date" value={bookingData.checkIn} onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Départ</Label>
-                  <Input type="date" value={bookingData.checkOut} onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})} />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
-              <Button onClick={handleQuickBook} className="bg-primary hover:bg-primary/90">Confirmer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Alerte Suppression */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer la chambre ?</AlertDialogTitle>
-              <AlertDialogDescription>Ceci retirera définitivement la chambre de l'inventaire hôtelier.</AlertDialogDescription>
+              <AlertDialogDescription>Ceci retirera définitivement la chambre de l'inventaire.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setRoomToDelete(null)}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

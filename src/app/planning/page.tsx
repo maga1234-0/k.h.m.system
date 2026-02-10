@@ -157,16 +157,6 @@ export default function PlanningPage() {
               </div>
             </Card>
           </TooltipProvider>
-          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="h-3 w-3 rounded-full bg-primary" />
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">En séjour</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Réservé</span>
-            </div>
-          </div>
         </main>
       </SidebarInset>
     </div>

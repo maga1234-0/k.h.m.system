@@ -103,12 +103,15 @@ export default function BillingPage() {
 
   const handleSendWhatsApp = (invoice: any) => {
     if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Erreur", description: "Numéro WhatsApp manquant." });
+      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant pour ce client." });
       return;
     }
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    const hotelName = settings?.hotelName || 'ImaraPMS';
+    const hotelName = settings?.hotelName || 'FIESTA HOTEL';
+    
+    // Exact template requested by user
     const message = `*${hotelName.toUpperCase()} - FACTURE*\n\nBonjour ${invoice.guestName},\n\nVeuillez trouver ci-joint votre facture.\n\nCordialement.`;
+    
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -361,7 +364,7 @@ export default function BillingPage() {
                       <Hotel className="h-8 w-8" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-headline font-black text-2xl text-primary tracking-tighter">{settings?.hotelName || 'ImaraPMS'}</span>
+                      <span className="font-headline font-black text-2xl text-primary tracking-tighter">{settings?.hotelName || 'FIESTA HOTEL'}</span>
                     </div>
                   </div>
                   <div className="md:text-right">
@@ -378,7 +381,7 @@ export default function BillingPage() {
                   </div>
                   <div className="md:text-right">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Émetteur</p>
-                    <p className="text-sm font-black">{settings?.hotelName || 'ImaraPMS'}</p>
+                    <p className="text-sm font-black">{settings?.hotelName || 'FIESTA HOTEL'}</p>
                     <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-[200px] md:ml-auto">{settings?.address || 'Adresse non configurée'}</p>
                   </div>
                 </div>
@@ -417,7 +420,7 @@ export default function BillingPage() {
                 </div>
                 
                 <div className="mt-20 pt-8 border-t border-dashed text-center">
-                  <p className="text-[9px] uppercase font-black tracking-[0.3em] text-slate-300">Merci de votre confiance • ImaraPMS</p>
+                  <p className="text-[9px] uppercase font-black tracking-[0.3em] text-slate-300">Merci de votre confiance • {settings?.hotelName || 'FIESTA HOTEL'}</p>
                 </div>
               </div>
 
