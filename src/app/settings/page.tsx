@@ -11,22 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { 
   Save, 
   Loader2, 
   Hotel, 
   Clock, 
-  Bell, 
   Shield, 
-  Globe,
-  Mail,
-  Phone,
-  User,
   ShieldCheck,
-  Eye,
-  EyeOff,
-  MapPin,
   PenTool,
   Eraser
 } from "lucide-react";
@@ -74,7 +65,6 @@ function SettingsContent() {
   });
 
   const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
-  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -99,20 +89,39 @@ function SettingsContent() {
     }
   }, [staffProfile, user]);
 
-  // Logic for the Signature Pad
+  // Enhanced Signature Logic for both Mouse and Touch
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
+    
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
-    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
-
+    const coords = getCoordinates(e);
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(coords.x, coords.y);
     setIsDrawing(true);
+    
+    if (e.cancelable) e.preventDefault();
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -122,14 +131,15 @@ function SettingsContent() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
-    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
-
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
+    const coords = getCoordinates(e);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.stroke();
+
+    if (e.cancelable) e.preventDefault();
   };
 
   const stopDrawing = () => {
@@ -150,7 +160,7 @@ function SettingsContent() {
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     setFormData(prev => ({ ...prev, signatureUrl: dataUrl }));
-    toast({ title: "Signature Capturée", description: "Votre signature a été convertie en image." });
+    toast({ title: "Signature Capturée", description: "Votre signature manuscrite a été enregistrée." });
   };
 
   const handleSaveGeneral = () => {
@@ -242,7 +252,7 @@ function SettingsContent() {
                         <Label>Nom du Signataire</Label>
                         <Input value={formData.managerName} onChange={(e) => setFormData({...formData, managerName: e.target.value})} placeholder="Manager Principal" />
                         <div className="p-4 border rounded-xl bg-white space-y-2">
-                          <Label className="text-[10px] uppercase font-bold text-muted-foreground">Zone de Signature</Label>
+                          <Label className="text-[10px] uppercase font-bold text-muted-foreground">Zone de Signature (Souris ou Tactile)</Label>
                           <canvas 
                             ref={canvasRef}
                             width={300}
@@ -261,7 +271,7 @@ function SettingsContent() {
                               <Eraser className="h-3 w-3 mr-2" /> Effacer
                             </Button>
                             <Button variant="secondary" size="sm" className="flex-1" onClick={saveSignature}>
-                              Appliquer
+                              Capturer
                             </Button>
                           </div>
                         </div>

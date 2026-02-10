@@ -25,7 +25,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
+import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
@@ -291,7 +291,7 @@ export default function BillingPage() {
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-xs md:text-sm">#INV-{inv.id.slice(0, 5).toUpperCase()}</span>
+                          <span className="font-bold text-sm">#INV-{inv.id.slice(0, 5).toUpperCase()}</span>
                           <span className="text-[10px] md:text-xs text-muted-foreground">{inv.guestName}</span>
                         </div>
                       </div>
@@ -305,7 +305,7 @@ export default function BillingPage() {
                             <Button 
                               variant="default" 
                               size="sm" 
-                              className="h-9 px-4 gap-2 text-[10px] font-bold uppercase rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                              className="h-9 px-4 gap-2 text-[10px] font-bold uppercase rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
                               onClick={() => {
                                 setInvoiceForPayment(inv);
                                 setIsPaymentDialogOpen(true);
@@ -360,7 +360,7 @@ export default function BillingPage() {
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleCollectPayment}>Confirmer le paiement</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -368,13 +368,12 @@ export default function BillingPage() {
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Aperçu Facture Fiesta Hotel</DialogTitle>
-            <DialogDescription>Document de facturation officiel incluant les détails de séjour et les consommations.</DialogDescription>
+            <DialogTitle>Facture Fiesta Hotel</DialogTitle>
+            <DialogDescription>Aperçu officiel de la facture hôtelière.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
               <div className="flex-1 overflow-auto p-6 md:p-12 bg-white text-slate-900" id="invoice-printable">
-                {/* Header Section */}
                 <div className="flex justify-between items-start mb-16">
                   <div className="flex items-center gap-3">
                     <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
@@ -388,23 +387,16 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Client & Emitter Section */}
                 <div className="grid grid-cols-2 gap-12 mb-16">
                   <div className="space-y-4">
-                    <div className="relative">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">CLIENT</p>
-                      <div className="h-[1.5px] w-full bg-primary/20 absolute -bottom-1" />
-                    </div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 border-b border-primary/20 pb-1">CLIENT</p>
                     <div>
                       <h3 className="text-2xl font-black tracking-tight text-slate-900">{selectedInvoice.guestName}</h3>
                       <p className="text-sm text-slate-500 font-bold mt-1">{selectedInvoice.guestPhone}</p>
                     </div>
                   </div>
                   <div className="space-y-4 text-right">
-                    <div className="relative">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">ÉMETTEUR</p>
-                      <div className="h-[1.5px] w-full bg-slate-900 absolute -bottom-1" />
-                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 border-b border-slate-900 pb-1">ÉMETTEUR</p>
                     <div>
                       <h3 className="text-xl font-black text-slate-900">{settings?.hotelName || 'Fiesta hotel'}</h3>
                       <p className="text-[11px] text-slate-400 font-bold leading-relaxed max-w-[220px] ml-auto mt-1">{settings?.address || 'Adresse non configurée'}</p>
@@ -412,7 +404,6 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Services Table */}
                 <div className="mb-16">
                   <table className="w-full text-left">
                     <thead>
@@ -439,13 +430,12 @@ export default function BillingPage() {
                   </table>
                 </div>
 
-                {/* Total Section & Signature */}
                 <div className="grid grid-cols-2 gap-8 items-end border-t-2 border-slate-100 pt-8">
                   <div className="text-left space-y-4">
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Cachet & Signature</p>
                     <div className="min-h-[80px] flex flex-col justify-end">
                       {settings?.signatureUrl ? (
-                        <img src={settings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2" />
+                        <img src={settings.signatureUrl} alt="Signature" className="h-20 w-auto object-contain mb-2" />
                       ) : (
                         <div className="h-12 w-full border-b border-dashed border-slate-300 mb-2" />
                       )}
@@ -460,13 +450,11 @@ export default function BillingPage() {
                   </div>
                 </div>
                 
-                {/* Footer Message */}
                 <div className="mt-24 pt-10 border-t border-dashed border-slate-200 text-center">
                   <p className="text-[10px] uppercase font-black tracking-[0.4em] text-slate-300">Merci de votre confiance • {settings?.hotelName || 'Fiesta hotel'}</p>
                 </div>
               </div>
 
-              {/* Actions Footer */}
               <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t">
                 <Button 
                   disabled={isGeneratingPdf}

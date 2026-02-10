@@ -72,7 +72,7 @@ export default function PlanningPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-sm md:text-xl">Planning</h1>
+            <h1 className="font-headline font-semibold text-sm md:text-xl">Planning des Séjours</h1>
           </div>
           <div className="flex items-center gap-1 md:gap-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
@@ -82,7 +82,7 @@ export default function PlanningPage() {
               <CalendarIcon className="h-3 w-3 md:h-4 md:w-4 text-primary" />
               {weekDays.length > 0 ? (
                 <>{format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}</>
-              ) : '...'}
+              ) : 'Chargement...'}
             </div>
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
               <ChevronRight className="h-4 w-4" />
@@ -100,7 +100,7 @@ export default function PlanningPage() {
                     {weekDays.map((day) => (
                       <div key={day.toString()} className="p-2 text-center border-r last:border-r-0">
                         <div className="text-[9px] font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                        <div className={`text-sm font-headline font-bold ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto shadow-lg' : ''}`}>
+                        <div className={`text-sm font-headline font-bold mx-auto ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center shadow-lg' : ''}`}>
                           {format(day, 'd')}
                         </div>
                       </div>
