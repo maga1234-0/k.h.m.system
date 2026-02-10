@@ -25,7 +25,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 import {
   Dialog,
   DialogContent,
@@ -81,6 +81,28 @@ export default function BillingPage() {
     return { unpaid, revenue, totalCount: invoices.length };
   }, [invoices]);
 
+  const getExtrasForInvoice = (invoice: any) => {
+    if (!invoice || !reservations) return [];
+    const res = reservations.find(r => r.id === invoice.reservationId);
+    if (!res || !res.notes) return [];
+
+    const extras: { date: string, type: string, description: string, amount: string }[] = [];
+    const lines = res.notes.split('\n');
+    const regex = /\[(.*?)\] (.*?): (.*?) \(\+(.*?) \$\)/;
+    lines.forEach(line => {
+      const match = line.match(regex);
+      if (match) {
+        extras.push({
+          date: match[1],
+          type: match[2],
+          description: match[3],
+          amount: match[4]
+        });
+      }
+    });
+    return extras;
+  };
+
   const handleClearRegistry = () => {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
@@ -103,15 +125,30 @@ export default function BillingPage() {
 
   const handleSendWhatsApp = (invoice: any) => {
     if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant pour ce client." });
+      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant." });
       return;
     }
-    const phone = invoice.guestPhone.replace(/\D/g, '');
+    
+    const extras = getExtrasForInvoice(invoice);
+    const totalExtras = extras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+    const basePrice = Math.max(0, Number(invoice.amountDue) - totalExtras);
     const hotelName = settings?.hotelName || 'FIESTA HOTEL';
     
-    // Exact template requested by user
-    const message = `*${hotelName.toUpperCase()} - FACTURE*\n\nBonjour ${invoice.guestName},\n\nVeuillez trouver ci-joint votre facture.\n\nCordialement.`;
+    let message = `*${hotelName.toUpperCase()} - FACTURE*\n\n`;
+    message += `Bonjour ${invoice.guestName},\n\n`;
+    message += `Voici le détail de votre facture :\n`;
+    message += `- Hébergement : ${basePrice.toFixed(2)} $\n`;
     
+    extras.forEach(extra => {
+      message += `- ${extra.type} (${extra.description}) : ${parseFloat(extra.amount).toFixed(2)} $\n`;
+    });
+    
+    message += `--------------------------\n`;
+    message += `*TOTAL : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
+    message += `Veuillez trouver ci-joint votre facture détaillée.\n\n`;
+    message += `Cordialement.`;
+
+    const phone = invoice.guestPhone.replace(/\D/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -151,26 +188,7 @@ export default function BillingPage() {
   };
 
   const parsedExtras = useMemo(() => {
-    if (!selectedInvoice || !reservations) return [];
-    const res = reservations.find(r => r.id === selectedInvoice.reservationId);
-    if (!res || !res.notes) return [];
-
-    const extras: { date: string, type: string, description: string, amount: string }[] = [];
-    const lines = res.notes.split('\n');
-    
-    const regex = /\[(.*?)\] (.*?): (.*?) \(\+(.*?) \$\)/;
-    lines.forEach(line => {
-      const match = line.match(regex);
-      if (match) {
-        extras.push({
-          date: match[1],
-          type: match[2],
-          description: match[3],
-          amount: match[4]
-        });
-      }
-    });
-    return extras;
+    return getExtrasForInvoice(selectedInvoice);
   }, [selectedInvoice, reservations]);
 
   const basePrice = useMemo(() => {
@@ -250,7 +268,7 @@ export default function BillingPage() {
                   <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                      <AlertDialogDescription>Cette action est irréversible et videra tout l'historique de facturation.</AlertDialogDescription>
+                      <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -331,7 +349,7 @@ export default function BillingPage() {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>Valider l'Encaissement</DialogTitle>
-            <DialogDescription>Confirmez la réception du paiement pour ce client.</DialogDescription>
+            <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
           </DialogHeader>
           {invoiceForPayment && (
             <div className="py-6 space-y-4">
@@ -339,7 +357,6 @@ export default function BillingPage() {
                 <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Total à encaisser</p>
                 <h3 className="text-3xl font-black text-primary tracking-tighter">{Number(invoiceForPayment.amountDue).toFixed(2)} $</h3>
               </div>
-              <p className="text-xs text-muted-foreground text-center">Cette action marquera la facture de <strong>{invoiceForPayment.guestName}</strong> comme réglée.</p>
             </div>
           )}
           <DialogFooter className="gap-2">
@@ -353,7 +370,7 @@ export default function BillingPage() {
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
           <DialogHeader className="p-6 md:p-8 bg-slate-50 border-b">
             <DialogTitle>Aperçu Facture Client</DialogTitle>
-            <DialogDescription>Document de facturation officiel incluant les services extras.</DialogDescription>
+            <DialogDescription>Document de facturation officiel Fiesta Hotel.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">

@@ -116,7 +116,7 @@ export default function PlanningPage() {
                   <div className="divide-y">
                     {isRoomsLoading ? (
                       <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2 text-sm">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement des chambres...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
                       </div>
                     ) : sortedRooms.map((room) => (
                       <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] md:grid-cols-[150px_repeat(7,1fr)] hover:bg-muted/5 transition-colors">

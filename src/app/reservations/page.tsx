@@ -40,7 +40,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
@@ -164,7 +163,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
 
     setActiveDialog(null);
-    toast({ title: "Départ validé", description: "La chambre a été libérée pour le ménage." });
+    toast({ title: "Départ validé", description: "La chambre est en nettoyage." });
   };
 
   const handleClearAll = () => {
@@ -212,7 +211,7 @@ export default function ReservationsPage() {
                 <AlertDialogContent className="rounded-2xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
-                    <AlertDialogDescription>Cette action supprimera définitivement toutes les réservations du système.</AlertDialogDescription>
+                    <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -309,7 +308,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px] w-[95vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Enregistrer un nouveau dossier de séjour dans le registre.</DialogDescription>
+              <DialogDescription>Enregistrer un nouveau dossier de séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -404,7 +403,7 @@ export default function ReservationsPage() {
                   
                   {(selectedRes.status === 'Checked Out' || selectedRes.status === 'Cancelled') && (
                     <div className="p-4 text-center border-2 border-dashed rounded-xl text-muted-foreground text-sm">
-                      Ce séjour est terminé ou annulé.
+                      Séjour terminé ou annulé.
                     </div>
                   )}
                 </div>
