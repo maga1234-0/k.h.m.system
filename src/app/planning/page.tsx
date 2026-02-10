@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, parseISO } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Tooltip,
@@ -57,7 +57,7 @@ export default function PlanningPage() {
       r.roomId === roomId && 
       r.status !== 'Cancelled' &&
       r.checkInDate <= dateStr && 
-      r.checkOutDate >= dateStr
+      r.checkOutDate > dateStr // Accurate to check-out (not included in the stay night)
     );
   };
 
@@ -162,3 +162,4 @@ export default function PlanningPage() {
     </div>
   );
 }
+
