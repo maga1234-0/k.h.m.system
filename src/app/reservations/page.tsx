@@ -88,6 +88,24 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
+  // Automatic Price Calculation for new reservation
+  useEffect(() => {
+    if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
+      const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
+      if (selectedRoom) {
+        const start = new Date(bookingForm.checkInDate);
+        const end = new Date(bookingForm.checkOutDate);
+        if (end > start) {
+          const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          const total = nights * (Number(selectedRoom.pricePerNight) || 0);
+          setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
+        } else {
+          setBookingForm(prev => ({ ...prev, totalAmount: selectedRoom.pricePerNight.toString() }));
+        }
+      }
+    }
+  }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
+
   const selectedRes = useMemo(() => 
     reservations?.find(r => r.id === activeResId) || null
   , [reservations, activeResId]);
@@ -323,7 +341,7 @@ export default function ReservationsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Prix Total ($)</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Prix Total Automatique ($)</label>
                   <Input type="number" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
                 </div>
               </div>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -102,6 +102,21 @@ export default function RoomsPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  // Automatic Price Calculation
+  useEffect(() => {
+    if (selectedRoom && bookingForm.checkInDate && bookingForm.checkOutDate) {
+      const start = new Date(bookingForm.checkInDate);
+      const end = new Date(bookingForm.checkOutDate);
+      if (end > start) {
+        const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const total = nights * (Number(selectedRoom.pricePerNight) || 0);
+        setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
+      } else {
+        setBookingForm(prev => ({ ...prev, totalAmount: selectedRoom.pricePerNight.toString() }));
+      }
+    }
+  }, [bookingForm.checkInDate, bookingForm.checkOutDate, selectedRoom]);
 
   const handleAddRoom = () => {
     if (!newRoom.roomNumber || !roomsCollection) return;
@@ -307,8 +322,9 @@ export default function RoomsPage() {
                 </div>
               </div>
               <div className="space-y-1">
-                <Label>Prix Total ($)</Label>
+                <Label>Montant Total Automatique ($)</Label>
                 <Input type="number" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
+                <p className="text-[10px] text-muted-foreground">Calculé sur la base de {selectedRoom?.pricePerNight} $/nuit.</p>
               </div>
             </div>
             <DialogFooter>
