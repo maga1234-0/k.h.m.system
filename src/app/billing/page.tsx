@@ -132,20 +132,19 @@ export default function BillingPage() {
     const extras = getExtrasForInvoice(invoice);
     const totalExtras = extras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
     const basePrice = Math.max(0, Number(invoice.amountDue) - totalExtras);
-    const hotelName = settings?.hotelName || 'FIESTA HOTEL';
+    const hotelName = settings?.hotelName || 'Fiesta hotel';
     
     let message = `*${hotelName.toUpperCase()} - FACTURE*\n\n`;
     message += `Bonjour ${invoice.guestName},\n\n`;
-    message += `Voici le détail de votre facture :\n`;
-    message += `- Hébergement : ${basePrice.toFixed(2)} $\n`;
+    message += `Veuillez trouver ci-dessous le détail de votre facture :\n\n`;
+    message += `*Détails des prestations :*\n`;
+    message += `- Services d'Hébergement (Base) : ${basePrice.toFixed(2)} $\n`;
     
     extras.forEach(extra => {
       message += `- ${extra.type} (${extra.description}) : ${parseFloat(extra.amount).toFixed(2)} $\n`;
     });
     
-    message += `--------------------------\n`;
-    message += `*TOTAL : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
-    message += `Veuillez trouver ci-joint votre facture détaillée.\n\n`;
+    message += `\n*TOTAL NET À PAYER : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
     message += `Cordialement.`;
 
     const phone = invoice.guestPhone.replace(/\D/g, '');
@@ -368,87 +367,101 @@ export default function BillingPage() {
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
-          <DialogHeader className="p-6 md:p-8 bg-slate-50 border-b">
-            <DialogTitle>Aperçu Facture Client</DialogTitle>
-            <DialogDescription>Document de facturation officiel Fiesta Hotel.</DialogDescription>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Aperçu Facture Fiesta Hotel</DialogTitle>
+            <DialogDescription>Document de facturation officiel.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
               <div className="flex-1 overflow-auto p-6 md:p-12 bg-white text-slate-900" id="invoice-printable">
-                <div className="flex flex-col md:flex-row justify-between items-start mb-12 md:mb-16 gap-6">
+                {/* Header Section */}
+                <div className="flex justify-between items-start mb-16">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white">
+                    <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                       <Hotel className="h-8 w-8" />
                     </div>
-                    <div className="flex flex-col">
-                      <span className="font-headline font-black text-2xl text-primary tracking-tighter">{settings?.hotelName || 'FIESTA HOTEL'}</span>
+                    <span className="font-headline font-black text-3xl text-primary tracking-tighter">Fiesta hotel</span>
+                  </div>
+                  <div className="text-right">
+                    <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
+                    <p className="text-sm text-slate-400 mt-1 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                </div>
+
+                {/* Client & Emitter Section */}
+                <div className="grid grid-cols-2 gap-12 mb-16">
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">CLIENT</p>
+                      <div className="h-[1.5px] w-full bg-primary/20 absolute -bottom-1" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black tracking-tight text-slate-900">{selectedInvoice.guestName}</h3>
+                      <p className="text-sm text-slate-500 font-bold mt-1">{selectedInvoice.guestPhone}</p>
                     </div>
                   </div>
-                  <div className="md:text-right">
-                    <h1 className="text-xl font-black text-slate-900 uppercase tracking-tighter">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
-                    <p className="text-xs text-slate-400 mt-2 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                  <div className="space-y-4 text-right">
+                    <div className="relative">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">ÉMETTEUR</p>
+                      <div className="h-[1.5px] w-full bg-slate-900 absolute -bottom-1" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900">Fiesta hotel</h3>
+                      <p className="text-[11px] text-slate-400 font-bold leading-relaxed max-w-[220px] ml-auto mt-1">{settings?.address || 'Adresse non configurée'}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12 md:mb-16">
-                  <div>
-                    <p className="text-[9px] font-bold text-primary uppercase tracking-widest border-b border-primary/20 pb-2 mb-4">Client</p>
-                    <h3 className="text-lg font-black tracking-tight">{selectedInvoice.guestName}</h3>
-                    <p className="text-sm text-slate-500 font-medium">{selectedInvoice.guestPhone}</p>
-                  </div>
-                  <div className="md:text-right">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Émetteur</p>
-                    <p className="text-sm font-black">{settings?.hotelName || 'FIESTA HOTEL'}</p>
-                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-[200px] md:ml-auto">{settings?.address || 'Adresse non configurée'}</p>
-                  </div>
-                </div>
-
-                <div className="mb-12 md:mb-20">
+                {/* Services Table */}
+                <div className="mb-16">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="bg-slate-50 border-y border-slate-100">
-                        <th className="py-4 px-4 md:px-6 text-[9px] uppercase font-black text-slate-400 tracking-widest">Désignation</th>
-                        <th className="py-4 px-4 md:px-6 text-[9px] uppercase font-black text-slate-400 tracking-widest text-right">Montant ($)</th>
+                      <tr className="bg-slate-50">
+                        <th className="py-5 px-6 text-[11px] uppercase font-black text-slate-400 tracking-[0.2em]">DÉSIGNATION</th>
+                        <th className="py-5 px-6 text-[11px] uppercase font-black text-slate-400 tracking-[0.2em] text-right">MONTANT ($)</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr className="border-b border-slate-50">
-                        <td className="py-4 px-4 md:px-6 font-bold text-sm">Services d'Hébergement (Base)</td>
-                        <td className="py-4 px-4 md:px-6 text-right font-black text-base tracking-tighter">{basePrice.toFixed(2)} $</td>
+                    <tbody className="divide-y divide-slate-100">
+                      <tr>
+                        <td className="py-6 px-6 font-black text-base text-slate-800">Services d'Hébergement (Base)</td>
+                        <td className="py-6 px-6 text-right font-black text-lg text-slate-900 tracking-tighter">{basePrice.toFixed(2)} $</td>
                       </tr>
                       {parsedExtras.map((extra, idx) => (
-                        <tr key={idx} className="border-b border-slate-50 bg-slate-50/30">
-                          <td className="py-4 px-4 md:px-6">
-                            <span className="text-[10px] font-black uppercase text-primary block mb-0.5">{extra.type}</span>
-                            <span className="text-xs font-medium text-slate-600">{extra.description} ({extra.date})</span>
+                        <tr key={idx} className="bg-slate-50/20">
+                          <td className="py-6 px-6">
+                            <span className="text-[11px] font-black uppercase text-primary block mb-1 tracking-wider">{extra.type}</span>
+                            <span className="text-sm font-bold text-slate-500">{extra.description} ({extra.date})</span>
                           </td>
-                          <td className="py-4 px-4 md:px-6 text-right font-bold text-sm tracking-tighter">+{parseFloat(extra.amount).toFixed(2)} $</td>
+                          <td className="py-6 px-6 text-right font-black text-base text-slate-900 tracking-tighter">+{parseFloat(extra.amount).toFixed(2)} $</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="flex justify-end">
-                  <div className="w-full max-w-[300px] border-t-4 border-slate-900 pt-6 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest">Total Net à payer</span>
-                    <span className="text-2xl md:text-3xl font-black text-primary tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                {/* Total Section */}
+                <div className="flex justify-end pt-8 border-t-2 border-slate-100">
+                  <div className="w-full max-w-[320px] flex justify-between items-center">
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Total Net à payer</span>
+                    <span className="text-4xl font-black text-slate-900 tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                   </div>
                 </div>
                 
-                <div className="mt-20 pt-8 border-t border-dashed text-center">
-                  <p className="text-[9px] uppercase font-black tracking-[0.3em] text-slate-300">Merci de votre confiance • {settings?.hotelName || 'FIESTA HOTEL'}</p>
+                {/* Footer Message */}
+                <div className="mt-24 pt-10 border-t border-dashed border-slate-200 text-center">
+                  <p className="text-[10px] uppercase font-black tracking-[0.4em] text-slate-300">Merci de votre confiance • Fiesta hotel</p>
                 </div>
               </div>
 
+              {/* Actions Footer */}
               <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t">
                 <Button 
                   disabled={isGeneratingPdf}
-                  className="h-11 px-8 gap-2 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 transition-all" 
+                  className="h-12 px-10 gap-2 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 transition-all font-black text-[11px] uppercase tracking-widest" 
                   onClick={handleDownloadPDF}
                 >
                   {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Générer PDF</span>
+                  Générer PDF
                 </Button>
               </div>
             </div>

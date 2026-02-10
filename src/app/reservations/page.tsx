@@ -166,6 +166,15 @@ export default function ReservationsPage() {
     toast({ title: "Départ validé", description: "La chambre est en nettoyage." });
   };
 
+  const handleCancelReservation = () => {
+    if (!selectedRes) return;
+    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
+
+    setActiveDialog(null);
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été annulé." });
+  };
+
   const handleClearAll = () => {
     if (!reservations) return;
     reservations.forEach((res) => {
@@ -373,7 +382,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Effectuer l'arrivée ou le départ du client.</DialogDescription>
+              <DialogDescription>Effectuer l'arrivée, le départ ou l'annulation.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
@@ -390,9 +399,14 @@ export default function ReservationsPage() {
                 
                 <div className="flex flex-col gap-3">
                   {selectedRes.status === 'Confirmée' && (
-                    <Button onClick={handleCheckIn} className="w-full h-12 gap-3 bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl shadow-lg">
-                      <CheckCircle className="h-5 w-5" /> Valider Arrivée (Check-in)
-                    </Button>
+                    <>
+                      <Button onClick={handleCheckIn} className="w-full h-12 gap-3 bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl shadow-lg">
+                        <CheckCircle className="h-5 w-5" /> Valider Arrivée (Check-in)
+                      </Button>
+                      <Button onClick={handleCancelReservation} variant="outline" className="w-full h-12 gap-3 text-destructive border-destructive hover:bg-destructive/5 font-bold rounded-xl">
+                        <XCircle className="h-5 w-5" /> Annuler la réservation
+                      </Button>
+                    </>
                   )}
                   
                   {selectedRes.status === 'Checked In' && (
