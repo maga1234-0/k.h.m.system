@@ -40,6 +40,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
@@ -107,6 +108,7 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // On laisse le temps au menu de se fermer pour éviter les conflits de focus Radix
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -141,6 +143,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
+    // Création automatique de la facture à l'arrivée
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
       reservationId: selectedRes.id,
@@ -164,15 +167,6 @@ export default function ReservationsPage() {
 
     setActiveDialog(null);
     toast({ title: "Départ validé", description: "La chambre est en nettoyage." });
-  };
-
-  const handleCancelReservation = () => {
-    if (!selectedRes) return;
-    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
-    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
-
-    setActiveDialog(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été annulé." });
   };
 
   const handleClearAll = () => {
@@ -382,7 +376,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Effectuer l'arrivée, le départ ou l'annulation.</DialogDescription>
+              <DialogDescription>Effectuer l'arrivée ou le départ.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
@@ -399,14 +393,9 @@ export default function ReservationsPage() {
                 
                 <div className="flex flex-col gap-3">
                   {selectedRes.status === 'Confirmée' && (
-                    <>
-                      <Button onClick={handleCheckIn} className="w-full h-12 gap-3 bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl shadow-lg">
-                        <CheckCircle className="h-5 w-5" /> Valider Arrivée (Check-in)
-                      </Button>
-                      <Button onClick={handleCancelReservation} variant="outline" className="w-full h-12 gap-3 text-destructive border-destructive hover:bg-destructive/5 font-bold rounded-xl">
-                        <XCircle className="h-5 w-5" /> Annuler la réservation
-                      </Button>
-                    </>
+                    <Button onClick={handleCheckIn} className="w-full h-12 gap-3 bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl shadow-lg">
+                      <CheckCircle className="h-5 w-5" /> Valider Arrivée (Check-in)
+                    </Button>
                   )}
                   
                   {selectedRes.status === 'Checked In' && (
