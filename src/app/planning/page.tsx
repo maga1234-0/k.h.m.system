@@ -61,11 +61,7 @@ export default function PlanningPage() {
   };
 
   if (!mounted) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -76,7 +72,7 @@ export default function PlanningPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-sm md:text-xl">Planning des Réservations</h1>
+            <h1 className="font-headline font-semibold text-sm md:text-xl">Planning</h1>
           </div>
           <div className="flex items-center gap-1 md:gap-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
@@ -85,9 +81,7 @@ export default function PlanningPage() {
             <div className="flex items-center gap-2 font-medium bg-muted px-2 md:px-4 py-1.5 rounded-lg text-[10px] md:text-sm">
               <CalendarIcon className="h-3 w-3 md:h-4 md:w-4 text-primary" />
               {weekDays.length > 0 ? (
-                <>
-                  {format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
-                </>
+                <>{format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}</>
               ) : '...'}
             </div>
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
@@ -99,14 +93,14 @@ export default function PlanningPage() {
         <main className="p-2 md:p-6">
           <TooltipProvider>
             <Card className="border-none shadow-sm overflow-hidden rounded-xl">
-              <div className="overflow-x-auto scrollbar-hide">
-                <div className="min-w-[800px] md:min-w-[1000px]">
-                  <div className="grid grid-cols-[100px_repeat(7,1fr)] md:grid-cols-[150px_repeat(7,1fr)] bg-muted/50 border-b">
-                    <div className="p-3 md:p-4 font-bold text-[10px] uppercase tracking-widest text-muted-foreground border-r flex items-center justify-center">Chambre</div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[800px]">
+                  <div className="grid grid-cols-[100px_repeat(7,1fr)] bg-muted/50 border-b">
+                    <div className="p-3 font-bold text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
                     {weekDays.map((day) => (
-                      <div key={day.toString()} className="p-2 md:p-4 text-center border-r last:border-r-0">
-                        <div className="text-[9px] md:text-xs font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                        <div className={`text-sm md:text-lg font-headline font-bold ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center mx-auto shadow-lg shadow-primary/20' : ''}`}>
+                      <div key={day.toString()} className="p-2 text-center border-r last:border-r-0">
+                        <div className="text-[9px] font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
+                        <div className={`text-sm font-headline font-bold ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto shadow-lg' : ''}`}>
                           {format(day, 'd')}
                         </div>
                       </div>
@@ -114,36 +108,27 @@ export default function PlanningPage() {
                   </div>
 
                   <div className="divide-y">
-                    {isRoomsLoading ? (
-                      <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2 text-sm">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
-                      </div>
-                    ) : sortedRooms.map((room) => (
-                      <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] md:grid-cols-[150px_repeat(7,1fr)] hover:bg-muted/5 transition-colors">
-                        <div className="p-2 md:p-4 border-r flex flex-col justify-center bg-muted/10 text-center">
-                          <span className="font-bold text-xs md:text-sm">Ch. {room.roomNumber}</span>
-                          <span className="text-[8px] md:text-[10px] text-muted-foreground uppercase font-medium truncate">{room.roomType}</span>
+                    {sortedRooms.map((room) => (
+                      <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] hover:bg-muted/5">
+                        <div className="p-2 border-r flex flex-col justify-center bg-muted/10 text-center">
+                          <span className="font-bold text-xs">Ch. {room.roomNumber}</span>
+                          <span className="text-[8px] text-muted-foreground uppercase truncate">{room.roomType}</span>
                         </div>
                         {weekDays.map((day) => {
                           const res = getReservationForDay(room.id, day);
                           return (
-                            <div key={day.toString()} className="h-16 md:h-20 border-r last:border-r-0 relative p-1">
+                            <div key={day.toString()} className="h-16 border-r last:border-r-0 relative p-1">
                               {res && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className={`
-                                      absolute inset-1 rounded-lg p-1.5 text-[9px] md:text-[10px] font-bold overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer transition-transform hover:scale-[1.02] active:scale-95
-                                      ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}
-                                    `}>
+                                    <div className={`absolute inset-1 rounded-lg p-1.5 text-[9px] font-bold overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
                                       <span className="truncate">{res.guestName}</span>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <div className="space-y-1 p-1">
-                                      <p className="font-bold text-xs">{res.guestName}</p>
-                                      <p className="text-[10px]">{res.checkInDate} → {res.checkOutDate}</p>
-                                      <p className="text-[10px] uppercase font-black text-primary">{res.status}</p>
-                                    </div>
+                                    <p className="font-bold text-xs">{res.guestName}</p>
+                                    <p className="text-[10px]">{res.checkInDate} → {res.checkOutDate}</p>
+                                    <p className="text-[10px] uppercase font-black text-primary">{res.status}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               )}

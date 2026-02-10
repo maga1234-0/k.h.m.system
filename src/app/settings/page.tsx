@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -27,7 +27,8 @@ import {
   Eye,
   EyeOff,
   MapPin,
-  PenTool
+  PenTool,
+  Eraser
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -41,12 +42,14 @@ function SettingsContent() {
   const defaultTab = searchParams.get('tab') || 'general';
   
   const firestore = useFirestore();
-  
   const settingsRef = useMemoFirebase(() => user ? doc(firestore, 'settings', 'general') : null, [firestore, user]);
   const staffProfileRef = useMemoFirebase(() => user ? doc(firestore, 'staff', user.uid) : null, [firestore, user]);
   
   const { data: settings } = useDoc(settingsRef);
   const { data: staffProfile } = useDoc(staffProfileRef);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   const [formData, setFormData] = useState({
     hotelName: "",
@@ -96,6 +99,60 @@ function SettingsContent() {
     }
   }, [staffProfile, user]);
 
+  // Logic for the Signature Pad
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setFormData(prev => ({ ...prev, signatureUrl: "" }));
+  };
+
+  const saveSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    setFormData(prev => ({ ...prev, signatureUrl: dataUrl }));
+    toast({ title: "Signature Capturée", description: "Votre signature a été convertie en image." });
+  };
+
   const handleSaveGeneral = () => {
     if (!settingsRef) return;
     setDocumentNonBlocking(settingsRef, formData, { merge: true });
@@ -109,47 +166,24 @@ function SettingsContent() {
     if (!user) return;
     
     if (accountData.newPassword && accountData.newPassword !== accountData.confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de Validation",
-        description: "Les mots de passe ne correspondent pas.",
-      });
+      toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas." });
       return;
     }
 
     setIsUpdatingAccount(true);
     try {
-      if (accountData.email !== user.email) {
-        await updateEmail(user, accountData.email);
-      }
-
-      if (accountData.newPassword) {
-        await updatePassword(user, accountData.newPassword);
-      }
-
-      toast({
-        title: "Compte Mis à Jour",
-        description: "Vos identifiants administrateur ont été synchronisés.",
-      });
-      
-      setAccountData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }));
+      if (accountData.email !== user.email) await updateEmail(user, accountData.email);
+      if (accountData.newPassword) await updatePassword(user, accountData.newPassword);
+      toast({ title: "Compte Mis à Jour", description: "Identifiants synchronisés." });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de Sécurité",
-        description: error.message || "Échec de la mise à jour.",
-      });
+      toast({ variant: "destructive", title: "Erreur Sécurité", description: error.message });
     } finally {
       setIsUpdatingAccount(false);
     }
   };
 
   if (isAuthLoading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -164,104 +198,86 @@ function SettingsContent() {
 
         <main className="p-4 md:p-6 max-w-4xl mx-auto w-full space-y-6">
           <Tabs defaultValue={defaultTab} className="w-full">
-            <div className="overflow-x-auto pb-2">
-              <TabsList className="grid w-full grid-cols-4 min-w-[500px]">
-                <TabsTrigger value="general" className="gap-2">
-                  <Hotel className="h-4 w-4" /> Général
-                </TabsTrigger>
-                <TabsTrigger value="reservations" className="gap-2">
-                  <Clock className="h-4 w-4" /> Politiques
-                </TabsTrigger>
-                <TabsTrigger value="account" className="gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Compte
-                </TabsTrigger>
-                <TabsTrigger value="system" className="gap-2">
-                  <Shield className="h-4 w-4" /> Système
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="general"><Hotel className="h-4 w-4 mr-2" /> Général</TabsTrigger>
+              <TabsTrigger value="reservations"><Clock className="h-4 w-4 mr-2" /> Politiques</TabsTrigger>
+              <TabsTrigger value="account"><ShieldCheck className="h-4 w-4 mr-2" /> Compte</TabsTrigger>
+              <TabsTrigger value="system"><Shield className="h-4 w-4 mr-2" /> Système</TabsTrigger>
+            </TabsList>
 
             <TabsContent value="general">
               <Card>
                 <CardHeader>
-                  <CardTitle>Informations de l'Hôtel</CardTitle>
-                  <CardDescription>Gérez l'identité publique et votre signature.</CardDescription>
+                  <CardTitle>Identité de l'Hôtel</CardTitle>
+                  <CardDescription>Gérez les informations publiques et votre signature.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="hotelName">Nom de l'Hôtel</Label>
-                    <div className="relative">
-                      <Hotel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="hotelName" 
-                        placeholder="Ex: Fiesta Hotel"
-                        className="pl-9"
-                        value={formData.hotelName}
-                        onChange={(e) => setFormData({...formData, hotelName: e.target.value})}
-                      />
-                    </div>
+                    <Label>Nom de l'Établissement</Label>
+                    <Input value={formData.hotelName} onChange={(e) => setFormData({...formData, hotelName: e.target.value})} />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="email">E-mail Officiel</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="email" 
-                          type="email"
-                          className="pl-9"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        />
-                      </div>
+                      <Label>E-mail</Label>
+                      <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="phone">N° de Contact</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="phone" 
-                          className="pl-9"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        />
-                      </div>
+                      <Label>Téléphone</Label>
+                      <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="address">Adresse physique</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="address" 
-                        className="pl-9"
-                        value={formData.address}
-                        onChange={(e) => setFormData({...formData, address: e.target.value})}
-                      />
-                    </div>
+                    <Label>Adresse</Label>
+                    <Input value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
                   </div>
-                  <Separator />
-                  <div className="space-y-4 pt-2">
-                    <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                      <PenTool className="h-4 w-4" /> Signature des Factures
-                    </h3>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="grid gap-2">
+                  
+                  <Separator className="my-6" />
+                  
+                  <div className="space-y-4">
+                    <Label className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                      <PenTool className="h-4 w-4" /> Signature du Manager
+                    </Label>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
                         <Label>Nom du Signataire</Label>
-                        <Input 
-                          placeholder="Nom du Manager"
-                          value={formData.managerName}
-                          onChange={(e) => setFormData({...formData, managerName: e.target.value})}
-                        />
+                        <Input value={formData.managerName} onChange={(e) => setFormData({...formData, managerName: e.target.value})} placeholder="Manager Principal" />
+                        <div className="p-4 border rounded-xl bg-white space-y-2">
+                          <Label className="text-[10px] uppercase font-bold text-muted-foreground">Zone de Signature</Label>
+                          <canvas 
+                            ref={canvasRef}
+                            width={300}
+                            height={120}
+                            className="w-full h-[120px] bg-slate-50 border border-dashed rounded-lg cursor-crosshair touch-none"
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                          />
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={clearSignature}>
+                              <Eraser className="h-3 w-3 mr-2" /> Effacer
+                            </Button>
+                            <Button variant="secondary" size="sm" className="flex-1" onClick={saveSignature}>
+                              Appliquer
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid gap-2">
-                        <Label>URL de l'image de Signature</Label>
-                        <Input 
-                          placeholder="https://..."
-                          value={formData.signatureUrl}
-                          onChange={(e) => setFormData({...formData, signatureUrl: e.target.value})}
-                        />
-                        <p className="text-[10px] text-muted-foreground italic">Lien vers une image PNG transparente de votre signature.</p>
+                      <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-2xl border-2 border-dashed border-muted">
+                        {formData.signatureUrl ? (
+                          <div className="space-y-3 text-center">
+                            <img src={formData.signatureUrl} alt="Signature actuelle" className="max-h-24 mx-auto" />
+                            <p className="text-[10px] font-bold uppercase text-emerald-600">Signature prête</p>
+                          </div>
+                        ) : (
+                          <div className="text-center space-y-2 opacity-20">
+                            <PenTool className="h-12 w-12 mx-auto" />
+                            <p className="text-xs font-bold uppercase tracking-widest">Aucune signature</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -277,149 +293,40 @@ function SettingsContent() {
             <TabsContent value="reservations">
               <Card>
                 <CardHeader>
-                  <CardTitle>Politiques de Réservation</CardTitle>
-                  <CardDescription>Définissez les horaires et le comportement des réservations.</CardDescription>
+                  <CardTitle>Politiques de Séjour</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-2">
-                      <Label>Heure d'Arrivée Standard</Label>
-                      <Input 
-                        type="time" 
-                        value={formData.checkInTime}
-                        onChange={(e) => setFormData({...formData, checkInTime: e.target.value})}
-                      />
+                      <Label>Check-in Standard</Label>
+                      <Input type="time" value={formData.checkInTime} onChange={(e) => setFormData({...formData, checkInTime: e.target.value})} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Heure de Départ Standard</Label>
-                      <Input 
-                        type="time" 
-                        value={formData.checkOutTime}
-                        onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})}
-                      />
+                      <Label>Check-out Standard</Label>
+                      <Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} />
                     </div>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Facturation Automatique</Label>
-                      <p className="text-xs text-muted-foreground">Générer les factures dès l'arrivée d'un client.</p>
-                    </div>
-                    <Switch 
-                      checked={formData.autoInvoicing}
-                      onCheckedChange={(val) => setFormData({...formData, autoInvoicing: val})}
-                    />
                   </div>
                 </CardContent>
                 <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Sauvegarder
-                  </Button>
+                  <Button onClick={handleSaveGeneral} className="gap-2"><Save className="h-4 w-4" /> Sauvegarder</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
 
             <TabsContent value="account">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" /> Profil Administrateur
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Compte Administrateur</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">Prénom</Label>
-                      <Input 
-                        id="firstName" 
-                        value={accountData.firstName} 
-                        onChange={(e) => setAccountData({...accountData, firstName: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Nom</Label>
-                      <Input 
-                        id="lastName" 
-                        value={accountData.lastName} 
-                        onChange={(e) => setAccountData({...accountData, lastName: e.target.value})}
-                      />
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input value={accountData.firstName} onChange={(e) => setAccountData({...accountData, firstName: e.target.value})} placeholder="Prénom" />
+                    <Input value={accountData.lastName} onChange={(e) => setAccountData({...accountData, lastName: e.target.value})} placeholder="Nom" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="loginEmail">E-mail de Connexion</Label>
-                    <Input 
-                      id="loginEmail" 
-                      type="email"
-                      value={accountData.email} 
-                      onChange={(e) => setAccountData({...accountData, email: e.target.value})}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newPass">Nouveau Mot de Passe</Label>
-                      <Input 
-                        id="newPass" 
-                        type={showPasswords ? 'text' : 'password'} 
-                        value={accountData.newPassword}
-                        onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPass">Confirmer</Label>
-                      <Input 
-                        id="confirmPass" 
-                        type={showPasswords ? 'text' : 'password'}
-                        value={accountData.confirmPassword}
-                        onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPasswords(!showPasswords)}>
-                    {showPasswords ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
-                    {showPasswords ? "Masquer" : "Afficher"} les mots de passe
-                  </Button>
+                  <Input value={accountData.email} onChange={(e) => setAccountData({...accountData, email: e.target.value})} placeholder="E-mail" />
                 </CardContent>
                 <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2">
-                    {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Mettre à jour le compte
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="system">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Système & Préférences</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-accent" /> Notifications Push
-                      </Label>
-                    </div>
-                    <Switch 
-                      checked={formData.notificationsEnabled}
-                      onCheckedChange={(val) => setFormData({...formData, notificationsEnabled: val})}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="grid gap-2">
-                    <Label className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-accent" /> Devise
-                    </Label>
-                    <Input 
-                      value={formData.currency}
-                      onChange={(e) => setFormData({...formData, currency: e.target.value.toUpperCase()})}
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Sauvegarder
+                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount}>
+                    {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Mettre à jour
                   </Button>
                 </CardFooter>
               </Card>
@@ -432,9 +339,5 @@ function SettingsContent() {
 }
 
 export default function SettingsPage() {
-  return (
-    <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto mt-20" />}>
-      <SettingsContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto mt-20" />}><SettingsContent /></Suspense>;
 }
