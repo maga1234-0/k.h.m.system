@@ -31,8 +31,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -326,20 +324,17 @@ export default function BillingPage() {
           <DialogContent className="sm:max-w-md rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Valider le Paiement</DialogTitle>
-              <DialogDescription>Confirmer l'encaissement de la facture.</DialogDescription>
             </DialogHeader>
-            {invoiceForPayment && (
-              <div className="py-8">
-                <div className="p-6 bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/10 text-center">
-                  <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-2">Montant</p>
-                  <h3 className="text-4xl font-black text-emerald-700">{Number(invoiceForPayment.amountDue).toFixed(2)} $</h3>
-                </div>
+            <div className="py-8">
+              <div className="p-6 bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/10 text-center">
+                <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-2">Montant</p>
+                <h3 className="text-4xl font-black text-emerald-700">{invoiceForPayment ? Number(invoiceForPayment.amountDue).toFixed(2) : "0.00"} $</h3>
               </div>
-            )}
-            <DialogFooter className="gap-2 sm:justify-center">
+            </div>
+            <div className="flex justify-center gap-2">
               <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer</Button>
-            </DialogFooter>
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -356,17 +351,17 @@ export default function BillingPage() {
                       
                       {/* PAGE 1 */}
                       <div id="invoice-page-1" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900">
-                        <div className="flex justify-between items-start mb-16">
-                          <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white"><Hotel className="h-10 w-10" /></div>
-                            <div className="flex flex-col">
-                              <span className="font-headline font-black text-4xl text-primary leading-none">{settings?.hotelName || 'ImaraPMS'}</span>
+                        <div className="flex justify-between items-start mb-16 border-b pb-8">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-headline font-black text-3xl text-primary leading-tight truncate">{settings?.hotelName || 'ImaraPMS'}</span>
                               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Excellence Hôtelière</span>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <h1 className="text-3xl font-black uppercase mb-1">FACTURE</h1>
-                            <span className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</span>
+                            <div className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</div>
                             <p className="text-xs text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                           </div>
                         </div>
@@ -380,7 +375,7 @@ export default function BillingPage() {
                             </div>
                           </div>
                           <div className="text-right space-y-4">
-                            <p className="text-[10px] font-black text-slate-400 uppercase border-b pb-1">ÉMETTEUR</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase border-b pb-1 text-right">ÉMETTEUR</p>
                             <div className="space-y-1">
                               <h3 className="text-lg font-black">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
                               <p className="text-[12px] text-slate-400 font-bold">{settings?.address || 'Adresse officielle'}</p>
@@ -393,21 +388,21 @@ export default function BillingPage() {
                             <thead>
                               <tr className="bg-slate-900 text-white text-[10px] font-bold uppercase">
                                 <th className="py-4 px-6 text-left">DESCRIPTION</th>
-                                <th className="py-4 px-6 text-right">TOTAL ($)</th>
+                                <th className="py-4 px-6 text-right w-40">TOTAL ($)</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                               <tr>
                                 <td className="py-8 px-6">
                                   <span className="font-black text-lg block">Hébergement & Frais de Séjour</span>
-                                  <span className="text-xs text-slate-400">Services standards inclus</span>
+                                  <span className="text-xs text-slate-400">Services standards inclus pour la durée du séjour</span>
                                 </td>
                                 <td className="py-8 px-6 text-right font-black text-xl">{basePrice.toFixed(2)} $</td>
                               </tr>
                               <tr className="bg-slate-50">
                                 <td className="py-8 px-6">
                                   <span className="font-black text-slate-500 text-lg block">Extras & Consommations</span>
-                                  <span className="text-xs text-slate-400">Détail en page 2</span>
+                                  <span className="text-xs text-slate-400">Voir le détail exhaustif en page 2</span>
                                 </td>
                                 <td className="py-8 px-6 text-right font-black text-xl text-slate-500">+{totalExtras.toFixed(2)} $</td>
                               </tr>
@@ -417,7 +412,7 @@ export default function BillingPage() {
 
                         <div className="flex justify-between items-end border-t-8 border-slate-900 pt-12 mt-12">
                           <div className="space-y-6">
-                            <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE</p>
+                            <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE AUTORISÉE</p>
                             <div className="min-h-[120px] flex flex-col justify-end">
                               {settings?.signatureUrl ? (
                                 <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
@@ -428,9 +423,11 @@ export default function BillingPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-[12px] font-black text-slate-400 uppercase mb-2">TOTAL À RÉGLER</p>
-                            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
-                              <span className="text-5xl font-black text-slate-900 leading-none">{Number(selectedInvoice.amountDue).toFixed(2)} <span className="text-2xl text-primary">$</span></span>
+                            <p className="text-[12px] font-black text-slate-400 uppercase mb-2">TOTAL NET À RÉGLER</p>
+                            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                              <div className="text-5xl font-black text-slate-900 leading-none">
+                                {Number(selectedInvoice.amountDue).toFixed(2)} <span className="text-2xl text-primary">$</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -438,13 +435,16 @@ export default function BillingPage() {
 
                       {/* PAGE 2 */}
                       <div id="invoice-page-2" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] mt-8 flex flex-col text-slate-900">
-                        <h2 className="text-2xl font-black uppercase border-b-2 border-slate-100 pb-4 mb-8">DÉTAIL DES SERVICES</h2>
+                        <div className="mb-8 flex justify-between items-center border-b pb-4">
+                          <h2 className="text-2xl font-black uppercase">DÉTAIL DES SERVICES</h2>
+                          <span className="text-xs font-bold text-slate-400">REF: #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</span>
+                        </div>
                         <table className="w-full border-collapse mb-auto">
                           <thead>
                             <tr className="bg-slate-50 border-y border-slate-200 text-[10px] font-bold text-slate-400 uppercase">
-                              <th className="py-4 px-6 text-left">DATE</th>
-                              <th className="py-4 px-6 text-left">SERVICE</th>
-                              <th className="py-4 px-6 text-right">PRIX ($)</th>
+                              <th className="py-4 px-6 text-left w-32">DATE</th>
+                              <th className="py-4 px-6 text-left">SERVICE / DESCRIPTION</th>
+                              <th className="py-4 px-6 text-right w-32">MONTANT ($)</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -452,18 +452,18 @@ export default function BillingPage() {
                               <tr key={i}>
                                 <td className="py-6 px-6 text-xs font-bold text-slate-400">{e.date}</td>
                                 <td className="py-6 px-6">
-                                  <span className="font-bold block">{e.type}</span>
-                                  <span className="text-[10px] text-slate-400 uppercase">{e.description}</span>
+                                  <span className="font-bold block text-sm">{e.type}</span>
+                                  <span className="text-[10px] text-slate-400 uppercase leading-none">{e.description}</span>
                                 </td>
                                 <td className="py-6 px-6 text-right font-bold">+{parseFloat(e.amount).toFixed(2)} $</td>
                               </tr>
                             )) : (
-                              <tr><td colSpan={3} className="py-24 text-center text-slate-300 font-bold italic">Aucun extra enregistré</td></tr>
+                              <tr><td colSpan={3} className="py-24 text-center text-slate-300 font-bold italic">Aucun extra enregistré pour ce séjour.</td></tr>
                             )}
                           </tbody>
                         </table>
                         <div className="mt-12 pt-8 border-t text-center">
-                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">Généré par ImaraPMS - Solution de gestion hôtelière officielle</p>
+                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">Généré par ImaraPMS - Document officiel du Fiesta Hotel Group</p>
                         </div>
                       </div>
 
