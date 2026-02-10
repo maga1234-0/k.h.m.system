@@ -179,7 +179,6 @@ export default function BillingPage() {
       
       toast({ title: "Document Prêt", description: "Le PDF a été généré. Envoi WhatsApp en cours..." });
       
-      // Après la génération du PDF, on déclenche automatiquement l'envoi WhatsApp avec les détails
       setTimeout(() => {
         handleSendWhatsApp(selectedInvoice);
       }, 1000);
@@ -354,7 +353,7 @@ export default function BillingPage() {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>Valider l'Encaissement</DialogTitle>
-            <DialogDescription>Confirmez la réception du paiement pour ce dossier client.</DialogDescription>
+            <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
           </DialogHeader>
           {invoiceForPayment && (
             <div className="py-6 space-y-4">
@@ -368,14 +367,14 @@ export default function BillingPage() {
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
           </DialogFooter>
-        </DialogContent>
+        </Dialog>
       </Dialog>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Facture Fiesta Hotel</DialogTitle>
-            <DialogDescription>Aperçu officiel de la facture hôtelière.</DialogDescription>
+            <DialogDescription>Aperçu officiel de la facture.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">

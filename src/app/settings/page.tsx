@@ -115,7 +115,6 @@ function SettingsContent() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Empêche le scroll sur mobile pendant le dessin
     if (e.cancelable) e.preventDefault();
 
     const coords = getCoordinates(e);
@@ -160,7 +159,7 @@ function SettingsContent() {
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     setFormData(prev => ({ ...prev, signatureUrl: dataUrl }));
-    toast({ title: "Signature Capturée", description: "Votre signature manuscrite a été enregistrée." });
+    toast({ title: "Signature Capturée", description: "Votre signature a été enregistrée." });
   };
 
   const handleSaveGeneral = () => {
@@ -168,7 +167,7 @@ function SettingsContent() {
     setDocumentNonBlocking(settingsRef, formData, { merge: true });
     toast({
       title: "Paramètres Sauvegardés",
-      description: "La configuration de l'hôtel a été mise à jour.",
+      description: "Configuration mise à jour.",
     });
   };
 
@@ -176,7 +175,7 @@ function SettingsContent() {
     if (!user) return;
     
     if (accountData.newPassword && accountData.newPassword !== accountData.confirmPassword) {
-      toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas." });
+      toast({ variant: "destructive", title: "Erreur", description: "Mots de passe différents." });
       return;
     }
 

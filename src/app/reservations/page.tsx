@@ -94,7 +94,6 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    // On ferme d'abord le dropdown (géré par Radix) puis on ouvre le dialogue
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -290,7 +289,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Dossier</DialogTitle>
-              <DialogDescription>Validez les arrivées, les départs ou annulez le séjour.</DialogDescription>
+              <DialogDescription>Validez les arrivées ou les départs.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-4 py-4">
