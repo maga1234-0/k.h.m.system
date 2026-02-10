@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   Clock,
   Wrench,
-  Phone
+  CalendarCheck
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -28,7 +28,9 @@ import {
   useMemoFirebase, 
   setDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking
+  deleteDocumentNonBlocking,
+  addDocumentNonBlocking,
+  useUser
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { 
@@ -58,12 +60,17 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation';
 
 export default function RoomsPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [editRoomData, setEditRoomData] = useState<any>(null);
   const [roomToDelete, setRoomToDelete] = useState<any>(null);
@@ -78,13 +85,27 @@ export default function RoomsPage() {
     amenities: "",
   });
 
+  const [bookingForm, setBookingForm] = useState({
+    guestName: "",
+    guestPhone: "",
+    checkInDate: "",
+    checkOutDate: "",
+    totalAmount: ""
+  });
+
   const firestore = useFirestore();
-  const roomsCollection = useMemoFirebase(() => collection(firestore, 'rooms'), [firestore]);
+  const roomsCollection = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const { data: rooms, isLoading } = useCollection(roomsCollection);
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const handleAddRoom = () => {
-    if (!newRoom.roomNumber) return;
-    const roomId = doc(collection(firestore, 'rooms')).id;
+    if (!newRoom.roomNumber || !roomsCollection) return;
+    const roomId = doc(roomsCollection).id;
     const roomRef = doc(firestore, 'rooms', roomId);
     const amenitiesArray = newRoom.amenities ? newRoom.amenities.split(',').map((a: string) => a.trim()).filter((a: string) => a !== "") : [];
     const roomData = { ...newRoom, id: roomId, status: "Available", amenities: amenitiesArray, pricePerNight: Number(newRoom.pricePerNight) || 0, capacity: Number(newRoom.capacity) || 1, floor: Number(newRoom.floor) || 0 };
@@ -112,6 +133,28 @@ export default function RoomsPage() {
     toast({ variant: "destructive", title: "Supprimée", description: "Chambre retirée de l'inventaire." });
   };
 
+  const handleConfirmBooking = () => {
+    if (!selectedRoom || !bookingForm.guestName || !bookingForm.checkInDate) return;
+
+    const resCol = collection(firestore, 'reservations');
+    const reservationData = {
+      guestName: bookingForm.guestName,
+      guestPhone: bookingForm.guestPhone,
+      roomId: selectedRoom.id,
+      roomNumber: selectedRoom.roomNumber,
+      checkInDate: bookingForm.checkInDate,
+      checkOutDate: bookingForm.checkOutDate,
+      totalAmount: Number(bookingForm.totalAmount) || 0,
+      status: "Confirmée",
+      createdAt: new Date().toISOString()
+    };
+
+    addDocumentNonBlocking(resCol, reservationData);
+    setIsBookingOpen(false);
+    setBookingForm({ guestName: "", guestPhone: "", checkInDate: "", checkOutDate: "", totalAmount: "" });
+    toast({ title: "Réservation effectuée", description: `Un dossier a été créé pour ${reservationData.guestName}.` });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Available": return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1"><CheckCircle2 className="h-3 w-3" /> Disponible</Badge>;
@@ -123,6 +166,8 @@ export default function RoomsPage() {
   };
 
   const filteredRooms = rooms?.filter(room => room.roomNumber.includes(searchTerm) || room.roomType.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  if (isUserLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
   return (
     <div className="flex h-screen w-full">
@@ -168,6 +213,11 @@ export default function RoomsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-2 flex justify-end gap-2">
+                    {room.status === 'Available' && (
+                      <Button variant="default" size="sm" className="h-8 text-[10px] font-bold uppercase gap-1" onClick={() => { setSelectedRoom(room); setIsBookingOpen(true); }}>
+                        <CalendarCheck className="h-3 w-3" /> Réserver
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setRoomToDelete(room); setIsDeleteDialogOpen(true); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -227,6 +277,43 @@ export default function RoomsPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
               <Button onClick={handleAddRoom}>Enregistrer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Réservation Rapide</DialogTitle>
+              <DialogDescription>Chambre {selectedRoom?.roomNumber} - {selectedRoom?.roomType}</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1">
+                <Label>Nom du Client</Label>
+                <Input value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <Label>Téléphone</Label>
+                <Input value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Arrivée</Label>
+                  <Input type="date" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Départ</Label>
+                  <Input type="date" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Prix Total ($)</Label>
+                <Input type="number" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
+              <Button onClick={handleConfirmBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

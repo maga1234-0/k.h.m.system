@@ -353,7 +353,7 @@ export default function BillingPage() {
                                       <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
                                       <div>
                                         <h1 className="font-headline font-black text-3xl text-primary leading-none uppercase">{settings?.hotelName || 'ImaraPMS'}</h1>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Fiesta Hotel Group • Excellence</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Hôtellerie de Prestige • Excellence</p>
                                       </div>
                                     </div>
                                   </td>
