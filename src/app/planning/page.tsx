@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Tooltip,
@@ -77,7 +77,7 @@ export default function PlanningPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Planning</h1>
+            <h1 className="font-headline font-semibold text-xl">Planning des Séjours</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
@@ -99,8 +99,8 @@ export default function PlanningPage() {
           <TooltipProvider>
             <Card className="border shadow-sm overflow-hidden rounded-xl">
               <div className="overflow-x-auto">
-                <div className="min-w-[900px]">
-                  <div className="grid grid-cols-[120px_repeat(7,1fr)] bg-muted/50 border-b">
+                <div className="min-w-[1000px]">
+                  <div className="grid grid-cols-[140px_repeat(7,1fr)] bg-muted/50 border-b">
                     <div className="p-4 font-black text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
                     {weekDays.map((day) => (
                       <div key={day.toString()} className="p-2 text-center border-r last:border-r-0">
@@ -114,7 +114,7 @@ export default function PlanningPage() {
 
                   <div className="divide-y">
                     {sortedRooms.map((room) => (
-                      <div key={room.id} className="grid grid-cols-[120px_repeat(7,1fr)] hover:bg-muted/5">
+                      <div key={room.id} className="grid grid-cols-[140px_repeat(7,1fr)] hover:bg-muted/5">
                         <div className="p-3 border-r flex flex-col justify-center bg-muted/10 text-center">
                           <span className="font-black text-sm">Ch. {room.roomNumber}</span>
                           <span className="text-[9px] text-muted-foreground uppercase font-bold truncate">{room.roomType}</span>
@@ -122,19 +122,22 @@ export default function PlanningPage() {
                         {weekDays.map((day) => {
                           const res = getReservationForDay(room.id, day);
                           return (
-                            <div key={day.toString()} className="h-20 border-r last:border-r-0 relative p-1.5">
+                            <div key={day.toString()} className="h-24 border-r last:border-r-0 relative p-1.5">
                               {res && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div className={`absolute inset-1.5 rounded-xl p-2 text-[10px] font-black overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer transition-all hover:scale-[1.02] ${res.status === 'Checked In' ? 'bg-primary text-white' : 'bg-secondary text-secondary-foreground border border-primary/20'}`}>
                                       <span className="truncate">{res.guestName}</span>
+                                      <div className="mt-1 flex items-center gap-1">
+                                        <Badge className="h-4 text-[8px] uppercase px-1">{res.status}</Badge>
+                                      </div>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent className="p-0 border-none shadow-2xl rounded-2xl overflow-hidden">
-                                    <div className="p-4 bg-white min-w-[200px] text-slate-900">
-                                      <div className="flex items-center justify-between mb-3">
-                                        <p className="font-black text-sm">{res.guestName}</p>
-                                        <Badge className="h-5 text-[8px] uppercase tracking-widest">{res.status}</Badge>
+                                    <div className="p-4 bg-white min-w-[220px] text-slate-900">
+                                      <div className="flex items-center justify-between mb-3 gap-4">
+                                        <p className="font-black text-sm truncate">{res.guestName}</p>
+                                        <Badge className="h-5 text-[8px] uppercase tracking-widest shrink-0">{res.status}</Badge>
                                       </div>
                                       <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase">Dates du séjour</p>

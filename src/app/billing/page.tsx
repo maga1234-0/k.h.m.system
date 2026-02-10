@@ -165,13 +165,23 @@ export default function BillingPage() {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      const canvas1 = await html2canvas(page1, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas1 = await html2canvas(page1, { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: '#ffffff',
+        logging: false
+      });
       const img1 = canvas1.toDataURL('image/png');
       const height1 = (canvas1.height * pdfWidth) / canvas1.width;
       pdf.addImage(img1, 'PNG', 0, 0, pdfWidth, height1);
 
       pdf.addPage();
-      const canvas2 = await html2canvas(page2, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas2 = await html2canvas(page2, { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: '#ffffff',
+        logging: false
+      });
       const img2 = canvas2.toDataURL('image/png');
       const height2 = (canvas2.height * pdfWidth) / canvas2.width;
       pdf.addImage(img2, 'PNG', 0, 0, pdfWidth, height2);
@@ -191,8 +201,8 @@ export default function BillingPage() {
     }
   };
 
-  const extras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
-  const totalExtras = extras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+  const invoiceExtras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
+  const totalExtras = invoiceExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
   const basePrice = useMemo(() => {
     if (!selectedInvoice) return 0;
     return Math.max(0, Number(selectedInvoice.amountDue) - totalExtras);
@@ -341,7 +351,7 @@ export default function BillingPage() {
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
           <DialogContent className="max-w-5xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl">
             <DialogHeader className="sr-only">
-              <DialogTitle>Facture</DialogTitle>
+              <DialogTitle>Facture Officielle</DialogTitle>
             </DialogHeader>
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
@@ -352,14 +362,14 @@ export default function BillingPage() {
                       {/* PAGE 1 */}
                       <div id="invoice-page-1" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900">
                         <div className="flex justify-between items-start mb-16 border-b pb-8">
-                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div style={{ width: '60%' }} className="flex items-center gap-4 min-w-0">
                             <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-headline font-black text-3xl text-primary leading-tight">{settings?.hotelName || 'ImaraPMS'}</span>
+                              <span className="font-headline font-black text-3xl text-primary leading-tight truncate">{settings?.hotelName || 'ImaraPMS'}</span>
                               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Excellence Hôtelière</span>
                             </div>
                           </div>
-                          <div className="text-right shrink-0 ml-8">
+                          <div style={{ width: '35%' }} className="text-right shrink-0">
                             <h1 className="text-3xl font-black uppercase mb-1">FACTURE</h1>
                             <div className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</div>
                             <p className="text-xs text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
@@ -370,14 +380,14 @@ export default function BillingPage() {
                           <div className="space-y-4">
                             <p className="text-[10px] font-black text-primary uppercase border-b pb-1">CLIENT</p>
                             <div className="space-y-1">
-                              <h3 className="text-2xl font-black leading-none mb-1">{selectedInvoice.guestName}</h3>
+                              <h3 className="text-2xl font-black leading-tight mb-1">{selectedInvoice.guestName}</h3>
                               <p className="text-sm font-bold text-slate-500">{selectedInvoice.guestPhone}</p>
                             </div>
                           </div>
                           <div className="text-right space-y-4">
                             <p className="text-[10px] font-black text-slate-400 uppercase border-b pb-1 text-right">ÉMETTEUR</p>
                             <div className="space-y-1">
-                              <h3 className="text-lg font-black leading-none mb-1">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
+                              <h3 className="text-lg font-black leading-tight mb-1">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
                               <p className="text-[12px] text-slate-400 font-bold">{settings?.address || 'Adresse officielle'}</p>
                             </div>
                           </div>
@@ -448,7 +458,7 @@ export default function BillingPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {extras.length > 0 ? extras.map((e, i) => (
+                            {invoiceExtras.length > 0 ? invoiceExtras.map((e, i) => (
                               <tr key={i}>
                                 <td className="py-6 px-6 text-xs font-bold text-slate-400">{e.date}</td>
                                 <td className="py-6 px-6">
