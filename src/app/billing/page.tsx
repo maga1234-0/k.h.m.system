@@ -367,7 +367,7 @@ export default function BillingPage() {
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
           </DialogFooter>
-        </Dialog>
+        </DialogContent>
       </Dialog>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
