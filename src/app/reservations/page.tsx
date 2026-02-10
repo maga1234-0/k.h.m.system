@@ -20,7 +20,7 @@ import {
   CheckCircle,
   CalendarDays,
   Trash2,
-  AlertCircle
+  XCircle
 } from "lucide-react";
 import { 
   Dialog, 
@@ -107,6 +107,7 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // On laisse le menu se fermer avant d'ouvrir le dialogue pour éviter le focus trap
     setTimeout(() => {
       setActiveDialog("manage");
     }, 100);
@@ -164,6 +165,15 @@ export default function ReservationsPage() {
 
     setActiveDialog(null);
     toast({ title: "Départ validé", description: "La chambre a été libérée pour le ménage." });
+  };
+
+  const handleCancel = () => {
+    if (!selectedRes) return;
+    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
+
+    setActiveDialog(null);
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "La chambre est de nouveau disponible." });
   };
 
   const handleClearAll = () => {
@@ -271,8 +281,8 @@ export default function ReservationsPage() {
                         </TableCell>
                         <TableCell className="font-bold text-primary text-xs md:text-sm">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                         <TableCell>
-                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : 'outline'} className="text-[10px]">
-                            {res.status === 'Checked In' ? 'En séjour' : res.status === 'Checked Out' ? 'Parti' : 'Confirmé'}
+                          <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'destructive' : 'outline'} className="text-[10px]">
+                            {res.status === 'Checked In' ? 'En séjour' : res.status === 'Checked Out' ? 'Parti' : res.status === 'Cancelled' ? 'Annulé' : 'Confirmé'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -370,7 +380,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Effectuer l'arrivée ou le départ du client de sa chambre.</DialogDescription>
+              <DialogDescription>Effectuer l'arrivée, le départ ou l'annulation de la réservation.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
@@ -398,9 +408,21 @@ export default function ReservationsPage() {
                     </Button>
                   )}
                   
+                  {(selectedRes.status === 'Confirmée' || selectedRes.status === 'Checked In') && (
+                    <Button onClick={handleCancel} variant="outline" className="w-full h-12 gap-3 text-rose-600 border-rose-200 hover:bg-rose-50 font-bold rounded-xl">
+                      <XCircle className="h-5 w-5" /> Annuler la réservation
+                    </Button>
+                  )}
+                  
                   {selectedRes.status === 'Checked Out' && (
                     <div className="p-4 text-center border-2 border-dashed rounded-xl text-muted-foreground text-sm">
                       Ce séjour est déjà clôturé.
+                    </div>
+                  )}
+                  
+                  {selectedRes.status === 'Cancelled' && (
+                    <div className="p-4 text-center border-2 border-dashed rounded-xl text-rose-500 bg-rose-50 text-sm font-bold">
+                      Cette réservation a été annulée.
                     </div>
                   )}
                 </div>
