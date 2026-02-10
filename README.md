@@ -1,6 +1,6 @@
 # ImaraPMS - Modern Hotel Management
 
-ImaraPMS is a professional, high-performance hotel management platform built with Next.js, Firebase, and GenAI. It streamlines hotel operations from front-desk reservations to financial reporting and AI-powered insights.
+ImaraPMS is a professional, high-performance hotel management platform built with Next.js, Firebase. It streamlines hotel operations from front-desk reservations to financial reporting and AI-powered insights.
 
 ## 🚀 Features
 
