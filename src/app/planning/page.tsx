@@ -7,6 +7,7 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
@@ -52,7 +53,6 @@ export default function PlanningPage() {
   const getReservationForDay = (roomId: string, date: Date) => {
     if (!reservations) return null;
     const dateStr = format(date, 'yyyy-MM-dd');
-    // Simple logic: if date is within range [checkIn, checkOut]
     return reservations.find(r => 
       r.roomId === roomId && 
       r.status !== 'Cancelled' &&
@@ -100,7 +100,6 @@ export default function PlanningPage() {
             <Card className="border-none shadow-sm overflow-hidden rounded-xl">
               <div className="overflow-x-auto">
                 <div className="min-w-[800px]">
-                  {/* Calendar Header */}
                   <div className="grid grid-cols-[100px_repeat(7,1fr)] bg-muted/50 border-b">
                     <div className="p-3 font-bold text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
                     {weekDays.map((day) => (
@@ -113,7 +112,6 @@ export default function PlanningPage() {
                     ))}
                   </div>
 
-                  {/* Calendar Body */}
                   <div className="divide-y">
                     {sortedRooms.map((room) => (
                       <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] hover:bg-muted/5">

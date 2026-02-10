@@ -94,7 +94,6 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    // Timeout to ensure dropdown closes properly before dialog opens
     setTimeout(() => {
       setActiveDialog("manage");
     }, 150);
@@ -201,7 +200,7 @@ export default function ReservationsPage() {
                 <AlertDialogContent className="rounded-2xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                    <AlertDialogDescription>Ceci supprimera définitivement tout l'historique des réservations. Cette action est irréversible.</AlertDialogDescription>
+                    <AlertDialogDescription>Ceci supprimera définitivement tout l'historique des réservations.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -246,7 +245,7 @@ export default function ReservationsPage() {
                   {isResLoading ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
                   ) : filteredReservations?.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Aucun dossier de réservation trouvé.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Aucun dossier trouvé.</TableCell></TableRow>
                   ) : filteredReservations?.map((res) => (
                     <TableRow key={res.id}>
                       <TableCell className="font-bold text-xs">{res.guestName}</TableCell>
@@ -282,7 +281,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Remplissez les informations du client et les dates de séjour.</DialogDescription>
+              <DialogDescription>Informations du client et dates de séjour.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
@@ -313,7 +312,7 @@ export default function ReservationsPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">Chambre</label>
                   <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={bookingForm.roomId} 
                     onChange={(e) => setBookingForm({...bookingForm, roomId: e.target.value})}
                   >
@@ -331,7 +330,7 @@ export default function ReservationsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleSaveBooking} className="bg-primary text-primary-foreground">Confirmer la réservation</Button>
+              <Button onClick={handleSaveBooking}>Confirmer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -340,7 +339,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Actions rapides pour l'arrivée ou le départ du client.</DialogDescription>
+              <DialogDescription>Actions pour l'arrivée ou le départ.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-4 py-4">
