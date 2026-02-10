@@ -73,18 +73,18 @@ export default function PlanningPage() {
     <div className="flex h-screen w-full">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
-        <header className="flex h-16 items-center border-b px-4 md:px-6 justify-between bg-background sticky top-0 z-10">
+        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
           <div className="flex items-center">
             <SidebarTrigger />
-            <Separator orientation="vertical" className="mx-2 md:mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-sm md:text-xl">Planning des Séjours</h1>
+            <Separator orientation="vertical" className="mx-4 h-6" />
+            <h1 className="font-headline font-semibold text-xl">Planning</h1>
           </div>
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2 font-medium bg-muted px-2 md:px-4 py-1.5 rounded-lg text-[10px] md:text-sm">
-              <CalendarIcon className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+            <div className="flex items-center gap-2 font-bold bg-muted px-4 py-1.5 rounded-lg text-xs uppercase tracking-widest">
+              <CalendarIcon className="h-4 w-4 text-primary" />
               {weekDays.length > 0 ? (
                 <>{format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}</>
               ) : 'Chargement...'}
@@ -95,17 +95,17 @@ export default function PlanningPage() {
           </div>
         </header>
 
-        <main className="p-2 md:p-6">
+        <main className="p-6">
           <TooltipProvider>
-            <Card className="border-none shadow-sm overflow-hidden rounded-xl">
+            <Card className="border shadow-sm overflow-hidden rounded-xl">
               <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
-                  <div className="grid grid-cols-[100px_repeat(7,1fr)] bg-muted/50 border-b">
-                    <div className="p-3 font-bold text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
+                <div className="min-w-[900px]">
+                  <div className="grid grid-cols-[120px_repeat(7,1fr)] bg-muted/50 border-b">
+                    <div className="p-4 font-black text-[10px] uppercase text-muted-foreground border-r text-center">Chambre</div>
                     {weekDays.map((day) => (
                       <div key={day.toString()} className="p-2 text-center border-r last:border-r-0">
-                        <div className="text-[9px] font-bold uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                        <div className={`text-sm font-headline font-bold mx-auto ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center shadow-lg' : ''}`}>
+                        <div className="text-[9px] font-black uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
+                        <div className={`text-lg font-headline font-black mx-auto w-10 h-10 flex items-center justify-center rounded-full transition-colors ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-white shadow-lg' : ''}`}>
                           {format(day, 'd')}
                         </div>
                       </div>
@@ -114,28 +114,31 @@ export default function PlanningPage() {
 
                   <div className="divide-y">
                     {sortedRooms.map((room) => (
-                      <div key={room.id} className="grid grid-cols-[100px_repeat(7,1fr)] hover:bg-muted/5">
-                        <div className="p-2 border-r flex flex-col justify-center bg-muted/10 text-center">
-                          <span className="font-bold text-xs">Ch. {room.roomNumber}</span>
-                          <span className="text-[8px] text-muted-foreground uppercase truncate">{room.roomType}</span>
+                      <div key={room.id} className="grid grid-cols-[120px_repeat(7,1fr)] hover:bg-muted/5">
+                        <div className="p-3 border-r flex flex-col justify-center bg-muted/10 text-center">
+                          <span className="font-black text-sm">Ch. {room.roomNumber}</span>
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold truncate">{room.roomType}</span>
                         </div>
                         {weekDays.map((day) => {
                           const res = getReservationForDay(room.id, day);
                           return (
-                            <div key={day.toString()} className="h-16 border-r last:border-r-0 relative p-1">
+                            <div key={day.toString()} className="h-20 border-r last:border-r-0 relative p-1.5">
                               {res && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className={`absolute inset-1 rounded-lg p-1.5 text-[9px] font-bold overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer ${res.status === 'Checked In' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                                    <div className={`absolute inset-1.5 rounded-xl p-2 text-[10px] font-black overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer transition-all hover:scale-[1.02] ${res.status === 'Checked In' ? 'bg-primary text-white' : 'bg-secondary text-secondary-foreground border border-primary/20'}`}>
                                       <span className="truncate">{res.guestName}</span>
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent>
-                                    <div className="p-1">
-                                      <p className="font-bold text-xs">{res.guestName}</p>
-                                      <p className="text-[10px] text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</p>
-                                      <div className="mt-1 flex items-center gap-1">
-                                        <Badge className="h-4 text-[8px] uppercase">{res.status}</Badge>
+                                  <TooltipContent className="p-0 border-none shadow-2xl rounded-2xl overflow-hidden">
+                                    <div className="p-4 bg-white min-w-[200px] text-slate-900">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <p className="font-black text-sm">{res.guestName}</p>
+                                        <Badge className="h-5 text-[8px] uppercase tracking-widest">{res.status}</Badge>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Dates du séjour</p>
+                                        <p className="text-xs font-bold">{res.checkInDate} au {res.checkOutDate}</p>
                                       </div>
                                     </div>
                                   </TooltipContent>
