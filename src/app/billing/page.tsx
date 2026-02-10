@@ -161,13 +161,12 @@ export default function BillingPage() {
     }
 
     try {
-      // Use a fixed scale and clear canvas to prevent text squashing or overlapping
       const canvas = await html2canvas(page, { 
         scale: 2, 
         useCORS: true, 
         backgroundColor: '#ffffff',
         logging: false,
-        windowWidth: 1000 // Force width to prevent responsive shifts during capture
+        windowWidth: 1000
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -345,7 +344,6 @@ export default function BillingPage() {
                     <div className="scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top transform-gpu">
                       <div id="invoice-single-page" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900 font-sans">
                         
-                        {/* Header Section - Robust Table for PDF stability */}
                         <div className="mb-12 border-b-2 border-primary pb-8">
                            <table className="w-full">
                               <tbody>
@@ -369,7 +367,6 @@ export default function BillingPage() {
                            </table>
                         </div>
 
-                        {/* Addresses Section */}
                         <div className="grid grid-cols-2 gap-12 mb-12">
                           <div className="space-y-2">
                             <h4 className="text-[10px] font-black text-primary uppercase border-b border-slate-100 pb-1">DESTINATAIRE</h4>
@@ -387,7 +384,6 @@ export default function BillingPage() {
                           </div>
                         </div>
 
-                        {/* Services Table - Optimized for no overlap */}
                         <div className="flex-1 mb-12">
                           <table className="w-full border-collapse">
                             <thead>
@@ -419,7 +415,6 @@ export default function BillingPage() {
                           </table>
                         </div>
 
-                        {/* Totals & Signature Section */}
                         <div className="mt-auto pt-8">
                            <table className="w-full">
                               <tbody>
@@ -470,4 +465,3 @@ export default function BillingPage() {
     </div>
   );
 }
-

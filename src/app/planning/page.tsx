@@ -57,7 +57,7 @@ export default function PlanningPage() {
       r.roomId === roomId && 
       r.status !== 'Cancelled' &&
       r.checkInDate <= dateStr && 
-      r.checkOutDate > dateStr // Accurate to check-out (not included in the stay night)
+      r.checkOutDate > dateStr
     );
   };
 
@@ -162,4 +162,3 @@ export default function PlanningPage() {
     </div>
   );
 }
-
