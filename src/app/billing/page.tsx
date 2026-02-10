@@ -470,7 +470,7 @@ export default function BillingPage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white p-6 border-t flex justify-end gap-4 rounded-b-3xl">
+                <div className="bg-white p-6 border-t flex justify-center rounded-b-3xl">
                   <Button disabled={isGeneratingPdf} className="h-12 px-8 font-black uppercase text-xs gap-2" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     Générer PDF (2 Pages)
