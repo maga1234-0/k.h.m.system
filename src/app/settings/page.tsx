@@ -89,53 +89,39 @@ function SettingsContent() {
     }
   }, [staffProfile, user]);
 
-  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+  const getCoordinates = (e: any) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    
-    let clientX, clientY;
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
-    }
-    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
       x: clientX - rect.left,
       y: clientY - rect.top
     };
   };
 
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+  const startDrawing = (e: any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    if (e.cancelable) e.preventDefault();
-
     const coords = getCoordinates(e);
     ctx.beginPath();
     ctx.moveTo(coords.x, coords.y);
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+  const draw = (e: any) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    if (e.cancelable) e.preventDefault();
-
     const coords = getCoordinates(e);
     ctx.lineTo(coords.x, coords.y);
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
@@ -159,33 +145,28 @@ function SettingsContent() {
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     setFormData(prev => ({ ...prev, signatureUrl: dataUrl }));
-    toast({ title: "Signature Capturée", description: "Votre signature a été enregistrée." });
+    toast({ title: "Prêt", description: "Signature capturée." });
   };
 
   const handleSaveGeneral = () => {
     if (!settingsRef) return;
     setDocumentNonBlocking(settingsRef, formData, { merge: true });
-    toast({
-      title: "Paramètres Sauvegardés",
-      description: "Configuration mise à jour.",
-    });
+    toast({ title: "Sauvegardé", description: "Paramètres mis à jour." });
   };
 
   const handleUpdateAccount = async () => {
     if (!user) return;
-    
     if (accountData.newPassword && accountData.newPassword !== accountData.confirmPassword) {
       toast({ variant: "destructive", title: "Erreur", description: "Mots de passe différents." });
       return;
     }
-
     setIsUpdatingAccount(true);
     try {
       if (accountData.email !== user.email) await updateEmail(user, accountData.email);
       if (accountData.newPassword) await updatePassword(user, accountData.newPassword);
-      toast({ title: "Compte Mis à Jour", description: "Identifiants synchronisés." });
+      toast({ title: "Compte Mis à Jour" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur Sécurité", description: error.message });
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
     } finally {
       setIsUpdatingAccount(false);
     }
@@ -202,7 +183,7 @@ function SettingsContent() {
         <header className="flex h-16 items-center border-b px-6 bg-background">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl">Paramètres Système</h1>
+          <h1 className="font-headline font-semibold text-xl">Paramètres</h1>
         </header>
 
         <main className="p-4 md:p-6 max-w-4xl mx-auto w-full space-y-6">
@@ -217,127 +198,67 @@ function SettingsContent() {
             <TabsContent value="general">
               <Card>
                 <CardHeader>
-                  <CardTitle>Identité de l'Hôtel</CardTitle>
-                  <CardDescription>Gérez les informations publiques et votre signature.</CardDescription>
+                  <CardTitle>Identité & Signature</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
-                    <Label>Nom de l'Établissement</Label>
+                    <Label>Nom de l'Hôtel</Label>
                     <Input value={formData.hotelName} onChange={(e) => setFormData({...formData, hotelName: e.target.value})} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>E-mail</Label>
-                      <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Téléphone</Label>
-                      <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                    </div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Adresse</Label>
                     <Input value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
                   </div>
-                  
                   <Separator className="my-6" />
-                  
                   <div className="space-y-4">
-                    <Label className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                      <PenTool className="h-4 w-4" /> Signature du Manager
-                    </Label>
+                    <Label className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest"><PenTool className="h-3 w-3" /> Signature Manager</Label>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-3">
-                        <Label>Nom du Signataire</Label>
-                        <Input value={formData.managerName} onChange={(e) => setFormData({...formData, managerName: e.target.value})} placeholder="Manager Principal" />
-                        <div className="p-4 border rounded-xl bg-white space-y-2">
-                          <Label className="text-[10px] uppercase font-bold text-muted-foreground">Zone de Signature (Souris ou Tactile)</Label>
+                        <Input value={formData.managerName} onChange={(e) => setFormData({...formData, managerName: e.target.value})} placeholder="Nom du manager" />
+                        <div className="border rounded-xl p-2 bg-white space-y-2">
                           <canvas 
-                            ref={canvasRef}
-                            width={300}
-                            height={120}
+                            ref={canvasRef} width={300} height={120}
                             className="w-full h-[120px] bg-slate-50 border border-dashed rounded-lg cursor-crosshair touch-none"
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
+                            onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
+                            onTouchStart={(e) => { e.preventDefault(); startDrawing(e); }}
+                            onTouchMove={(e) => { e.preventDefault(); draw(e); }}
                             onTouchEnd={stopDrawing}
                           />
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1" onClick={clearSignature}>
-                              <Eraser className="h-3 w-3 mr-2" /> Effacer
-                            </Button>
-                            <Button variant="secondary" size="sm" className="flex-1" onClick={saveSignature}>
-                              Capturer
-                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1" onClick={clearSignature}><Eraser className="h-3 w-3 mr-2" /> Effacer</Button>
+                            <Button variant="secondary" size="sm" className="flex-1" onClick={saveSignature}>Capturer</Button>
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-2xl border-2 border-dashed border-muted">
-                        {formData.signatureUrl ? (
-                          <div className="space-y-3 text-center">
-                            <img src={formData.signatureUrl} alt="Signature actuelle" className="max-h-24 mx-auto" />
-                            <p className="text-[10px] font-bold uppercase text-emerald-600">Signature prête</p>
-                          </div>
-                        ) : (
-                          <div className="text-center space-y-2 opacity-20">
-                            <PenTool className="h-12 w-12 mx-auto" />
-                            <p className="text-xs font-bold uppercase tracking-widest">Aucune signature</p>
-                          </div>
-                        )}
+                      <div className="flex items-center justify-center p-6 bg-muted/30 rounded-2xl border-2 border-dashed">
+                        {formData.signatureUrl ? <img src={formData.signatureUrl} alt="Signature" className="max-h-24" /> : <p className="text-xs text-muted-foreground italic">Aucune signature</p>}
                       </div>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleSaveGeneral} className="gap-2">
-                    <Save className="h-4 w-4" /> Sauvegarder
-                  </Button>
-                </CardFooter>
+                <CardFooter className="border-t p-4 flex justify-end"><Button onClick={handleSaveGeneral} className="gap-2"><Save className="h-4 w-4" /> Sauvegarder</Button></CardFooter>
               </Card>
             </TabsContent>
 
             <TabsContent value="reservations">
               <Card>
-                <CardHeader>
-                  <CardTitle>Politiques de Séjour</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <Label>Check-in Standard</Label>
-                      <Input type="time" value={formData.checkInTime} onChange={(e) => setFormData({...formData, checkInTime: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Check-out Standard</Label>
-                      <Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} />
-                    </div>
-                  </div>
+                <CardHeader><CardTitle>Politiques</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Check-in</Label><Input type="time" value={formData.checkInTime} onChange={(e) => setFormData({...formData, checkInTime: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Check-out</Label><Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} /></div>
                 </CardContent>
-                <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleSaveGeneral} className="gap-2"><Save className="h-4 w-4" /> Sauvegarder</Button>
-                </CardFooter>
+                <CardFooter className="border-t p-4 flex justify-end"><Button onClick={handleSaveGeneral} className="gap-2"><Save className="h-4 w-4" /> Sauvegarder</Button></CardFooter>
               </Card>
             </TabsContent>
 
             <TabsContent value="account">
               <Card>
-                <CardHeader><CardTitle>Compte Administrateur</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Sécurité</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input value={accountData.firstName} onChange={(e) => setAccountData({...accountData, firstName: e.target.value})} placeholder="Prénom" />
-                    <Input value={accountData.lastName} onChange={(e) => setAccountData({...accountData, lastName: e.target.value})} placeholder="Nom" />
-                  </div>
-                  <Input value={accountData.email} onChange={(e) => setAccountData({...accountData, email: e.target.value})} placeholder="E-mail" />
+                  <Input value={accountData.email} readOnly disabled />
+                  <Input type="password" placeholder="Nouveau mot de passe" value={accountData.newPassword} onChange={(e) => setAccountData({...accountData, newPassword: e.target.value})} />
                 </CardContent>
-                <CardFooter className="border-t bg-muted/20 flex justify-end p-4">
-                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount}>
-                    {isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                    Mettre à jour
-                  </Button>
-                </CardFooter>
+                <CardFooter className="border-t p-4 flex justify-end"><Button onClick={handleUpdateAccount} disabled={isUpdatingAccount}>Mettre à jour</Button></CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
