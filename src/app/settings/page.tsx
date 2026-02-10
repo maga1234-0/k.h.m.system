@@ -93,8 +93,8 @@ function SettingsContent() {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+    const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
     return {
       x: clientX - rect.left,
       y: clientY - rect.top

@@ -317,110 +317,114 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         </main>
-      </SidebarInset>
 
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Valider l'Encaissement</DialogTitle>
-            <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
-          </DialogHeader>
-          {invoiceForPayment && (
-            <div className="py-6 space-y-4">
-              <div className="p-4 bg-muted/50 rounded-xl border">
-                <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Total à encaisser</p>
-                <h3 className="text-3xl font-black text-primary tracking-tighter">{Number(invoiceForPayment.amountDue).toFixed(2)} $</h3>
+        <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Valider l'Encaissement</DialogTitle>
+              <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
+            </DialogHeader>
+            {invoiceForPayment && (
+              <div className="py-6 space-y-4">
+                <div className="p-4 bg-muted/50 rounded-xl border">
+                  <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Total à encaisser</p>
+                  <h3 className="text-3xl font-black text-primary tracking-tighter">{Number(invoiceForPayment.amountDue).toFixed(2)} $</h3>
+                </div>
               </div>
-            </div>
-          )}
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCollectPayment}>Confirmer le paiement</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Facture Fiesta Hotel</DialogTitle>
-            <DialogDescription>Aperçu officiel de la facture.</DialogDescription>
-          </DialogHeader>
-          {selectedInvoice && (
-            <div className="flex flex-col h-full max-h-[90vh]">
-              <div className="flex-1 overflow-auto p-4 space-y-8 bg-slate-100">
-                <div id="invoice-page-1" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm]">
-                  <div className="flex justify-between items-start mb-16">
-                    <div className="flex items-center gap-3">
-                      <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg"><Hotel className="h-10 w-10" /></div>
-                      <span className="font-headline font-black text-4xl text-primary tracking-tighter">{settings?.hotelName || 'Fiesta hotel'}</span>
-                    </div>
-                    <div className="text-right">
-                      <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
-                      <p className="text-sm text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-12 mb-16">
-                    <div>
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4 border-b border-primary/20 pb-1">CLIENT</p>
-                      <h3 className="text-2xl font-black text-slate-900">{selectedInvoice.guestName}</h3>
-                      <p className="text-sm text-slate-500 font-bold mt-1">{selectedInvoice.guestPhone}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 border-b border-slate-900 pb-1">ÉMETTEUR</p>
-                      <h3 className="text-xl font-black text-slate-900">{settings?.hotelName || 'Fiesta hotel'}</h3>
-                      <p className="text-[11px] text-slate-400 font-bold mt-1">{settings?.address || 'Adresse'}</p>
-                    </div>
-                  </div>
-                  <div className="mb-20">
-                    <table className="w-full">
-                      <thead><tr className="bg-slate-50 border-b"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-left">DESCRIPTION</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right">TOTAL ($)</th></tr></thead>
-                      <tbody className="divide-y">
-                        <tr><td className="py-8 px-6 font-black text-slate-800">Hébergement & Services de base</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900">{basePrice.toFixed(2)} $</td></tr>
-                        <tr><td className="py-8 px-6 font-black text-slate-500">Total Consommations & Extras (Page 2)</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900">+{totalExtras.toFixed(2)} $</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex justify-between items-end border-t-4 border-slate-900 pt-10">
-                    <div className="text-left space-y-4">
-                      <p className="text-[10px] font-black uppercase text-slate-400">Signature & Cachet</p>
-                      <div className="min-h-[100px] flex flex-col justify-end">
-                        {settings?.signatureUrl ? <img src={settings.signatureUrl} alt="Signature" className="h-20 w-auto object-contain mb-2" /> : <div className="h-16 w-48 border-b-2 border-dashed border-slate-200" />}
-                        <p className="text-sm font-black uppercase">{settings?.managerName || 'Le Manager'}</p>
+        <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
+          <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Facture Fiesta Hotel</DialogTitle>
+              <DialogDescription>Aperçu officiel de la facture.</DialogDescription>
+            </DialogHeader>
+            {selectedInvoice && (
+              <div className="flex flex-col h-full max-h-[90vh]">
+                <div className="flex-1 overflow-auto p-2 md:p-4 space-y-8 bg-slate-100">
+                  <div className="w-full flex justify-center">
+                    <div className="scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top transform-gpu">
+                      <div id="invoice-page-1" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm]">
+                        <div className="flex justify-between items-start mb-16">
+                          <div className="flex items-center gap-3">
+                            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg"><Hotel className="h-10 w-10" /></div>
+                            <span className="font-headline font-black text-4xl text-primary tracking-tighter">{settings?.hotelName || 'Fiesta hotel'}</span>
+                          </div>
+                          <div className="text-right">
+                            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
+                            <p className="text-sm text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-12 mb-16">
+                          <div>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4 border-b border-primary/20 pb-1">CLIENT</p>
+                            <h3 className="text-2xl font-black text-slate-900">{selectedInvoice.guestName}</h3>
+                            <p className="text-sm text-slate-500 font-bold mt-1">{selectedInvoice.guestPhone}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 border-b border-slate-900 pb-1">ÉMETTEUR</p>
+                            <h3 className="text-xl font-black text-slate-900">{settings?.hotelName || 'Fiesta hotel'}</h3>
+                            <p className="text-[11px] text-slate-400 font-bold mt-1">{settings?.address || 'Adresse'}</p>
+                          </div>
+                        </div>
+                        <div className="mb-20">
+                          <table className="w-full">
+                            <thead><tr className="bg-slate-50 border-b"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-left">DESCRIPTION</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right">TOTAL ($)</th></tr></thead>
+                            <tbody className="divide-y">
+                              <tr><td className="py-8 px-6 font-black text-slate-800">Hébergement & Services de base</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900">{basePrice.toFixed(2)} $</td></tr>
+                              <tr><td className="py-8 px-6 font-black text-slate-500">Total Consommations & Extras (Page 2)</td><td className="py-8 px-6 text-right font-black text-xl text-slate-900">+{totalExtras.toFixed(2)} $</td></tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="flex justify-between items-end border-t-4 border-slate-900 pt-10">
+                          <div className="text-left space-y-4">
+                            <p className="text-[10px] font-black uppercase text-slate-400">Signature & Cachet</p>
+                            <div className="min-h-[100px] flex flex-col justify-end">
+                              {settings?.signatureUrl ? <img src={settings.signatureUrl} alt="Signature" className="h-20 w-auto object-contain mb-2" /> : <div className="h-16 w-48 border-b-2 border-dashed border-slate-200" />}
+                              <p className="text-sm font-black uppercase">{settings?.managerName || 'Le Manager'}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[11px] font-black text-slate-400 uppercase mb-2">TOTAL NET À PAYER</p>
+                            <span className="text-5xl font-black text-slate-900 tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div id="invoice-page-2" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm] mt-8">
+                        <h2 className="text-xl font-black uppercase tracking-widest border-b-2 border-primary pb-4 mb-10 text-primary">Détail des Consommations</h2>
+                        <table className="w-full text-left mb-20">
+                          <thead><tr className="bg-slate-50"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase">DATE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase">SERVICE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right">MONTANT</th></tr></thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {extras.length > 0 ? extras.map((e, i) => (
+                              <tr key={i}>
+                                <td className="py-6 px-6 text-sm font-bold text-slate-500">{e.date}</td>
+                                <td className="py-6 px-6 text-sm font-black text-primary">{e.type} ({e.description})</td>
+                                <td className="py-6 px-6 text-right font-black text-slate-900">+{parseFloat(e.amount).toFixed(2)} $</td>
+                              </tr>
+                            )) : <tr><td colSpan={3} className="py-12 text-center text-slate-300 italic">Aucune consommation supplémentaire.</td></tr>}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[11px] font-black text-slate-400 uppercase mb-2">TOTAL NET À PAYER</p>
-                      <span className="text-5xl font-black text-slate-900 tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
-                    </div>
                   </div>
                 </div>
-                <div id="invoice-page-2" className="bg-white p-12 shadow-sm rounded-sm mx-auto w-[210mm] min-h-[297mm]">
-                  <h2 className="text-xl font-black uppercase tracking-widest border-b-2 border-primary pb-4 mb-10 text-primary">Détail des Consommations</h2>
-                  <table className="w-full text-left mb-20">
-                    <thead><tr className="bg-slate-50"><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase">DATE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase">SERVICE</th><th className="py-4 px-6 text-[11px] font-black text-slate-400 uppercase text-right">MONTANT</th></tr></thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {extras.length > 0 ? extras.map((e, i) => (
-                        <tr key={i}>
-                          <td className="py-6 px-6 text-sm font-bold text-slate-500">{e.date}</td>
-                          <td className="py-6 px-6 text-sm font-black text-primary">{e.type} ({e.description})</td>
-                          <td className="py-6 px-6 text-right font-black text-slate-900">+{parseFloat(e.amount).toFixed(2)} $</td>
-                        </tr>
-                      )) : <tr><td colSpan={3} className="py-12 text-center text-slate-300 italic">Aucune consommation supplémentaire.</td></tr>}
-                    </tbody>
-                  </table>
+                <div className="bg-white p-4 md:p-6 border-t flex flex-col md:flex-row justify-end gap-4">
+                  <Button disabled={isGeneratingPdf} className="w-full md:w-auto h-12 px-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 font-black text-[11px] uppercase tracking-widest gap-2" onClick={handleDownloadPDF}>
+                    {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    Générer Facture (2 Pages)
+                  </Button>
                 </div>
               </div>
-              <div className="bg-white p-6 border-t flex justify-end gap-4">
-                <Button disabled={isGeneratingPdf} className="h-12 px-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 font-black text-[11px] uppercase tracking-widest gap-2" onClick={handleDownloadPDF}>
-                  {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  Générer Facture (2 Pages)
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </DialogContent>
+        </Dialog>
+      </SidebarInset>
     </div>
   );
 }
