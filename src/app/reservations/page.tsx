@@ -94,9 +94,10 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // On ferme d'abord le dropdown (géré par Radix) puis on ouvre le dialogue
     setTimeout(() => {
       setActiveDialog("manage");
-    }, 150);
+    }, 100);
   };
 
   const handleSaveBooking = () => {

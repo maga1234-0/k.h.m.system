@@ -177,7 +177,13 @@ export default function BillingPage() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`facture-${selectedInvoice.guestName.replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "Document Prêt", description: "Le PDF a été généré avec succès." });
+      toast({ title: "Document Prêt", description: "Le PDF a été généré. Envoi WhatsApp en cours..." });
+      
+      // Après la génération du PDF, on déclenche automatiquement l'envoi WhatsApp avec les détails
+      setTimeout(() => {
+        handleSendWhatsApp(selectedInvoice);
+      }, 1000);
+
     } catch (error) {
       console.error('PDF Generation Error:', error);
       toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération du PDF." });
@@ -462,7 +468,7 @@ export default function BillingPage() {
                   onClick={handleDownloadPDF}
                 >
                   {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  Générer PDF
+                  Générer & Partager
                 </Button>
               </div>
             </div>

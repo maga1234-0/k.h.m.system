@@ -89,7 +89,6 @@ function SettingsContent() {
     }
   }, [staffProfile, user]);
 
-  // Enhanced Signature Logic for both Mouse and Touch
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -116,12 +115,13 @@ function SettingsContent() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Empêche le scroll sur mobile pendant le dessin
+    if (e.cancelable) e.preventDefault();
+
     const coords = getCoordinates(e);
     ctx.beginPath();
     ctx.moveTo(coords.x, coords.y);
     setIsDrawing(true);
-    
-    if (e.cancelable) e.preventDefault();
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -131,6 +131,8 @@ function SettingsContent() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    if (e.cancelable) e.preventDefault();
+
     const coords = getCoordinates(e);
     ctx.lineTo(coords.x, coords.y);
     ctx.strokeStyle = "#000000";
@@ -138,8 +140,6 @@ function SettingsContent() {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
-
-    if (e.cancelable) e.preventDefault();
   };
 
   const stopDrawing = () => {
