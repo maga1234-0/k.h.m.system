@@ -23,11 +23,11 @@ import {
   Mail,
   Phone,
   User,
-  Key,
   ShieldCheck,
   Eye,
   EyeOff,
-  MapPin
+  MapPin,
+  PenTool
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -58,6 +58,8 @@ function SettingsContent() {
     autoInvoicing: true,
     notificationsEnabled: true,
     currency: "USD",
+    signatureUrl: "",
+    managerName: ""
   });
 
   const [accountData, setAccountData] = useState({
@@ -183,7 +185,7 @@ function SettingsContent() {
               <Card>
                 <CardHeader>
                   <CardTitle>Informations de l'Hôtel</CardTitle>
-                  <CardDescription>Gérez l'identité publique de votre établissement.</CardDescription>
+                  <CardDescription>Gérez l'identité publique et votre signature.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
@@ -192,7 +194,7 @@ function SettingsContent() {
                       <Hotel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         id="hotelName" 
-                        placeholder="Ex: ImaraPMS"
+                        placeholder="Ex: Fiesta Hotel"
                         className="pl-9"
                         value={formData.hotelName}
                         onChange={(e) => setFormData({...formData, hotelName: e.target.value})}
@@ -207,7 +209,6 @@ function SettingsContent() {
                         <Input 
                           id="email" 
                           type="email"
-                          placeholder=""
                           className="pl-9"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -220,7 +221,6 @@ function SettingsContent() {
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                           id="phone" 
-                          placeholder=""
                           className="pl-9"
                           value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -234,11 +234,35 @@ function SettingsContent() {
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         id="address" 
-                        placeholder=""
                         className="pl-9"
                         value={formData.address}
                         onChange={(e) => setFormData({...formData, address: e.target.value})}
                       />
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                      <PenTool className="h-4 w-4" /> Signature des Factures
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-2">
+                        <Label>Nom du Signataire</Label>
+                        <Input 
+                          placeholder="Nom du Manager"
+                          value={formData.managerName}
+                          onChange={(e) => setFormData({...formData, managerName: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>URL de l'image de Signature</Label>
+                        <Input 
+                          placeholder="https://..."
+                          value={formData.signatureUrl}
+                          onChange={(e) => setFormData({...formData, signatureUrl: e.target.value})}
+                        />
+                        <p className="text-[10px] text-muted-foreground italic">Lien vers une image PNG transparente de votre signature.</p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

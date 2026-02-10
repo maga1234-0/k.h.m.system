@@ -267,7 +267,7 @@ export default function BillingPage() {
                   <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmer la purge ?</AlertDialogTitle>
-                      <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                      <AlertDialogDescription>Cette action est irréversible et supprimera tout l'historique de facturation.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -348,7 +348,7 @@ export default function BillingPage() {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>Valider l'Encaissement</DialogTitle>
-            <DialogDescription>Confirmez la réception du paiement.</DialogDescription>
+            <DialogDescription>Confirmez la réception du paiement pour ce dossier client.</DialogDescription>
           </DialogHeader>
           {invoiceForPayment && (
             <div className="py-6 space-y-4">
@@ -369,7 +369,7 @@ export default function BillingPage() {
         <DialogContent className="max-w-4xl w-[95vw] p-0 bg-white border-none shadow-2xl overflow-hidden rounded-3xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Aperçu Facture Fiesta Hotel</DialogTitle>
-            <DialogDescription>Document de facturation officiel.</DialogDescription>
+            <DialogDescription>Document de facturation officiel incluant les détails de séjour et les consommations.</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="flex flex-col h-full max-h-[90vh]">
@@ -380,7 +380,7 @@ export default function BillingPage() {
                     <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                       <Hotel className="h-8 w-8" />
                     </div>
-                    <span className="font-headline font-black text-3xl text-primary tracking-tighter">Fiesta hotel</span>
+                    <span className="font-headline font-black text-3xl text-primary tracking-tighter">{settings?.hotelName || 'Fiesta hotel'}</span>
                   </div>
                   <div className="text-right">
                     <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">FACTURE #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</h1>
@@ -406,7 +406,7 @@ export default function BillingPage() {
                       <div className="h-[1.5px] w-full bg-slate-900 absolute -bottom-1" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-900">Fiesta hotel</h3>
+                      <h3 className="text-xl font-black text-slate-900">{settings?.hotelName || 'Fiesta hotel'}</h3>
                       <p className="text-[11px] text-slate-400 font-bold leading-relaxed max-w-[220px] ml-auto mt-1">{settings?.address || 'Adresse non configurée'}</p>
                     </div>
                   </div>
@@ -439,17 +439,30 @@ export default function BillingPage() {
                   </table>
                 </div>
 
-                {/* Total Section */}
-                <div className="flex justify-end pt-8 border-t-2 border-slate-100">
-                  <div className="w-full max-w-[320px] flex justify-between items-center">
-                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Total Net à payer</span>
-                    <span className="text-4xl font-black text-slate-900 tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                {/* Total Section & Signature */}
+                <div className="grid grid-cols-2 gap-8 items-end border-t-2 border-slate-100 pt-8">
+                  <div className="text-left space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Cachet & Signature</p>
+                    <div className="min-h-[80px] flex flex-col justify-end">
+                      {settings?.signatureUrl ? (
+                        <img src={settings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2" />
+                      ) : (
+                        <div className="h-12 w-full border-b border-dashed border-slate-300 mb-2" />
+                      )}
+                      <p className="text-sm font-black text-slate-900">{settings?.managerName || 'Le Manager'}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="w-full max-w-[320px] flex justify-between items-center">
+                      <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Total Net à payer</span>
+                      <span className="text-4xl font-black text-slate-900 tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
+                    </div>
                   </div>
                 </div>
                 
                 {/* Footer Message */}
                 <div className="mt-24 pt-10 border-t border-dashed border-slate-200 text-center">
-                  <p className="text-[10px] uppercase font-black tracking-[0.4em] text-slate-300">Merci de votre confiance • Fiesta hotel</p>
+                  <p className="text-[10px] uppercase font-black tracking-[0.4em] text-slate-300">Merci de votre confiance • {settings?.hotelName || 'Fiesta hotel'}</p>
                 </div>
               </div>
 

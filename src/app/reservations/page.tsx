@@ -116,7 +116,7 @@ export default function ReservationsPage() {
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ variant: "destructive", title: "Données manquantes", description: "Veuillez remplir les informations." });
+      toast({ variant: "destructive", title: "Données manquantes", description: "Veuillez remplir les informations obligatoires." });
       return;
     }
     
@@ -135,7 +135,7 @@ export default function ReservationsPage() {
     
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Succès", description: "Réservation créée." });
+    toast({ title: "Succès", description: "La réservation a été créée avec succès." });
   };
 
   const handleCheckIn = () => {
@@ -166,7 +166,16 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
 
     setActiveDialog(null);
-    toast({ title: "Départ validé", description: "La chambre est en nettoyage." });
+    toast({ title: "Départ validé", description: "La chambre est maintenant en statut nettoyage." });
+  };
+
+  const handleCancelReservation = () => {
+    if (!selectedRes) return;
+    updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
+
+    setActiveDialog(null);
+    toast({ variant: "destructive", title: "Réservation Annulée", description: "Le dossier a été annulé et la chambre est libre." });
   };
 
   const handleClearAll = () => {
@@ -175,7 +184,7 @@ export default function ReservationsPage() {
       deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
     });
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre purgé", description: "Toutes les réservations ont été supprimées." });
+    toast({ variant: "destructive", title: "Registre purgé", description: "Toutes les réservations ont été définitivement supprimées." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -214,7 +223,7 @@ export default function ReservationsPage() {
                 <AlertDialogContent className="rounded-2xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
-                    <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    <AlertDialogDescription>Cette action supprimera tout l'historique des réservations. Cette opération est irréversible.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -311,7 +320,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px] w-[95vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
-              <DialogDescription>Enregistrer un nouveau dossier de séjour.</DialogDescription>
+              <DialogDescription>Enregistrer un nouveau dossier de séjour pour un client.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -376,7 +385,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md w-[90vw] rounded-2xl">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
-              <DialogDescription>Effectuer l'arrivée ou le départ.</DialogDescription>
+              <DialogDescription>Effectuer l'arrivée, le départ ou l'annulation du séjour.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-4">
@@ -404,9 +413,15 @@ export default function ReservationsPage() {
                     </Button>
                   )}
                   
+                  {(selectedRes.status === 'Confirmée' || selectedRes.status === 'Checked In') && (
+                    <Button variant="outline" onClick={handleCancelReservation} className="w-full h-12 gap-3 text-destructive border-destructive/20 hover:bg-destructive/10 font-bold rounded-xl">
+                      <XCircle className="h-5 w-5" /> Annuler la réservation
+                    </Button>
+                  )}
+                  
                   {(selectedRes.status === 'Checked Out' || selectedRes.status === 'Cancelled') && (
                     <div className="p-4 text-center border-2 border-dashed rounded-xl text-muted-foreground text-sm">
-                      Séjour terminé ou annulé.
+                      Dossier clos. Ce séjour est terminé ou a été annulé.
                     </div>
                   )}
                 </div>
