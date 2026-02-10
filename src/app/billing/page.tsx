@@ -25,7 +25,7 @@ import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
-import jsPDF from 'jsPDF'
+import jsPDF from 'jspdf'
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
@@ -187,7 +186,7 @@ export default function BillingPage() {
 
   const invoiceExtras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
   const totalExtras = invoiceExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
-  const basePrice = useMemo(() => {
+  const basePriceValue = useMemo(() => {
     if (!selectedInvoice) return 0;
     return Math.max(0, Number(selectedInvoice.amountDue) - totalExtras);
   }, [selectedInvoice, totalExtras]);
@@ -395,7 +394,7 @@ export default function BillingPage() {
                               <p className="font-black text-lg text-slate-900 leading-tight">Hébergement & Prestations Incluses</p>
                               <p className="text-xs text-slate-400 mt-1">Séjour du {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                             </td>
-                            <td className="py-6 px-6 text-right font-black text-xl text-slate-900 align-top">{basePrice.toFixed(2)} $</td>
+                            <td className="py-6 px-6 text-right font-black text-xl text-slate-900 align-top">{basePriceValue.toFixed(2)} $</td>
                           </tr>
                           {invoiceExtras.map((e, i) => (
                             <tr key={i} className="bg-slate-50/50">
