@@ -340,8 +340,8 @@ export default function BillingPage() {
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
                 <div className="flex-1 overflow-auto p-4 md:p-8">
-                  <div className="w-full flex justify-center">
-                    <div className="scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top transform-gpu">
+                  <div className="w-full flex justify-center py-4">
+                    <div className="shrink-0 scale-[0.35] xs:scale-[0.45] sm:scale-[0.6] md:scale-[0.7] lg:scale-[0.9] xl:scale-100 origin-top transform-gpu">
                       <div id="invoice-single-page" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900 font-sans">
                         
                         <div className="mb-12 border-b-2 border-primary pb-8">
@@ -451,7 +451,7 @@ export default function BillingPage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white p-6 border-t flex justify-center rounded-b-3xl">
+                <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl shrink-0">
                   <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg shadow-primary/20" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     Télécharger la Facture (PDF)
