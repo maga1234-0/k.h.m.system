@@ -370,14 +370,14 @@ export default function BillingPage() {
                           <div className="space-y-4">
                             <p className="text-[10px] font-black text-primary uppercase border-b pb-1">CLIENT</p>
                             <div className="space-y-1">
-                              <h3 className="text-2xl font-black">{selectedInvoice.guestName}</h3>
+                              <h3 className="text-2xl font-black leading-none mb-1">{selectedInvoice.guestName}</h3>
                               <p className="text-sm font-bold text-slate-500">{selectedInvoice.guestPhone}</p>
                             </div>
                           </div>
                           <div className="text-right space-y-4">
                             <p className="text-[10px] font-black text-slate-400 uppercase border-b pb-1 text-right">ÉMETTEUR</p>
                             <div className="space-y-1">
-                              <h3 className="text-lg font-black">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
+                              <h3 className="text-lg font-black leading-none mb-1">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
                               <p className="text-[12px] text-slate-400 font-bold">{settings?.address || 'Adresse officielle'}</p>
                             </div>
                           </div>
@@ -394,14 +394,14 @@ export default function BillingPage() {
                             <tbody className="divide-y divide-slate-100">
                               <tr>
                                 <td className="py-8 px-6">
-                                  <span className="font-black text-lg block">Hébergement & Frais de Séjour</span>
+                                  <span className="font-black text-lg block leading-tight">Hébergement & Frais de Séjour</span>
                                   <span className="text-xs text-slate-400">Services standards inclus pour la durée du séjour</span>
                                 </td>
                                 <td className="py-8 px-6 text-right font-black text-xl">{basePrice.toFixed(2)} $</td>
                               </tr>
                               <tr className="bg-slate-50">
                                 <td className="py-8 px-6">
-                                  <span className="font-black text-slate-500 text-lg block">Extras & Consommations</span>
+                                  <span className="font-black text-slate-500 text-lg block leading-tight">Extras & Consommations</span>
                                   <span className="text-xs text-slate-400">Voir le détail exhaustif en page 2</span>
                                 </td>
                                 <td className="py-8 px-6 text-right font-black text-xl text-slate-500">+{totalExtras.toFixed(2)} $</td>
@@ -419,7 +419,7 @@ export default function BillingPage() {
                               ) : (
                                 <div className="h-16 w-48 border-b border-dashed border-slate-200 mb-2" />
                               )}
-                              <p className="text-sm font-black uppercase tracking-widest">{settings?.managerName || 'Le Directeur'}</p>
+                              <p className="text-sm font-black uppercase tracking-widest leading-none">{settings?.managerName || 'Le Directeur'}</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -452,7 +452,7 @@ export default function BillingPage() {
                               <tr key={i}>
                                 <td className="py-6 px-6 text-xs font-bold text-slate-400">{e.date}</td>
                                 <td className="py-6 px-6">
-                                  <span className="font-bold block text-sm">{e.type}</span>
+                                  <span className="font-bold block text-sm leading-tight">{e.type}</span>
                                   <span className="text-[10px] text-slate-400 uppercase leading-none">{e.description}</span>
                                 </td>
                                 <td className="py-6 px-6 text-right font-bold">+{parseFloat(e.amount).toFixed(2)} $</td>
@@ -484,3 +484,4 @@ export default function BillingPage() {
     </div>
   );
 }
+    

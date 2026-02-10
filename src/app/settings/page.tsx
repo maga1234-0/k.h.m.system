@@ -273,3 +273,4 @@ function SettingsContent() {
 export default function SettingsPage() {
   return <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto mt-20" />}><SettingsContent /></Suspense>;
 }
+    
