@@ -153,10 +153,9 @@ export default function BillingPage() {
     if (!selectedInvoice) return;
 
     setIsGeneratingPdf(true);
-    const page1 = document.getElementById('invoice-page-1');
-    const page2 = document.getElementById('invoice-page-2');
+    const page = document.getElementById('invoice-single-page');
     
-    if (!page1 || !page2) {
+    if (!page) {
       setIsGeneratingPdf(false);
       return;
     }
@@ -165,28 +164,18 @@ export default function BillingPage() {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      const canvas1 = await html2canvas(page1, { 
+      const canvas = await html2canvas(page, { 
         scale: 2, 
         useCORS: true, 
         backgroundColor: '#ffffff',
         logging: false
       });
-      const img1 = canvas1.toDataURL('image/png');
-      const height1 = (canvas1.height * pdfWidth) / canvas1.width;
-      pdf.addImage(img1, 'PNG', 0, 0, pdfWidth, height1);
-
-      pdf.addPage();
-      const canvas2 = await html2canvas(page2, { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        logging: false
-      });
-      const img2 = canvas2.toDataURL('image/png');
-      const height2 = (canvas2.height * pdfWidth) / canvas2.width;
-      pdf.addImage(img2, 'PNG', 0, 0, pdfWidth, height2);
-
+      const imgData = canvas.toDataURL('image/png');
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
       pdf.save(`FACTURE-${selectedInvoice.guestName.toUpperCase().replace(/\s+/g, '-')}.pdf`);
+      
       toast({ title: "Succès", description: "Facture générée." });
       
       setTimeout(() => {
@@ -349,141 +338,119 @@ export default function BillingPage() {
         </Dialog>
 
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-          <DialogContent className="max-w-5xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl">
+          <DialogContent className="max-w-4xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl">
             <DialogHeader className="sr-only">
               <DialogTitle>Facture Officielle</DialogTitle>
             </DialogHeader>
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
-                <div className="flex-1 overflow-auto p-4 md:p-8 space-y-12">
+                <div className="flex-1 overflow-auto p-4 md:p-8">
                   <div className="w-full flex justify-center">
                     <div className="scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top transform-gpu">
-                      
-                      {/* PAGE 1 */}
-                      <div id="invoice-page-1" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900">
-                        <div className="flex justify-between items-start mb-16 border-b pb-8">
-                          <div style={{ width: '60%' }} className="flex items-center gap-4 min-w-0">
+                      <div id="invoice-single-page" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col text-slate-900 font-sans">
+                        
+                        {/* Header Section */}
+                        <div className="flex justify-between items-start mb-12 border-b-2 border-primary pb-8">
+                          <div className="w-2/3 flex items-center gap-4">
                             <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-headline font-black text-3xl text-primary leading-tight truncate">{settings?.hotelName || 'ImaraPMS'}</span>
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Excellence Hôtelière</span>
+                            <div className="min-w-0">
+                              <h1 className="font-headline font-black text-3xl text-primary leading-tight truncate uppercase">{settings?.hotelName || 'ImaraPMS'}</h1>
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Fiesta Hotel Group • Excellence</p>
                             </div>
                           </div>
-                          <div style={{ width: '35%' }} className="text-right shrink-0">
-                            <h1 className="text-3xl font-black uppercase mb-1">FACTURE</h1>
-                            <div className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</div>
+                          <div className="w-1/3 text-right">
+                            <h2 className="text-3xl font-black uppercase text-slate-900 mb-1">FACTURE</h2>
+                            <p className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
                             <p className="text-xs text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-12 mb-16">
-                          <div className="space-y-4">
-                            <p className="text-[10px] font-black text-primary uppercase border-b pb-1">CLIENT</p>
-                            <div className="space-y-1">
-                              <h3 className="text-2xl font-black leading-tight mb-1">{selectedInvoice.guestName}</h3>
+                        {/* Details Section */}
+                        <div className="grid grid-cols-2 gap-12 mb-12">
+                          <div className="space-y-2">
+                            <h4 className="text-[10px] font-black text-primary uppercase border-b border-slate-100 pb-1">DESTINATAIRE</h4>
+                            <div className="pt-2">
+                              <p className="text-2xl font-black text-slate-900">{selectedInvoice.guestName}</p>
                               <p className="text-sm font-bold text-slate-500">{selectedInvoice.guestPhone}</p>
                             </div>
                           </div>
-                          <div className="text-right space-y-4">
-                            <p className="text-[10px] font-black text-slate-400 uppercase border-b pb-1 text-right">ÉMETTEUR</p>
-                            <div className="space-y-1">
-                              <h3 className="text-lg font-black leading-tight mb-1">{settings?.hotelName || 'ImaraPMS Resort'}</h3>
-                              <p className="text-[12px] text-slate-400 font-bold">{settings?.address || 'Adresse officielle'}</p>
+                          <div className="space-y-2 text-right">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 pb-1">ÉMETTEUR</h4>
+                            <div className="pt-2">
+                              <p className="text-lg font-black">{settings?.hotelName || 'ImaraPMS Resort'}</p>
+                              <p className="text-xs text-slate-400 font-bold max-w-[200px] ml-auto">{settings?.address || 'République Démocratique du Congo'}</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="mb-auto">
+                        {/* Services Table */}
+                        <div className="flex-1 mb-12">
                           <table className="w-full border-collapse">
                             <thead>
                               <tr className="bg-slate-900 text-white text-[10px] font-bold uppercase">
-                                <th className="py-4 px-6 text-left">DESCRIPTION</th>
+                                <th className="py-4 px-6 text-left border-r border-slate-700">DESCRIPTION DES SERVICES</th>
                                 <th className="py-4 px-6 text-right w-40">TOTAL ($)</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 border-b-2 border-slate-900">
                               <tr>
-                                <td className="py-8 px-6">
-                                  <span className="font-black text-lg block leading-tight">Hébergement & Frais de Séjour</span>
-                                  <span className="text-xs text-slate-400">Services standards inclus pour la durée du séjour</span>
+                                <td className="py-6 px-6">
+                                  <p className="font-black text-lg text-slate-900">Hébergement & Prestations Incluses</p>
+                                  <p className="text-xs text-slate-400">Séjour du {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                                 </td>
-                                <td className="py-8 px-6 text-right font-black text-xl whitespace-nowrap">{basePrice.toFixed(2)} $</td>
+                                <td className="py-6 px-6 text-right font-black text-xl text-slate-900">{basePrice.toFixed(2)} $</td>
                               </tr>
-                              <tr className="bg-slate-50">
-                                <td className="py-8 px-6">
-                                  <span className="font-black text-slate-500 text-lg block leading-tight">Extras & Consommations</span>
-                                  <span className="text-xs text-slate-400">Voir le détail exhaustif en page 2</span>
-                                </td>
-                                <td className="py-8 px-6 text-right font-black text-xl text-slate-500 whitespace-nowrap">+{totalExtras.toFixed(2)} $</td>
-                              </tr>
+                              {invoiceExtras.map((e, i) => (
+                                <tr key={i} className="bg-slate-50/50">
+                                  <td className="py-4 px-6">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-[9px] font-black bg-slate-200 px-2 py-0.5 rounded text-slate-500">{e.date}</span>
+                                      <span className="font-bold text-sm">{e.type} : {e.description}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-6 text-right font-bold text-slate-600">+{parseFloat(e.amount).toFixed(2)} $</td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         </div>
 
-                        <div className="flex justify-between items-end border-t-8 border-slate-900 pt-12 mt-12">
-                          <div className="space-y-6">
-                            <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE AUTORISÉE</p>
-                            <div className="min-h-[120px] flex flex-col justify-end">
+                        {/* Totals & Signature */}
+                        <div className="flex justify-between items-end pt-8">
+                          <div className="w-1/2">
+                            <p className="text-[10px] font-black uppercase text-primary mb-4">SIGNATURE & CACHET</p>
+                            <div className="min-h-[140px] flex flex-col justify-end">
                               {settings?.signatureUrl ? (
                                 <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
                               ) : (
-                                <div className="h-16 w-48 border-b border-dashed border-slate-200 mb-2" />
+                                <div className="h-20 w-48 border-b-2 border-dashed border-slate-200 mb-2" />
                               )}
-                              <p className="text-sm font-black uppercase tracking-widest leading-none">{settings?.managerName || 'Le Directeur'}</p>
+                              <p className="text-sm font-black uppercase tracking-widest">{settings?.managerName || 'La Direction'}</p>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase">Manager Officiel Fiesta Hotel</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-[12px] font-black text-slate-400 uppercase mb-2">TOTAL NET À RÉGLER</p>
-                            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
-                              <div className="text-5xl font-black text-slate-900 leading-none">
-                                {Number(selectedInvoice.amountDue).toFixed(2)} <span className="text-2xl text-primary">$</span>
+                          <div className="w-1/2 text-right">
+                            <div className="inline-block bg-primary/5 p-8 rounded-3xl border-2 border-primary/20">
+                              <p className="text-[10px] font-black text-slate-400 uppercase mb-2">MONTANT NET À RÉGLER</p>
+                              <div className="text-5xl font-black text-slate-900 flex items-baseline justify-end gap-2">
+                                {Number(selectedInvoice.amountDue).toFixed(2)} <span className="text-2xl text-primary font-black">$</span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* PAGE 2 */}
-                      <div id="invoice-page-2" className="bg-white p-12 shadow-2xl mx-auto w-[210mm] min-h-[297mm] mt-8 flex flex-col text-slate-900">
-                        <div className="mb-8 flex justify-between items-center border-b pb-4">
-                          <h2 className="text-2xl font-black uppercase">DÉTAIL DES SERVICES</h2>
-                          <span className="text-xs font-bold text-slate-400">REF: #INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</span>
+                        <div className="mt-auto pt-12 text-center">
+                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-[0.3em]">ImaraPMS - Logiciel de gestion hôtelière certifié - Document Officiel</p>
                         </div>
-                        <table className="w-full border-collapse mb-auto">
-                          <thead>
-                            <tr className="bg-slate-50 border-y border-slate-200 text-[10px] font-bold text-slate-400 uppercase">
-                              <th className="py-4 px-6 text-left w-32">DATE</th>
-                              <th className="py-4 px-6 text-left">SERVICE / DESCRIPTION</th>
-                              <th className="py-4 px-6 text-right w-32">MONTANT ($)</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {invoiceExtras.length > 0 ? invoiceExtras.map((e, i) => (
-                              <tr key={i}>
-                                <td className="py-6 px-6 text-xs font-bold text-slate-400">{e.date}</td>
-                                <td className="py-6 px-6">
-                                  <span className="font-bold block text-sm leading-tight">{e.type}</span>
-                                  <span className="text-[10px] text-slate-400 uppercase leading-none">{e.description}</span>
-                                </td>
-                                <td className="py-6 px-6 text-right font-bold whitespace-nowrap">+{parseFloat(e.amount).toFixed(2)} $</td>
-                              </tr>
-                            )) : (
-                              <tr><td colSpan={3} className="py-24 text-center text-slate-300 font-bold italic">Aucun extra enregistré pour ce séjour.</td></tr>
-                            )}
-                          </tbody>
-                        </table>
-                        <div className="mt-12 pt-8 border-t text-center">
-                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">Généré par ImaraPMS - Document officiel du Fiesta Hotel Group</p>
-                        </div>
-                      </div>
 
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div className="bg-white p-6 border-t flex justify-center rounded-b-3xl">
-                  <Button disabled={isGeneratingPdf} className="h-12 px-8 font-black uppercase text-xs gap-2" onClick={handleDownloadPDF}>
-                    {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    Générer PDF (2 Pages)
+                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg shadow-primary/20" onClick={handleDownloadPDF}>
+                    {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+                    Générer la Facture (PDF)
                   </Button>
                 </div>
               </div>
