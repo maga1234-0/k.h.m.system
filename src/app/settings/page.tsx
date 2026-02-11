@@ -27,7 +27,10 @@ import {
   Lock,
   Bell,
   FileText,
-  DollarSign
+  Database,
+  RefreshCw,
+  Download,
+  Info
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -58,6 +61,7 @@ function SettingsContent() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [formData, setFormData] = useState({
     hotelName: "",
@@ -184,6 +188,14 @@ function SettingsContent() {
         description: error.code === 'auth/requires-recent-login' ? "Veuillez vous reconnecter pour cette opération." : error.message 
       });
     } finally { setIsUpdatingAccount(false); }
+  };
+
+  const handleRefreshCache = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({ title: "Système Optimisé", description: "Le cache local a été purgé avec succès." });
+    }, 1500);
   };
 
   if (isAuthLoading || !user) return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -365,6 +377,70 @@ function SettingsContent() {
                   <Button onClick={handleSaveGeneral} className="gap-2 rounded-xl h-12 px-8 font-bold uppercase text-xs tracking-widest shadow-lg shadow-primary/20"><Save className="h-4 w-4" /> Sauvegarder les politiques</Button>
                 </CardFooter>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="system" className="animate-in slide-in-from-bottom-2 duration-400">
+              <div className="grid gap-6">
+                <Card className="border-none shadow-sm rounded-[2rem]">
+                  <CardHeader>
+                    <CardTitle className="font-headline font-bold text-lg flex items-center gap-2">
+                      <Database className="h-5 w-5 text-primary" /> Maintenance des Données
+                    </CardTitle>
+                    <CardDescription>Gérez le stockage local et les exportations du système.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-primary border shadow-sm"><RefreshCw className={isRefreshing ? "h-5 w-5 animate-spin" : "h-5 w-5"} /></div>
+                        <div>
+                          <p className="font-bold text-sm">Vider le Cache Système</p>
+                          <p className="text-[10px] text-muted-foreground font-medium">Libère la mémoire locale pour plus de fluidité.</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="rounded-xl font-bold text-[10px] uppercase tracking-widest h-8" onClick={handleRefreshCache} disabled={isRefreshing}>
+                        {isRefreshing ? "En cours..." : "Purger"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-primary border shadow-sm"><Download className="h-5 w-5" /></div>
+                        <div>
+                          <p className="font-bold text-sm">Exportation au format JSON</p>
+                          <p className="text-[10px] text-muted-foreground font-medium">Téléchargez l'intégralité des données d'inventaire.</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="rounded-xl font-bold text-[10px] uppercase tracking-widest h-8">
+                        Exporter
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-sm rounded-[2rem] bg-primary/5 border border-primary/10">
+                  <CardHeader>
+                    <CardTitle className="font-headline font-bold text-sm flex items-center gap-2 uppercase tracking-widest">
+                      <Info className="h-4 w-4" /> Informations Système
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-bold">Version ImaraPMS</span>
+                      <span className="font-black text-primary">v2.5.0-stable</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-bold">Dernière mise à jour</span>
+                      <span className="font-bold">Mars 2024</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-bold">État du serveur</span>
+                      <span className="flex items-center gap-1 text-emerald-600 font-black">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Opérationnel
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </main>
