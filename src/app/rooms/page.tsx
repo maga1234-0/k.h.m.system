@@ -112,8 +112,6 @@ export default function RoomsPage() {
         const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
         const total = nights * (Number(selectedRoom.pricePerNight) || 0);
         setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
-      } else {
-        setBookingForm(prev => ({ ...prev, totalAmount: selectedRoom.pricePerNight.toString() }));
       }
     }
   }, [bookingForm.checkInDate, bookingForm.checkOutDate, selectedRoom]);
@@ -164,10 +162,15 @@ export default function RoomsPage() {
       createdAt: new Date().toISOString()
     };
 
+    // Save Reservation
     addDocumentNonBlocking(resCol, reservationData);
+    
+    // Update Room Status: once booked, it can't be available
+    updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
+
     setIsBookingOpen(false);
     setBookingForm({ guestName: "", guestPhone: "", checkInDate: "", checkOutDate: "", totalAmount: "" });
-    toast({ title: "Réservation effectuée", description: `Un dossier a été créé pour ${reservationData.guestName}.` });
+    toast({ title: "Réservation effectuée", description: `Un dossier a été créé et la chambre ${selectedRoom.roomNumber} est désormais bloquée.` });
   };
 
   const getStatusBadge = (status: string) => {
