@@ -201,7 +201,7 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
         <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
@@ -237,7 +237,7 @@ export default function ReservationsPage() {
         </header>
 
         <main className="p-4 md:p-6">
-          <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+          <div className="bg-card rounded-xl shadow-sm border overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
             <div className="p-4 border-b bg-muted/20">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -267,8 +267,8 @@ export default function ReservationsPage() {
                     <TableRow><TableCell colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
                   ) : filteredReservations?.length === 0 ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Aucun dossier trouvé.</TableCell></TableRow>
-                  ) : filteredReservations?.map((res) => (
-                    <TableRow key={res.id}>
+                  ) : filteredReservations?.map((res, idx) => (
+                    <TableRow key={res.id} className="animate-in fade-in duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                       <TableCell className="font-bold text-xs">{res.guestName}</TableCell>
                       <TableCell><Badge variant="outline">N° {res.roomNumber}</Badge></TableCell>
                       <TableCell className="text-xs text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</TableCell>
@@ -281,9 +281,9 @@ export default function ReservationsPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:scale-110 transition-transform"><MoreHorizontal className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuContent align="end" className="w-48 animate-in slide-in-from-top-1">
                             <DropdownMenuItem onSelect={() => handleOpenManage(res.id)}>
                               Gérer le séjour
                             </DropdownMenuItem>
@@ -299,7 +299,7 @@ export default function ReservationsPage() {
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300">
             <DialogHeader>
               <DialogTitle>Nouvelle Réservation</DialogTitle>
               <DialogDescription>Informations du client et dates de séjour.</DialogDescription>
@@ -357,14 +357,14 @@ export default function ReservationsPage() {
         </Dialog>
 
         <Dialog open={activeDialog === "manage"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogContent className="sm:max-w-md rounded-2xl animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Gestion du Séjour</DialogTitle>
               <DialogDescription>Actions pour l'arrivée ou le départ.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl border">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl border animate-in fade-in duration-500">
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Voyageur</p>
                     <p className="font-bold text-sm">{selectedRes.guestName}</p>
@@ -376,12 +376,12 @@ export default function ReservationsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {selectedRes.status === 'Confirmée' && (
-                    <Button onClick={handleCheckIn} className="h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-500/20">
+                    <Button onClick={handleCheckIn} className="h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform">
                       Valider le Check-in
                     </Button>
                   )}
                   {selectedRes.status === 'Checked In' && (
-                    <Button onClick={handleCheckOut} className="h-12 bg-primary hover:bg-primary/90 font-bold text-white shadow-lg shadow-primary/20">
+                    <Button onClick={handleCheckOut} className="h-12 bg-primary hover:bg-primary/90 font-bold text-white shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
                       Valider le Check-out
                     </Button>
                   )}

@@ -197,7 +197,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
@@ -208,42 +208,28 @@ export default function BillingPage() {
 
         <main className="p-4 md:p-6 space-y-6">
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-3">
-            <Card className="border-none shadow-sm bg-rose-500/5 border border-rose-500/10">
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-1">Dettes Clients</p>
-                    <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">{stats.unpaid.toLocaleString('fr-FR')} $</h3>
+            {[
+              { label: "Dettes Clients", value: stats.unpaid, icon: AlertCircle, color: "rose" },
+              { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
+              { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
+            ].map((stat, i) => (
+              <Card key={i} className={`border-none shadow-sm bg-${stat.color}-500/5 border border-${stat.color}-500/10 animate-in slide-in-from-bottom-4 duration-500 delay-${i * 100}`}>
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={`text-[10px] font-black uppercase tracking-widest text-${stat.color}-600 mb-1`}>{stat.label}</p>
+                      <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">
+                        {stat.value.toLocaleString('fr-FR')} {stat.isCount ? '' : '$'}
+                      </h3>
+                    </div>
+                    <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
                   </div>
-                  <AlertCircle className="h-5 w-5 text-rose-600" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-primary/5 border border-primary/10">
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Total Encaissé</p>
-                    <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">{stats.revenue.toLocaleString('fr-FR')} $</h3>
-                  </div>
-                  <CreditCard className="h-5 w-5 text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-accent/5 border border-accent/10">
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1">Nombre Factures</p>
-                    <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">{stats.totalCount}</h3>
-                  </div>
-                  <FileText className="h-5 w-5 text-accent" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden animate-in fade-in duration-700 delay-300">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg font-bold">Registre de Facturation</CardTitle>
@@ -274,8 +260,8 @@ export default function BillingPage() {
                 <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
               ) : invoices && invoices.length > 0 ? (
                 <div className="space-y-3">
-                  {invoices.map((inv) => (
-                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all gap-4">
+                  {invoices.map((inv, idx) => (
+                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all gap-4 animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                       <div className="flex items-center gap-4">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Receipt className="h-6 w-6" />}
@@ -419,8 +405,8 @@ export default function BillingPage() {
                               <td className="w-1/2 align-bottom pb-4">
                                 <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE & CACHET</p>
                                 <div className="min-h-[140px] flex flex-col justify-end">
-                                  {formData.signatureUrl ? (
-                                    <img src={formData.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
+                                  {settings?.signatureUrl ? (
+                                    <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
                                   ) : (
                                     <div className="h-20 w-48 border-b-2 border-dashed border-slate-200 mb-2" />
                                   )}

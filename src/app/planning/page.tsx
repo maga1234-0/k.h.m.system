@@ -70,7 +70,7 @@ export default function PlanningPage() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
         <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
@@ -80,16 +80,16 @@ export default function PlanningPage() {
             <h1 className="font-headline font-semibold text-xl">Planning des Séjours</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
+            <Button variant="outline" size="icon" className="h-8 w-8 hover:scale-110 transition-transform" onClick={() => setCurrentDate(addDays(currentDate, -7))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2 font-bold bg-muted px-4 py-1.5 rounded-lg text-xs uppercase tracking-widest">
+            <div className="flex items-center gap-2 font-bold bg-muted px-4 py-1.5 rounded-lg text-xs uppercase tracking-widest animate-in zoom-in-95 duration-300">
               <CalendarIcon className="h-4 w-4 text-primary" />
               {weekDays.length > 0 ? (
                 <>{format(weekDays[0], 'd MMM', { locale: fr })} - {format(weekDays[6], 'd MMM yyyy', { locale: fr })}</>
               ) : 'Chargement...'}
             </div>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
+            <Button variant="outline" size="icon" className="h-8 w-8 hover:scale-110 transition-transform" onClick={() => setCurrentDate(addDays(currentDate, 7))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -97,7 +97,7 @@ export default function PlanningPage() {
 
         <main className="p-6">
           <TooltipProvider>
-            <Card className="border shadow-sm overflow-hidden rounded-xl">
+            <Card className="border shadow-sm overflow-hidden rounded-xl animate-in slide-in-from-bottom-4 duration-700">
               <div className="overflow-x-auto">
                 <div className="min-w-[1000px]">
                   <div className="grid grid-cols-[140px_repeat(7,1fr)] bg-muted/50 border-b">
@@ -105,7 +105,7 @@ export default function PlanningPage() {
                     {weekDays.map((day) => (
                       <div key={day.toString()} className="p-2 text-center border-r last:border-r-0">
                         <div className="text-[9px] font-black uppercase text-muted-foreground">{format(day, 'EEE', { locale: fr })}</div>
-                        <div className={`text-lg font-headline font-black mx-auto w-10 h-10 flex items-center justify-center rounded-full transition-colors ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-white shadow-lg' : ''}`}>
+                        <div className={`text-lg font-headline font-black mx-auto w-10 h-10 flex items-center justify-center rounded-full transition-all duration-500 ${todayDate && isSameDay(day, todayDate) ? 'bg-primary text-white shadow-lg scale-110' : ''}`}>
                           {format(day, 'd')}
                         </div>
                       </div>
@@ -113,8 +113,8 @@ export default function PlanningPage() {
                   </div>
 
                   <div className="divide-y">
-                    {sortedRooms.map((room) => (
-                      <div key={room.id} className="grid grid-cols-[140px_repeat(7,1fr)] hover:bg-muted/5">
+                    {sortedRooms.map((room, idx) => (
+                      <div key={room.id} className="grid grid-cols-[140px_repeat(7,1fr)] hover:bg-muted/5 transition-colors animate-in fade-in duration-500" style={{ animationDelay: `${idx * 30}ms` }}>
                         <div className="p-3 border-r flex flex-col justify-center bg-muted/10 text-center">
                           <span className="font-black text-sm">Ch. {room.roomNumber}</span>
                           <span className="text-[9px] text-muted-foreground uppercase font-bold truncate">{room.roomType}</span>
@@ -126,14 +126,14 @@ export default function PlanningPage() {
                               {res && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className={`absolute inset-1.5 rounded-xl p-2 text-[10px] font-black overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer transition-all hover:scale-[1.02] ${res.status === 'Checked In' ? 'bg-primary text-white' : 'bg-secondary text-secondary-foreground border border-primary/20'}`}>
+                                    <div className={`absolute inset-1.5 rounded-xl p-2 text-[10px] font-black overflow-hidden shadow-sm flex flex-col justify-center cursor-pointer transition-all hover:scale-[1.02] animate-in zoom-in-95 duration-300 ${res.status === 'Checked In' ? 'bg-primary text-white' : 'bg-secondary text-secondary-foreground border border-primary/20'}`}>
                                       <span className="truncate">{res.guestName}</span>
                                       <div className="mt-1 flex items-center gap-1">
                                         <Badge className="h-4 text-[8px] uppercase px-1">{res.status}</Badge>
                                       </div>
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent className="p-0 border-none shadow-2xl rounded-2xl overflow-hidden">
+                                  <TooltipContent className="p-0 border-none shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-top-2">
                                     <div className="p-4 bg-white min-w-[220px] text-slate-900">
                                       <div className="flex items-center justify-between mb-3 gap-4">
                                         <p className="font-black text-sm truncate">{res.guestName}</p>
