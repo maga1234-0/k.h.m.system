@@ -430,7 +430,6 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog for Editing Reservation */}
         <Dialog open={activeDialog === "edit"} onOpenChange={(open) => !open && setActiveDialog(null)}>
           <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
             <DialogHeader>

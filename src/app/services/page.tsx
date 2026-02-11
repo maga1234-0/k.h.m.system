@@ -20,7 +20,8 @@ import {
   DollarSign,
   Coffee,
   ChefHat,
-  ArrowRight
+  ArrowRight,
+  Activity
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -173,57 +174,62 @@ function ServicesContent() {
     <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background/50">
-        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
+        <header className="flex h-16 items-center border-b px-6 justify-between bg-background/80 backdrop-blur-xl sticky top-0 z-50">
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl text-primary">{getServiceTitle(activeTab)}</h1>
+            <h1 className="font-headline font-bold text-lg text-primary tracking-tight">{getServiceTitle(activeTab)}</h1>
           </div>
-          <Dialog open={isAddChargeOpen} onOpenChange={setIsAddChargeOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 h-9 rounded-xl">
-                <Plus className="h-4 w-4" /> Nouvelle Vente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] rounded-[2rem] animate-in zoom-in-95">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-black font-headline">Facturer un service</DialogTitle>
-                <DialogDescription className="font-medium">Ajout de frais au dossier client.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-6 py-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom du client</Label>
-                  <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
-                    <SelectTrigger className="h-11 rounded-xl">
-                      <SelectValue placeholder="Choisir un client..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {activeReservations.length > 0 ? activeReservations.map((res) => (
-                        <SelectItem key={res.id} value={res.id}>Ch. {res.roomNumber} - {res.guestName}</SelectItem>
-                      )) : <div className="p-4 text-center text-xs text-muted-foreground italic">Aucun client en séjour.</div>}
-                    </SelectContent>
-                  </Select>
+          <div className="flex items-center gap-4">
+            <Dialog open={isAddChargeOpen} onOpenChange={setIsAddChargeOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 h-9 rounded-xl">
+                  <Plus className="h-4 w-4" /> Nouvelle Vente
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] rounded-[2rem] animate-in zoom-in-95">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-black font-headline">Facturer un service</DialogTitle>
+                  <DialogDescription className="font-medium">Ajout de frais au dossier client.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom du client</Label>
+                    <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
+                      <SelectTrigger className="h-11 rounded-xl">
+                        <SelectValue placeholder="Choisir un client..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {activeReservations.length > 0 ? activeReservations.map((res) => (
+                          <SelectItem key={res.id} value={res.id}>Ch. {res.roomNumber} - {res.guestName}</SelectItem>
+                        )) : <div className="p-4 text-center text-xs text-muted-foreground italic">Aucun client en séjour.</div>}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Désignation</Label>
+                    <Input placeholder="Entrez la description..." className="h-11 rounded-xl" value={chargeData.description} onChange={(e) => setChargeData({...chargeData, description: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Montant ($)</Label>
+                    <Input type="number" placeholder="0.00" className="h-11 rounded-xl font-bold bg-primary/5 border-primary/10" value={chargeData.amount} onChange={(e) => setChargeData({...chargeData, amount: e.target.value})} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Désignation</Label>
-                  <Input placeholder="Entrez la description..." className="h-11 rounded-xl" value={chargeData.description} onChange={(e) => setChargeData({...chargeData, description: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Montant ($)</Label>
-                  <Input type="number" placeholder="0.00" className="h-11 rounded-xl font-bold bg-primary/5 border-primary/10" value={chargeData.amount} onChange={(e) => setChargeData({...chargeData, amount: e.target.value})} />
-                </div>
-              </div>
-              <DialogFooter className="gap-2">
-                <Button variant="outline" className="rounded-xl" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount} className="rounded-xl font-bold uppercase text-[10px] tracking-widest h-11 px-8">Confirmer</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" className="rounded-xl" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
+                  <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount} className="rounded-xl font-bold uppercase text-[10px] tracking-widest h-11 px-8">Confirmer</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
+              <Activity className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+          </div>
         </header>
 
-        <main className="p-4 md:p-6 space-y-6">
+        <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500">
+            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500">
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <DollarSign className="h-7 w-7" />
@@ -238,7 +244,7 @@ function ServicesContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
+            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                   <Utensils className="h-7 w-7" />
@@ -250,7 +256,7 @@ function ServicesContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
+            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <Coffee className="h-7 w-7" />
@@ -263,25 +269,25 @@ function ServicesContent() {
             </Card>
           </div>
 
-          <Card className="border-none shadow-sm rounded-[2rem] bg-white overflow-hidden animate-in fade-in duration-700">
-            <CardHeader className="border-b bg-muted/20 pb-4">
+          <Card className="border-none shadow-sm rounded-[2.5rem] bg-card overflow-hidden animate-in fade-in duration-700">
+            <CardHeader className="border-b bg-muted/20 p-8">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md">
                   {getServiceIcon(activeTab)}
                 </div>
                 <div>
-                  <CardTitle className="font-headline text-xl font-bold">Registre des Consommations</CardTitle>
-                  <CardDescription>Facturation directe par chambre pour le séjour en cours.</CardDescription>
+                  <CardTitle className="font-headline text-2xl font-black">Registre des Consommations</CardTitle>
+                  <CardDescription className="text-muted-foreground">Facturation directe par chambre pour le séjour en cours.</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="p-4 md:p-6 border-b">
+              <div className="p-6 border-b">
                 <div className="relative max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Rechercher par chambre ou nom..." 
-                    className="pl-9 bg-muted/30 border-none rounded-xl h-11" 
+                    className="pl-9 bg-muted/30 border-none rounded-xl h-11 shadow-inner" 
                     value={searchTerm} 
                     onChange={(e) => setSearchTerm(e.target.value)} 
                   />
@@ -291,27 +297,27 @@ function ServicesContent() {
                 {activeReservations.length > 0 ? activeReservations.map((res, idx) => {
                   const inv = invoices?.find(i => i.reservationId === res.id);
                   return (
-                    <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 hover:bg-primary/5 transition-all group animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-8 hover:bg-primary/5 transition-all group animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex flex-col items-center justify-center text-primary font-black border border-primary/20">
+                        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex flex-col items-center justify-center text-primary font-black border border-primary/20">
                           <span className="text-[8px] uppercase tracking-tighter">Chambre</span>
-                          <span className="text-xl">{res.roomNumber}</span>
+                          <span className="text-2xl">{res.roomNumber}</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-black text-lg text-foreground">{res.guestName}</span>
-                          <div className="flex items-center gap-2">
-                             <Badge variant="outline" className="text-[8px] uppercase font-black bg-emerald-500/5 text-emerald-600 border-emerald-500/10">Actif</Badge>
+                          <span className="font-black text-xl text-foreground">{res.guestName}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                             <Badge variant="outline" className="text-[8px] uppercase font-black bg-emerald-500/5 text-emerald-600 border-emerald-500/10 rounded-lg">Actif</Badge>
                              <span className="text-[10px] text-muted-foreground font-medium">Arrivé le {res.checkInDate}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 mt-6 md:mt-0">
+                      <div className="flex items-center gap-8 mt-6 md:mt-0">
                         <div className="text-right">
                           <span className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Encours Facturé</span>
-                          <span className="text-2xl font-black font-headline text-primary tracking-tighter">{Number(inv?.amountDue || 0).toLocaleString()} <span className="text-sm">$</span></span>
+                          <span className="text-3xl font-black font-headline text-primary tracking-tighter">{Number(inv?.amountDue || 0).toLocaleString()} <span className="text-sm">$</span></span>
                         </div>
                         <Button 
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase tracking-widest h-12 px-8 rounded-xl shadow-md transition-transform active:scale-95 flex gap-2" 
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase tracking-widest h-14 px-10 rounded-xl shadow-lg transition-transform active:scale-95 flex gap-2" 
                           onClick={() => { setChargeData({...chargeData, reservationId: res.id}); setIsAddChargeOpen(true); }}
                         >
                           Ajouter Frais
