@@ -293,7 +293,7 @@ export default function BillingPage() {
               ) : invoices && invoices.length > 0 ? (
                 <div className="space-y-3">
                   {invoices.map((inv, idx) => (
-                    <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all gap-4 animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <div key={inv.id} className="flex items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all group">
                       <div className="flex items-center gap-4">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Receipt className="h-6 w-6" />}
@@ -304,7 +304,7 @@ export default function BillingPage() {
                           <span className="text-[10px] text-muted-foreground">{new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between md:justify-end gap-3">
+                      <div className="flex items-center gap-3">
                         <div className="text-right mr-3">
                           <span className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Montant</span>
                           <span className="font-black text-lg tracking-tight text-foreground">{Number(inv.amountDue).toFixed(2)} $</span>
