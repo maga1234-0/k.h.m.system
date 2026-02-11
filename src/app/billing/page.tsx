@@ -125,7 +125,7 @@ export default function BillingPage() {
 
   const generatePDFBlob = async (invoice: any): Promise<Blob | null> => {
     setSelectedInvoice(invoice);
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     const page = document.getElementById('invoice-single-page');
     if (!page) return null;
@@ -153,7 +153,8 @@ export default function BillingPage() {
       return;
     }
 
-    const file = new File([blob], `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`, { type: 'application/pdf' });
+    const fileName = `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`;
+    const file = new File([blob], fileName, { type: 'application/pdf' });
 
     if (navigator.share && navigator.canShare({ files: [file] })) {
       try {
@@ -170,12 +171,24 @@ export default function BillingPage() {
         setIsSharing(false);
       }
     } else {
-      // Fallback: Just open WhatsApp with text if file share is not supported
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+      
       const phone = invoice.guestPhone.replace(/\D/g, '');
-      const text = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $.`;
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+      const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Le fichier PDF a été téléchargé, veuillez le joindre au message.`;
+      
+      try {
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+      } catch (e) {
+        console.error("WhatsApp error", e);
+      }
+      
       setIsSharing(false);
-      toast({ title: "WhatsApp ouvert", description: "Veuillez joindre le PDF manuellement si nécessaire." });
+      toast({ title: "Prêt pour WhatsApp", description: "Veuillez joindre le fichier téléchargé manuellement." });
     }
   };
 

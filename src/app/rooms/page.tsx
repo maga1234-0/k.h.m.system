@@ -382,55 +382,6 @@ export default function RoomsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
-            <DialogHeader>
-              <DialogTitle>Détails Chambre</DialogTitle>
-              <DialogDescription>Fiche technique.</DialogDescription>
-            </DialogHeader>
-            {selectedRoom && (
-              <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border animate-in slide-in-from-top-2">
-                  <span className="text-xs font-bold uppercase text-muted-foreground">Statut</span>
-                  {getStatusBadge(selectedRoom.status)}
-                </div>
-                <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-bottom-2">
-                  <div className="p-3 rounded-lg border">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Capacité</p>
-                    <p className="font-bold flex items-center gap-2"><UsersIcon className="h-4 w-4" /> {selectedRoom.capacity} Pers.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Type</p>
-                    <p className="font-bold">{selectedRoom.roomType}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 animate-in fade-in duration-700">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Équipements</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRoom.amenities?.map((a: string, i: number) => <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>)}
-                  </div>
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button className="w-full" onClick={() => setIsDetailsOpen(false)}>Fermer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer la chambre ?</AlertDialogTitle>
-              <AlertDialogDescription>Ceci retirera définitivement la chambre de l'inventaire.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setRoomToDelete(null)}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive">Supprimer</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </SidebarInset>
     </div>
   );
