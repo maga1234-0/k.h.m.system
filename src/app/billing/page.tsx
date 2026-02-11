@@ -28,7 +28,7 @@ import { toast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/ui/logo"
 import html2canvas from "html2canvas"
-import { jsPDF } from "jspdf"
+import { jsPDF } from "jsPDF"
 import {
   Dialog,
   DialogContent,
