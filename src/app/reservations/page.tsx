@@ -13,9 +13,9 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, 
   Plus, 
-  Loader2,
-  MoreHorizontal,
-  Trash2,
+  Loader2, 
+  MoreHorizontal, 
+  Trash2, 
   Edit2
 } from "lucide-react";
 import { 

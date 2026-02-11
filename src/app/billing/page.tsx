@@ -83,28 +83,6 @@ export default function BillingPage() {
     return { unpaid, revenue, totalCount: invoices.length };
   }, [invoices]);
 
-  const getExtrasForInvoice = (invoice: any) => {
-    if (!invoice || !reservations) return [];
-    const res = reservations.find(r => r.id === invoice.reservationId);
-    if (!res || !res.notes) return [];
-
-    const extras: { date: string, type: string, description: string, amount: string }[] = [];
-    const lines = res.notes.split('\n');
-    const regex = /\[(.*?)\] (.*?): (.*?) \(\+(.*?) \$\)/;
-    lines.forEach(line => {
-      const match = line.match(regex);
-      if (match) {
-        extras.push({
-          date: match[1],
-          type: match[2],
-          description: match[3],
-          amount: match[4]
-        });
-      }
-    });
-    return extras;
-  };
-
   const handleClearRegistry = () => {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
@@ -201,29 +179,6 @@ export default function BillingPage() {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!selectedInvoice) return;
-    setIsGeneratingPdf(true);
-    const blob = await generatePDFBlob(selectedInvoice);
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `FACTURE-${selectedInvoice.guestName.replace(/\s+/g, '-')}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast({ title: "Succès", description: "Facture téléchargée." });
-    }
-    setIsGeneratingPdf(false);
-  };
-
-  const invoiceExtras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
-  const totalExtrasValue = invoiceExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
-  const basePriceValue = useMemo(() => {
-    if (!selectedInvoice) return 0;
-    return Math.max(0, Number(selectedInvoice.amountDue) - totalExtrasValue);
-  }, [selectedInvoice, totalExtrasValue]);
-
   if (!mounted || isAuthLoading || !user) {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -315,24 +270,11 @@ export default function BillingPage() {
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-10 w-10 text-primary rounded-xl border-primary/20 hover:bg-primary/5" 
-                            onClick={() => handleShareInvoice(inv)}
-                            disabled={isSharing}
-                          >
+                          <Button variant="outline" size="icon" className="h-10 w-10 text-primary rounded-xl" onClick={() => handleShareInvoice(inv)} disabled={isSharing}>
                             {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
                           </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl" 
-                            onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}><Trash2 className="h-5 w-5" /></Button>
                         </div>
                       </div>
                     </div>
@@ -352,9 +294,7 @@ export default function BillingPage() {
           <AlertDialogContent className="rounded-3xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer la facture ?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Cette action supprimera définitivement le document de facturation pour <strong>{invoiceToDelete?.guestName}</strong>.
-              </AlertDialogDescription>
+              <AlertDialogDescription>Cette action supprimera définitivement le document pour <strong>{invoiceToDelete?.guestName}</strong>.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
@@ -364,147 +304,16 @@ export default function BillingPage() {
         </AlertDialog>
 
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-          <DialogContent className="sm:max-w-md rounded-3xl animate-in zoom-in-95">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black font-headline text-foreground">Valider le Paiement</DialogTitle>
-            </DialogHeader>
-            <div className="py-8">
-              <div className="p-6 bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/10 text-center">
-                <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-2">Montant</p>
-                <h3 className="text-4xl font-black text-emerald-700">{invoiceForPayment ? Number(invoiceForPayment.amountDue).toFixed(2) : "0.00"} $</h3>
-              </div>
+          <DialogContent className="sm:max-w-md rounded-3xl">
+            <DialogHeader><DialogTitle className="text-2xl font-black font-headline">Valider le Paiement</DialogTitle></DialogHeader>
+            <div className="py-8 text-center bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/10">
+              <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-2">Montant</p>
+              <h3 className="text-4xl font-black text-emerald-700">{invoiceForPayment ? Number(invoiceForPayment.amountDue).toFixed(2) : "0.00"} $</h3>
             </div>
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2 mt-4">
               <Button variant="outline" className="rounded-xl" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg" onClick={handleCollectPayment}>Confirmer</Button>
             </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-          <DialogContent className="max-w-4xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl animate-in zoom-in-95">
-            <DialogHeader className="sr-only"><DialogTitle>Facture Officielle</DialogTitle></DialogHeader>
-            {selectedInvoice && (
-              <div className="flex flex-col h-full max-h-[92vh]">
-                <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-slate-100">
-                  <div className="w-full max-w-[210mm] bg-white p-12 shadow-2xl min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page" style={{ margin: '0 auto' }}>
-                    <div className="mb-12 border-b-4 border-primary pb-8">
-                       <table style={{ width: '100%' }}>
-                          <tbody>
-                            <tr>
-                              <td style={{ width: '65%', verticalAlign: 'middle' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                  <div style={{ height: '75px', width: '75px', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justify: 'center', color: 'hsl(var(--primary))' }}>
-                                    <Logo size={60} />
-                                  </div>
-                                  <div>
-                                    <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
-                                      {settings?.hotelName || 'ImaraPMS'}
-                                    </h1>
-                                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ width: '35%', textAlign: 'right', verticalAlign: 'middle' }}>
-                                <h2 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: '#0f172a' }}>FACTURE</h2>
-                                <p style={{ fontSize: '14px', fontWeight: 800, color: 'hsl(var(--primary))', margin: '2px 0' }}>#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
-                                <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, margin: 0 }}>{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
-                              </td>
-                            </tr>
-                          </tbody>
-                       </table>
-                    </div>
-
-                    <div style={{ marginBottom: '40px' }}>
-                       <table style={{ width: '100%' }}>
-                          <tbody>
-                            <tr>
-                              <td style={{ width: '50%', paddingRight: '20px' }}>
-                                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--primary))', textTransform: 'uppercase' }}>DESTINATAIRE</span>
-                                </div>
-                                <p style={{ fontSize: '18px', fontWeight: 900, margin: 0, color: '#0f172a' }}>{selectedInvoice.guestName}</p>
-                                <p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0' }}>{selectedInvoice.guestPhone}</p>
-                              </td>
-                              <td style={{ width: '50%', textAlign: 'right' }}>
-                                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>ÉMETTEUR</span>
-                                </div>
-                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'ImaraPMS Resort'}</p>
-                                <p style={{ fontSize: '10px', color: '#64748b', margin: '5px 0' }}>{settings?.address || 'République Démocratique du Congo'}</p>
-                              </td>
-                            </tr>
-                          </tbody>
-                       </table>
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
-                            <th style={{ padding: '12px 15px', textAlign: 'left', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', borderRadius: '8px 0 0 0' }}>Description des Services</th>
-                            <th style={{ padding: '12px 15px', textAlign: 'right', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', width: '120px', borderRadius: '0 8px 0 0' }}>Montant ($)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '20px 15px' }}>
-                              <p style={{ fontWeight: 900, fontSize: '14px', margin: 0 }}>Hébergement & Services Inclus</p>
-                              <p style={{ fontSize: '10px', color: '#94a3b8', margin: '4px 0 0 0' }}>Séjour officiel - Chambre {selectedInvoice.roomNumber || 'N/A'}</p>
-                            </td>
-                            <td style={{ padding: '20px 15px', textAlign: 'right', fontWeight: 900, fontSize: '14px' }}>{basePriceValue.toFixed(2)}</td>
-                          </tr>
-                          {invoiceExtras.map((e, i) => (
-                            <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
-                              <td style={{ padding: '12px 15px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontSize: '8px', fontWeight: 900, backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>{e.date}</span>
-                                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>{e.type} : {e.description}</span>
-                                </div>
-                              </td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right', fontWeight: 700, color: '#475569', fontSize: '12px' }}>+{parseFloat(e.amount).toFixed(2) || "0.00"}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div style={{ marginTop: '50px' }}>
-                       <table style={{ width: '100%' }}>
-                          <tbody>
-                            <tr>
-                              <td style={{ width: '60%', verticalAlign: 'bottom' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 900, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase' }}>Cachet & Signature</p>
-                                {settings?.signatureUrl ? (
-                                  <img src={settings.signatureUrl} alt="Signature" style={{ maxHeight: '70px', display: 'block', marginBottom: '5px' }} />
-                                ) : (
-                                  <div style={{ height: '50px', width: '150px', borderBottom: '1px dashed #cbd5e1', marginBottom: '10px' }}></div>
-                                )}
-                                <p style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{settings?.managerName || 'La Direction'}</p>
-                                <p style={{ fontSize: '8px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>ImaraPMS Manager</p>
-                              </td>
-                              <td style={{ width: '40%', textAlign: 'right', verticalAlign: 'bottom' }}>
-                                <div style={{ backgroundColor: '#f1f5f9', padding: '25px', borderRadius: '20px', border: '2px solid hsl(var(--primary))' }}>
-                                  <p style={{ fontSize: '9px', fontWeight: 900, color: '#64748b', margin: '0 0 5px 0', textTransform: 'uppercase' }}>NET À PAYER</p>
-                                  <p style={{ fontSize: '32px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
-                                    {Number(selectedInvoice.amountDue).toFixed(2)} <span style={{ fontSize: '16px', color: 'hsl(var(--primary))' }}>$</span>
-                                  </p>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                       </table>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl">
-                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg mx-auto" onClick={handleDownloadPDF}>
-                    {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-                    Télécharger la Facture (PDF)
-                  </Button>
-                </div>
-              </div>
-            )}
           </DialogContent>
         </Dialog>
       </SidebarInset>
