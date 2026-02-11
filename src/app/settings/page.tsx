@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { 
   Save, 
   Loader2, 
@@ -23,12 +24,22 @@ import {
   Eye,
   EyeOff,
   Mail,
-  Lock
+  Lock,
+  Bell,
+  FileText,
+  DollarSign
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { updatePassword, updateEmail } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 function SettingsContent() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -144,7 +155,7 @@ function SettingsContent() {
   const handleSaveGeneral = () => {
     if (!settingsRef) return;
     setDocumentNonBlocking(settingsRef, formData, { merge: true });
-    toast({ title: "Sauvegardé", description: "Paramètres mis à jour." });
+    toast({ title: "Sauvegardé", description: "Paramètres mis à jour avec succès." });
   };
 
   const handleUpdateAccount = async () => {
@@ -284,18 +295,75 @@ function SettingsContent() {
 
             <TabsContent value="reservations" className="animate-in slide-in-from-bottom-2 duration-400">
               <Card className="border-none shadow-sm rounded-[2rem]">
-                <CardHeader><CardTitle className="font-headline font-bold text-lg">Politiques de Séjour</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-2 gap-8 py-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Check-in Standard</Label>
-                    <div className="relative"><Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" /><Input type="time" value={formData.checkInTime} onChange={(e) => setFormData({...formData, checkInTime: e.target.value})} className="pl-10 rounded-xl" /></div>
+                <CardHeader>
+                  <CardTitle className="font-headline font-bold text-lg">Politiques de Séjour & Flux</CardTitle>
+                  <CardDescription>Gérez les horaires et les automatisations de l'établissement.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8 py-6">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Check-in Standard</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input type="time" value={formData.checkInTime} onChange={(e) => setFormData({...formData, checkInTime: e.target.value})} className="pl-10 rounded-xl" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Check-out Standard</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} className="pl-10 rounded-xl" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Check-out Standard</Label>
-                    <div className="relative"><Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" /><Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} className="pl-10 rounded-xl" /></div>
+
+                  <Separator />
+
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <Bell className="h-3 w-3" /> Automatisation & Flux
+                    </h3>
+                    
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-primary border shadow-sm"><FileText className="h-5 w-5" /></div>
+                        <div>
+                          <p className="font-bold text-sm">Facturation Automatique</p>
+                          <p className="text-[10px] text-muted-foreground">Générer la facture dès le check-in.</p>
+                        </div>
+                      </div>
+                      <Switch checked={formData.autoInvoicing} onCheckedChange={(val) => setFormData({...formData, autoInvoicing: val})} />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-primary border shadow-sm"><Bell className="h-5 w-5" /></div>
+                        <div>
+                          <p className="font-bold text-sm">Notifications WhatsApp</p>
+                          <p className="text-[10px] text-muted-foreground">Alertes automatiques pour le personnel.</p>
+                        </div>
+                      </div>
+                      <Switch checked={formData.notificationsEnabled} onCheckedChange={(val) => setFormData({...formData, notificationsEnabled: val})} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Devise de l'établissement</Label>
+                      <Select value={formData.currency} onValueChange={(val) => setFormData({...formData, currency: val})}>
+                        <SelectTrigger className="rounded-xl h-11">
+                          <SelectValue placeholder="Choisir la devise" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">Dollar Américain ($)</SelectItem>
+                          <SelectItem value="CDF">Franc Congolais (FC)</SelectItem>
+                          <SelectItem value="EUR">Euro (€)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t p-6 flex justify-end"><Button onClick={handleSaveGeneral} className="gap-2 rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-primary/20"><Save className="h-4 w-4" /> Sauvegarder</Button></CardFooter>
+                <CardFooter className="border-t p-6 flex justify-end bg-muted/5">
+                  <Button onClick={handleSaveGeneral} className="gap-2 rounded-xl h-12 px-8 font-bold uppercase text-xs tracking-widest shadow-lg shadow-primary/20"><Save className="h-4 w-4" /> Sauvegarder les politiques</Button>
+                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
