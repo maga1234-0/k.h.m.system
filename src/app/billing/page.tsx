@@ -24,8 +24,6 @@ import {
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/ui/logo"
 import {
@@ -55,7 +53,6 @@ export default function BillingPage() {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
-  const [isSharing, setIsSharing] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [invoiceForPayment, setInvoiceForPayment] = useState<any>(null);
   
@@ -108,52 +105,39 @@ export default function BillingPage() {
     toast({ title: "Paiement Enregistré" });
   };
 
-  const handleShareInvoice = async (invoice: any) => {
-    setIsSharing(true);
-    setSelectedInvoice(invoice);
-    setIsInvoiceDialogOpen(true);
+  const handleShareInvoice = (invoice: any) => {
+    // Nettoyer le numéro de téléphone pour WhatsApp
+    const phone = invoice.guestPhone?.replace(/\D/g, '');
     
-    await new Promise(r => setTimeout(r, 500));
-    
-    const page = document.getElementById('invoice-single-page');
-    if (!page) {
-      setIsSharing(false);
+    if (!phone) {
+      toast({ 
+        variant: "destructive", 
+        title: "Numéro manquant", 
+        description: "Impossible de rediriger vers WhatsApp sans numéro de téléphone." 
+      });
       return;
     }
 
-    try {
-      const canvas = await html2canvas(page, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-      const blob = pdf.output('blob');
+    const hotel = settings?.hotelName || 'Fiesta Hotel';
+    const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
+      `Bonjour ${invoice.guestName},\n\n` +
+      `Voici le résumé de votre facture hôtelière :\n\n` +
+      `• *Référence :* #INV-${invoice.id.slice(0, 8).toUpperCase()}\n` +
+      `• *Chambre :* ${invoice.roomNumber} (${invoice.roomType || 'Standard'})\n` +
+      `• *Période :* du ${invoice.checkInDate} au ${invoice.checkOutDate}\n` +
+      `• *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n\n` +
+      `Merci pour votre confiance !\n\n` +
+      `_Généré par ImaraPMS_`;
 
-      const fileName = `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`;
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `Facture ImaraPMS - ${invoice.guestName}`,
-          text: `Bonjour ${invoice.guestName}, voici votre facture.`,
-        });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast({ title: "Téléchargement lancé" });
-      }
-    } catch (error) {
-      console.error('PDF Generation Error:', error);
-      toast({ variant: "destructive", title: "Erreur" });
-    } finally {
-      setIsSharing(false);
-    }
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    
+    // Ouvrir WhatsApp dans un nouvel onglet
+    window.open(whatsappUrl, '_blank');
+    
+    toast({ 
+      title: "WhatsApp", 
+      description: `Ouverture de la discussion avec ${invoice.guestName}...` 
+    });
   };
 
   if (!mounted || isAuthLoading || !user) {
@@ -247,8 +231,8 @@ export default function BillingPage() {
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
-                          <Button variant="outline" size="icon" className="h-10 w-10 text-primary rounded-xl" onClick={() => handleShareInvoice(inv)} disabled={isSharing}>
-                            {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
+                          <Button variant="outline" size="icon" className="h-10 w-10 text-primary rounded-xl" onClick={() => handleShareInvoice(inv)}>
+                            <Share2 className="h-5 w-5" />
                           </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
                           <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}><Trash2 className="h-5 w-5" /></Button>
