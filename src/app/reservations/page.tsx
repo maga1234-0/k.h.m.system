@@ -95,7 +95,6 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Auto-calculate amount for new booking
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -111,7 +110,6 @@ export default function ReservationsPage() {
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
-  // Auto-calculate amount for edit booking
   useEffect(() => {
     if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === editForm.roomId);

@@ -17,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   Clock,
-  Wrench
+  Wrench,
+  LayoutDashboard
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -66,10 +67,10 @@ export default function DashboardPage() {
     const occupancyRate = roomStatusBreakdown.total > 0 ? Math.round((roomStatusBreakdown.occupied / roomStatusBreakdown.total) * 100) : 0;
     
     return [
-      { title: "Occupation Actuelle", value: `${occupancyRate}%`, change: "+2%", trend: "up", icon: BedDouble },
-      { title: "Revenu Encaissé", value: `${totalCollected.toLocaleString()} $`, change: "+12%", trend: "up", icon: CreditCard },
-      { title: "Nouv. Réservations", value: reservations?.length.toString() || "0", change: "+5", trend: "up", icon: CalendarClock },
-      { title: "Total Clients", value: clients?.length.toString() || "0", change: "+8", trend: "up", icon: Users },
+      { title: "Occupation", value: `${occupancyRate}%`, color: "primary", icon: BedDouble },
+      { title: "Revenu", value: `${totalCollected.toLocaleString()} $`, color: "accent", icon: CreditCard },
+      { title: "Réservations", value: reservations?.length.toString() || "0", color: "amber-500", icon: CalendarClock },
+      { title: "Clients", value: clients?.length.toString() || "0", color: "primary", icon: Users },
     ];
   }, [roomStatusBreakdown, reservations, totalCollected, clients, mounted]);
 
@@ -84,7 +85,6 @@ export default function DashboardPage() {
       const dateStr = format(date, 'yyyy-MM-dd');
       const dayName = format(date, 'EEE', { locale: fr });
 
-      // Occupancy: count reservations covering this specific date
       const activeResCount = reservations.filter(r => 
         r.status !== 'Cancelled' && 
         r.checkInDate <= dateStr && 
@@ -93,7 +93,6 @@ export default function DashboardPage() {
 
       const occupancy = rooms.length > 0 ? Math.round((activeResCount / rooms.length) * 100) : 0;
 
-      // Revenue: sum of amountPaid for invoices paid on this exact day
       const dailyRev = invoices
         .filter(inv => inv.status === 'Paid' && inv.paymentDate?.startsWith(dateStr))
         .reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
@@ -121,54 +120,84 @@ export default function DashboardPage() {
           <h1 className="font-headline font-semibold text-xl text-primary">Tableau de Bord</h1>
         </header>
 
-        <main className="p-4 md:p-6 space-y-6">
-          <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => (
-              <Card key={stat.title} className="border-none shadow-sm hover:scale-[1.02] transition-transform duration-300 rounded-3xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.title}</CardTitle>
-                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><stat.icon className="h-4 w-4" /></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-black font-headline text-foreground tracking-tight">{stat.value}</div>
-                  <div className="flex items-center mt-1">
-                    <ArrowUpRight className="h-3 w-3 text-emerald-500 mr-1" />
-                    <span className="text-emerald-500 text-xs font-bold">{stat.change}</span>
+        <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+          {/* Stats Cards - Matching the image style */}
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, i) => (
+              <Card key={i} className="border-none shadow-sm rounded-[2.5rem] bg-white overflow-hidden transition-transform hover:scale-[1.02]">
+                <CardContent className="p-8 flex items-center gap-6">
+                  <div className={`h-16 w-16 rounded-[1.5rem] bg-${stat.color === 'primary' ? 'primary' : 'accent'}/10 flex items-center justify-center text-${stat.color === 'primary' ? 'primary' : 'accent'}`}>
+                    <stat.icon className="h-8 w-8" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">{stat.title}</span>
+                    <span className="text-3xl font-black font-headline text-foreground tracking-tighter">{stat.value}</span>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
-            <Card className="lg:col-span-4 border-none shadow-sm rounded-3xl overflow-hidden">
-              <CardHeader>
-                <CardTitle className="font-headline text-lg font-bold">Performance Réelle</CardTitle>
-                <CardDescription>Analyse des 7 derniers jours basée sur vos activités.</CardDescription>
+          <div className="grid gap-8 grid-cols-1 lg:grid-cols-7">
+            {/* Main Chart */}
+            <Card className="lg:col-span-4 border-none shadow-sm rounded-[2.5rem] bg-white overflow-hidden">
+              <CardHeader className="p-8 pb-0">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg">
+                    <LayoutDashboard className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="font-headline text-xl font-black">Performance Réelle</CardTitle>
+                    <CardDescription className="font-medium">Tendances d'occupation et revenus des 7 derniers jours.</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="h-[350px]"><DashboardCharts data={chartData} /></CardContent>
+              <CardContent className="h-[380px] p-8 pt-4">
+                <DashboardCharts data={chartData} />
+              </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3 border-none shadow-sm rounded-3xl overflow-hidden">
-              <CardHeader>
-                <CardTitle className="font-headline text-lg font-bold">Inventaire Réel</CardTitle>
-                <CardDescription>État en direct des {roomStatusBreakdown.total} chambres.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-4">
-                {[
-                  { label: "Disponible", value: roomStatusBreakdown.available, color: "emerald-500", icon: CheckCircle2 },
-                  { label: "Occupée", value: roomStatusBreakdown.occupied, color: "primary", icon: BedDouble },
-                  { label: "Nettoyage", value: roomStatusBreakdown.cleaning, color: "accent", icon: Clock },
-                  { label: "Maintenance", value: roomStatusBreakdown.maintenance, color: "rose-500", icon: Wrench }
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border-none transition-all hover:bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-10 w-10 rounded-xl bg-${item.color}/10 flex items-center justify-center text-${item.color}`}><item.icon className="h-5 w-5" /></div>
-                      <span className="font-bold text-xs uppercase tracking-widest text-muted-foreground">{item.label}</span>
-                    </div>
-                    <span className="text-2xl font-black font-headline">{item.value}</span>
+            {/* Inventory / Status Breakdown - Matching the list style in the image */}
+            <Card className="lg:col-span-3 border-none shadow-sm rounded-[2.5rem] bg-white overflow-hidden">
+              <CardHeader className="p-8 pb-0">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center text-accent-foreground shadow-lg">
+                    <BedDouble className="h-6 w-6" />
                   </div>
-                ))}
+                  <div>
+                    <CardTitle className="font-headline text-xl font-black">Inventaire Réel</CardTitle>
+                    <CardDescription className="font-medium">État en direct des {roomStatusBreakdown.total} chambres.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 mt-6">
+                <div className="divide-y border-t">
+                  {[
+                    { label: "Disponible", value: roomStatusBreakdown.available, color: "emerald-500", icon: CheckCircle2, status: "LIBRE" },
+                    { label: "Occupée", value: roomStatusBreakdown.occupied, color: "primary", icon: BedDouble, status: "PLEIN" },
+                    { label: "Nettoyage", value: roomStatusBreakdown.cleaning, color: "accent", icon: Clock, status: "ACTIF" },
+                    { label: "Maintenance", value: roomStatusBreakdown.maintenance, color: "rose-500", icon: Wrench, status: "BLOQUÉ" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-6 hover:bg-primary/5 transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className={`h-14 w-14 rounded-2xl bg-${item.color}/10 flex flex-col items-center justify-center text-${item.color} font-black border border-${item.color}/20 shadow-sm`}>
+                          <item.icon className="h-6 w-6" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-black text-lg text-foreground uppercase tracking-tight">{item.label}</span>
+                          <div className="flex items-center gap-2">
+                             <Badge variant="outline" className={`text-[8px] uppercase font-black bg-${item.color}/5 text-${item.color} border-${item.color}/10`}>{item.status}</Badge>
+                             <span className="text-[10px] text-muted-foreground font-medium">Temps réel</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Nombre</span>
+                        <span className="text-3xl font-black font-headline text-primary tracking-tighter">{item.value}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
