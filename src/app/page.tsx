@@ -58,15 +58,17 @@ export default function DashboardPage() {
   };
 
   const kpis = useMemo(() => {
-    if (!rooms || !reservations || !invoices) return { monthlyRev: 0, adr: 0, revpar: 0, occupancy: 0 };
+    if (!rooms || !reservations || !invoices) return { monthlyRev: 0, adr: 0, revpar: 0, occupancy: 0, stayRev: 0, extraRev: 0 };
     
     const now = new Date();
     const startMonth = startOfMonth(now).toISOString();
     
     const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
-    const monthlyRev = paidInvoices
-      .filter(inv => inv.paymentDate && inv.paymentDate >= startMonth)
-      .reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
+    const monthlyPaidInvoices = paidInvoices.filter(inv => inv.paymentDate && inv.paymentDate >= startMonth);
+    
+    const monthlyRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
+    const stayRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.stayAmount) || 0), 0);
+    const extraRev = monthlyRev - stayRev;
 
     const occupiedCount = rooms.filter(r => r.status === 'Occupied' || r.status === 'Cleaning').length;
     const occupancyRate = rooms.length > 0 ? (occupiedCount / rooms.length) * 100 : 0;
@@ -75,7 +77,14 @@ export default function DashboardPage() {
     const adr = occupiedCount > 0 ? totalRev / occupiedCount : 0;
     const revpar = rooms.length > 0 ? totalRev / rooms.length : 0;
 
-    return { monthlyRev, adr, revpar, occupancy: Math.round(occupancyRate) };
+    return { 
+      monthlyRev, 
+      adr, 
+      revpar, 
+      occupancy: Math.round(occupancyRate),
+      stayRev,
+      extraRev
+    };
   }, [rooms, reservations, invoices]);
 
   const inventoryStats = useMemo(() => {
@@ -108,6 +117,9 @@ export default function DashboardPage() {
   if (!mounted || isUserLoading || !user) {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
+
+  const stayPercent = kpis.monthlyRev > 0 ? (kpis.stayRev / kpis.monthlyRev) * 100 : 0;
+  const extraPercent = kpis.monthlyRev > 0 ? (kpis.extraRev / kpis.monthlyRev) * 100 : 0;
 
   return (
     <div className="flex h-screen w-full bg-background animate-in fade-in duration-500">
@@ -279,14 +291,14 @@ export default function DashboardPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground font-bold">Services Extras</span>
-                      <span className="text-sm font-black">{(kpis.monthlyRev * 0.15).toFixed(0)} $</span>
+                      <span className="text-sm font-black">{kpis.extraRev.toLocaleString()} $</span>
                     </div>
-                    <Progress value={15} className="h-1.5" />
+                    <Progress value={extraPercent} className="h-1.5" />
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground font-bold">Hébergement</span>
-                      <span className="text-sm font-black">{(kpis.monthlyRev * 0.85).toFixed(0)} $</span>
+                      <span className="text-sm font-black">{kpis.stayRev.toLocaleString()} $</span>
                     </div>
-                    <Progress value={85} className="h-1.5" />
+                    <Progress value={stayPercent} className="h-1.5" />
                   </div>
                 </div>
 
