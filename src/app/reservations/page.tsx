@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -24,7 +23,6 @@ import {
   DialogTitle, 
   DialogFooter,
   DialogDescription,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -35,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { 
   DropdownMenu, 
@@ -92,7 +89,6 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Automatic Price Calculation
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -184,7 +180,6 @@ export default function ReservationsPage() {
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
     
-    // Liberer la chambre avant de supprimer le dossier
     if (resToDelete.roomId) {
       updateDocumentNonBlocking(doc(firestore, 'rooms', resToDelete.roomId), { status: "Available" });
     }
@@ -198,11 +193,9 @@ export default function ReservationsPage() {
   const handleClearAll = () => {
     if (!reservations) return;
     reservations.forEach((res) => {
-      // Liberer chaque chambre
       if (res.roomId) {
         updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Available" });
       }
-      // Supprimer le document
       deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
     });
     setIsClearDialogOpen(false);
@@ -235,11 +228,9 @@ export default function ReservationsPage() {
           <div className="flex gap-2">
             {reservations && reservations.length > 0 && (
               <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest">
-                    <Trash2 className="h-4 w-4" /> Purger tout
-                  </Button>
-                </AlertDialogTrigger>
+                <Button variant="outline" className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest" onClick={() => setIsClearDialogOpen(true)}>
+                  <Trash2 className="h-4 w-4" /> Purger tout
+                </Button>
                 <AlertDialogContent className="rounded-3xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
@@ -293,7 +284,7 @@ export default function ReservationsPage() {
                     <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium italic">Aucun dossier trouvé dans le registre.</TableCell></TableRow>
                   ) : filteredReservations?.map((res, idx) => (
                     <TableRow key={res.id} className="animate-in fade-in duration-500 hover:bg-primary/5 transition-colors" style={{ animationDelay: `${idx * 50}ms` }}>
-                      <TableCell className="font-black text-xs text-slate-900">{res.guestName}</TableCell>
+                      <TableCell className="font-black text-xs text-foreground">{res.guestName}</TableCell>
                       <TableCell><Badge variant="outline" className="font-bold border-primary/20 bg-primary/5 text-primary">N° {res.roomNumber}</Badge></TableCell>
                       <TableCell className="text-xs text-muted-foreground font-medium">{res.checkInDate} au {res.checkOutDate}</TableCell>
                       <TableCell className="font-black text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
@@ -401,7 +392,7 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-2 gap-4 p-6 bg-primary/5 rounded-[1.5rem] border border-primary/10 animate-in fade-in duration-500">
                   <div>
                     <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Voyageur</p>
-                    <p className="font-black text-sm text-slate-900">{selectedRes.guestName}</p>
+                    <p className="font-black text-sm text-foreground">{selectedRes.guestName}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Chambre</p>

@@ -134,7 +134,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -152,7 +152,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {inventoryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -170,7 +170,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {serviceItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/services') && (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('tab') === item.url.split('=')[1])} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/services') && (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('tab') === item.url.split('=')[1])} tooltip={item.title} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -188,7 +188,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -206,7 +206,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {adminItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
