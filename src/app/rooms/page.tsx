@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Clock,
   Wrench,
-  CalendarCheck
+  CalendarCheck,
+  Info
 } from "lucide-react";
 import { 
   useFirestore, 
@@ -390,6 +391,54 @@ export default function RoomsPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
               <Button onClick={handleUpdateRoom}>Sauvegarder</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
+            <DialogHeader>
+              <DialogTitle>Détails de la Chambre {selectedRoom?.roomNumber}</DialogTitle>
+              <DialogDescription>Informations complètes sur l'unité d'hébergement.</DialogDescription>
+            </DialogHeader>
+            {selectedRoom && (
+              <div className="grid gap-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Type</p>
+                    <p className="font-bold">{selectedRoom.roomType}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Étage</p>
+                    <p className="font-bold">{selectedRoom.floor}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Capacité</p>
+                    <p className="font-bold">{selectedRoom.capacity} Voyageurs</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Tarif</p>
+                    <p className="font-bold text-primary">{selectedRoom.pricePerNight} $ / nuit</p>
+                  </div>
+                </div>
+                <div className="space-y-2 pt-4 border-t">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Équipements & Services</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRoom.amenities && selectedRoom.amenities.length > 0 ? (
+                      selectedRoom.amenities.map((amenity: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[10px] font-bold">{amenity}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-xs italic text-muted-foreground">Aucun équipement spécifié.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" className="w-full rounded-xl" onClick={() => setIsDetailsOpen(false)}>Fermer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
