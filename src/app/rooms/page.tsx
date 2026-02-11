@@ -162,15 +162,12 @@ export default function RoomsPage() {
       createdAt: new Date().toISOString()
     };
 
-    // Save Reservation
     addDocumentNonBlocking(resCol, reservationData);
-    
-    // Update Room Status: once booked, it can't be available
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
 
     setIsBookingOpen(false);
     setBookingForm({ guestName: "", guestPhone: "", checkInDate: "", checkOutDate: "", totalAmount: "" });
-    toast({ title: "Réservation effectuée", description: `Un dossier a été créé et la chambre ${selectedRoom.roomNumber} est désormais bloquée.` });
+    toast({ title: "Réservation effectuée", description: `La chambre ${selectedRoom.roomNumber} est maintenant Occupée.` });
   };
 
   const getStatusBadge = (status: string) => {

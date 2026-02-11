@@ -88,7 +88,7 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Automatic Price Calculation for new reservation
+  // Automatic Price Calculation
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -132,15 +132,12 @@ export default function ReservationsPage() {
       createdAt: new Date().toISOString() 
     };
 
-    // Save Reservation
     addDocumentNonBlocking(resCollection, reservationData);
-    
-    // Update Room Status: once booked, it becomes occupied
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
 
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Succès", description: "La réservation a été créée et la chambre est marquée comme Occupée." });
+    toast({ title: "Succès", description: "La réservation a été créée." });
   };
 
   const handleCheckIn = () => {

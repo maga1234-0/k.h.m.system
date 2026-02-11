@@ -128,7 +128,7 @@ export default function BillingPage() {
       return;
     }
     
-    const hotelName = settings?.hotelName || 'ImaraPMS Resort';
+    const hotelName = settings?.hotelName || 'Fiesta Hotel';
     let message = `*${hotelName.toUpperCase()} - FACTURE OFFICIELLE*\n\n`;
     message += `Cher(e) ${invoice.guestName},\n\n`;
     message += `Veuillez trouver ci-joint votre facture PDF concernant votre séjour.\n\n`;
@@ -136,7 +136,10 @@ export default function BillingPage() {
     message += `Merci de votre confiance.\nCordialement,\nLa Direction.`;
 
     const phone = invoice.guestPhone.replace(/\D/g, '');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    if (phone) {
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -330,7 +333,7 @@ export default function BillingPage() {
                                   </div>
                                   <div>
                                     <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
-                                      {settings?.hotelName || 'ImaraPMS'}
+                                      {settings?.hotelName || 'Fiesta Hotel'}
                                     </h1>
                                     <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
                                   </div>
@@ -362,7 +365,7 @@ export default function BillingPage() {
                                 <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
                                   <span style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>ÉMETTEUR</span>
                                 </div>
-                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'ImaraPMS Resort'}</p>
+                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'Fiesta Hotel Resort'}</p>
                                 <p style={{ fontSize: '10px', color: '#64748b', margin: '5px 0' }}>{settings?.address || 'République Démocratique du Congo'}</p>
                               </td>
                             </tr>
