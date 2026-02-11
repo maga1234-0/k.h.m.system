@@ -51,6 +51,8 @@ export default function BillingPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -107,6 +109,14 @@ export default function BillingPage() {
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
     toast({ variant: "destructive", title: "Action effectuée", description: "Le registre des factures a été purgé." });
+  };
+
+  const handleDeleteIndividual = () => {
+    if (!invoiceToDelete) return;
+    deleteDocumentNonBlocking(doc(firestore, 'invoices', invoiceToDelete.id));
+    setIsDeleteIndividualDialogOpen(false);
+    setInvoiceToDelete(null);
+    toast({ variant: "destructive", title: "Facture Supprimée", description: "Le document a été retiré du registre." });
   };
 
   const handleCollectPayment = () => {
@@ -262,13 +272,13 @@ export default function BillingPage() {
                 <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive gap-2 h-8 text-xs font-bold uppercase tracking-widest">
-                      <Trash2 className="h-4 w-4" /> Purger
+                      <Trash2 className="h-4 w-4" /> Purger tout
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Action Irréversible</AlertDialogTitle>
-                      <AlertDialogDescription>Vider le registre de facturation ?</AlertDialogDescription>
+                      <AlertDialogDescription>Voulez-vous vraiment vider le registre complet de facturation ?</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -295,14 +305,14 @@ export default function BillingPage() {
                           <span className="text-[10px] text-muted-foreground">{new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between md:justify-end gap-6">
-                        <div className="text-right">
-                          <span className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Montant Du</span>
+                      <div className="flex items-center justify-between md:justify-end gap-3">
+                        <div className="text-right mr-3">
+                          <span className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Montant</span>
                           <span className="font-black text-lg tracking-tight text-foreground">{Number(inv.amountDue).toFixed(2)} $</span>
                         </div>
                         <div className="flex gap-2">
                           {inv.status !== 'Paid' && (
-                            <Button className="h-10 px-6 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setInvoiceForPayment(inv); setIsPaymentDialogOpen(true); }}>
+                            <Button className="h-10 px-4 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setInvoiceForPayment(inv); setIsPaymentDialogOpen(true); }}>
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
@@ -316,6 +326,14 @@ export default function BillingPage() {
                             {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
                           </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl" 
+                            onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -330,6 +348,21 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         </main>
+
+        <AlertDialog open={isDeleteIndividualDialogOpen} onOpenChange={setIsDeleteIndividualDialogOpen}>
+          <AlertDialogContent className="rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer la facture ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action supprimera définitivement le document de facturation pour <strong>{invoiceToDelete?.guestName}</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
           <DialogContent className="sm:max-w-md rounded-3xl animate-in zoom-in-95">
