@@ -20,7 +20,6 @@ import {
   Share2,
   Printer,
   Download,
-  ChevronRight
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -112,7 +111,7 @@ export default function BillingPage() {
   const generatePDFBlob = async (invoice: any) => {
     const input = document.getElementById('invoice-single-page');
     if (!input) {
-      toast({ variant: "destructive", title: "Erreur technique", description: "Le rendu de la facture n'est pas prêt." });
+      toast({ variant: "destructive", title: "Erreur technique", description: "Veuillez d'abord ouvrir l'aperçu." });
       return null;
     }
 
@@ -151,22 +150,22 @@ export default function BillingPage() {
 
     toast({ title: "Préparation de la facture", description: "Génération du PDF Fiesta Hotel..." });
 
+    // Petit délai pour laisser le dialogue s'ouvrir et le DOM se rendre
     setTimeout(async () => {
       const blob = await generatePDFBlob(invoice);
       if (!blob) return;
 
       const fileName = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-
-      // Action de secours : Téléchargement immédiat
-      const pdfUrl = URL.createObjectURL(blob);
+      
+      // Téléchargement forcé pour que l'utilisateur ait le fichier prêt à être joint
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = pdfUrl;
+      a.href = url;
       a.download = fileName;
       a.click();
-      URL.revokeObjectURL(pdfUrl);
+      URL.revokeObjectURL(url);
 
-      // Préparation du message WhatsApp
+      // Ouverture de WhatsApp avec message
       const phone = invoice.guestPhone?.replace(/\D/g, '');
       const hotel = settings?.hotelName || 'Fiesta Hotel';
       const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
@@ -184,10 +183,10 @@ export default function BillingPage() {
       window.open(whatsappUrl, '_blank');
       
       toast({ 
-        title: "PDF Prêt", 
-        description: "Le PDF a été téléchargé. Veuillez le sélectionner dans WhatsApp." 
+        title: "PDF Téléchargé", 
+        description: "Veuillez joindre le fichier téléchargé dans WhatsApp." 
       });
-    }, 800);
+    }, 1000);
   };
 
   if (!mounted || isAuthLoading || !user) {
