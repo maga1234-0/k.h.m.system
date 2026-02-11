@@ -103,7 +103,6 @@ export default function RoomsPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Automatic Price Calculation for quick booking
   useEffect(() => {
     if (selectedRoom && bookingForm.checkInDate && bookingForm.checkOutDate) {
       const start = new Date(bookingForm.checkInDate);
@@ -371,7 +370,19 @@ export default function RoomsPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>Équipements</Label>
+                  <Label>Statut Manuel</Label>
+                  <Select value={editRoomData.status} onValueChange={(val) => setEditRoomData({...editRoomData, status: val})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Available">Disponible</SelectItem>
+                      <SelectItem value="Occupied">Occupée</SelectItem>
+                      <SelectItem value="Cleaning">Nettoyage</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Équipements (séparés par virgule)</Label>
                   <Input value={editRoomData.amenitiesString} onChange={(e) => setEditRoomData({...editRoomData, amenitiesString: e.target.value})} />
                 </div>
               </div>
@@ -382,6 +393,19 @@ export default function RoomsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer la chambre ?</AlertDialogTitle>
+              <AlertDialogDescription>Cette action est irréversible et retirera la chambre {roomToDelete?.roomNumber} de l'inventaire.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setRoomToDelete(null)}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteRoom} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );

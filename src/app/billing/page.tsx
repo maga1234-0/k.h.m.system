@@ -156,7 +156,7 @@ export default function BillingPage() {
     const fileName = `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`;
     const file = new File([blob], fileName, { type: 'application/pdf' });
 
-    if (navigator.share && navigator.canShare({ files: [file] })) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           files: [file],
@@ -182,7 +182,8 @@ export default function BillingPage() {
       const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Le fichier PDF a été téléchargé, veuillez le joindre au message.`;
       
       try {
-        window.location.assign(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`);
+        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
       } catch (e) {
         console.error("WhatsApp error", e);
       }
