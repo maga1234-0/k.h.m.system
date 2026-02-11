@@ -42,7 +42,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 export default function BillingPage() {
@@ -394,7 +393,7 @@ export default function BillingPage() {
                             <tr>
                               <td style={{ width: '65%', verticalAlign: 'middle' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                  <div style={{ height: '75px', width: '75px', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))' }}>
+                                  <div style={{ height: '75px', width: '75px', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justify: 'center', color: 'hsl(var(--primary))' }}>
                                     <Logo size={60} />
                                   </div>
                                   <div>

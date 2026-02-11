@@ -23,8 +23,7 @@ import {
   Eye,
   EyeOff,
   Mail,
-  Lock,
-  Trash2
+  Lock
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";

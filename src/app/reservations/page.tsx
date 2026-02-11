@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,7 +15,8 @@ import {
   Plus, 
   Loader2,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Edit2
 } from "lucide-react";
 import { 
   Dialog, 
@@ -33,7 +35,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { 
   DropdownMenu, 
@@ -60,12 +61,13 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
   const [activeResId, setActiveResId] = useState<string | null>(null);
-  const [activeDialog, setActiveDialog] = useState<"manage" | null>(null);
+  const [activeDialog, setActiveDialog] = useState<"manage" | "edit" | null>(null);
   
   const [bookingForm, setBookingForm] = useState({
     guestName: "",
@@ -77,6 +79,8 @@ export default function ReservationsPage() {
     numberOfGuests: 1,
     totalAmount: ""
   });
+
+  const [editForm, setEditForm] = useState<any>(null);
 
   const firestore = useFirestore();
   const resCollection = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
@@ -90,6 +94,7 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
+  // Auto-calculate amount for new booking
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -105,6 +110,22 @@ export default function ReservationsPage() {
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
+  // Auto-calculate amount for edit booking
+  useEffect(() => {
+    if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
+      const selectedRoom = rooms.find(r => r.id === editForm.roomId);
+      if (selectedRoom) {
+        const start = new Date(editForm.checkInDate);
+        const end = new Date(editForm.checkOutDate);
+        if (end > start) {
+          const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
+          setEditForm((prev: any) => ({ ...prev, totalAmount: total.toString() }));
+        }
+      }
+    }
+  }, [editForm?.roomId, editForm?.checkInDate, editForm?.checkOutDate, rooms]);
+
   const selectedRes = useMemo(() => 
     reservations?.find(r => r.id === activeResId) || null
   , [reservations, activeResId]);
@@ -113,6 +134,14 @@ export default function ReservationsPage() {
     setActiveResId(resId);
     setTimeout(() => {
       setActiveDialog("manage");
+    }, 150);
+  };
+
+  const handleOpenEdit = (res: any) => {
+    setEditForm({ ...res });
+    setActiveResId(res.id);
+    setTimeout(() => {
+      setActiveDialog("edit");
     }, 150);
   };
 
@@ -139,6 +168,25 @@ export default function ReservationsPage() {
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
     toast({ title: "Succès", description: "La réservation a été créée et la chambre bloquée." });
+  };
+
+  const handleUpdateBooking = () => {
+    if (!editForm || !editForm.id) return;
+
+    const selectedRoom = rooms?.find(r => r.id === editForm.roomId);
+    if (!selectedRoom) return;
+
+    const resRef = doc(firestore, 'reservations', editForm.id);
+    const updatedData = {
+      ...editForm,
+      roomNumber: selectedRoom.roomNumber,
+      totalAmount: Number(editForm.totalAmount) || 0
+    };
+
+    updateDocumentNonBlocking(resRef, updatedData);
+    setActiveDialog(null);
+    setEditForm(null);
+    toast({ title: "Mise à jour réussie", description: "Le dossier a été actualisé." });
   };
 
   const handleCheckIn = () => {
@@ -302,6 +350,9 @@ export default function ReservationsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-1 rounded-xl">
                             <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase tracking-widest py-2">Gérer le séjour</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleOpenEdit(res)} className="font-bold text-xs uppercase tracking-widest py-2">
+                              <Edit2 className="mr-2 h-4 w-4" /> Modifier les détails
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onSelect={() => {
@@ -377,6 +428,66 @@ export default function ReservationsPage() {
             <DialogFooter className="gap-2">
               <Button variant="outline" className="rounded-xl" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
               <Button onClick={handleSaveBooking} className="rounded-xl font-bold uppercase tracking-widest px-8">Confirmer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog for Editing Reservation */}
+        <Dialog open={activeDialog === "edit"} onOpenChange={(open) => !open && setActiveDialog(null)}>
+          <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black font-headline">Modifier Réservation</DialogTitle>
+              <DialogDescription className="font-medium">Mettre à jour les informations du dossier.</DialogDescription>
+            </DialogHeader>
+            {editForm && (
+              <div className="grid gap-6 py-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Client</label>
+                  <Input placeholder="Nom complet" className="rounded-xl h-11" value={editForm.guestName} onChange={(e) => setEditForm({...editForm, guestName: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Téléphone</label>
+                    <Input placeholder="+243..." className="rounded-xl h-11" value={editForm.guestPhone} onChange={(e) => setEditForm({...editForm, guestPhone: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">E-mail</label>
+                    <Input placeholder="client@exemple.com" className="rounded-xl h-11" value={editForm.guestEmail} onChange={(e) => setEditForm({...editForm, guestEmail: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Arrivée</label>
+                    <Input type="date" className="rounded-xl h-11" value={editForm.checkInDate} onChange={(e) => setEditForm({...editForm, checkInDate: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Départ</label>
+                    <Input type="date" className="rounded-xl h-11" value={editForm.checkOutDate} onChange={(e) => setEditForm({...editForm, checkOutDate: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Chambre</label>
+                    <select 
+                      className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                      value={editForm.roomId} 
+                      onChange={(e) => setEditForm({...editForm, roomId: e.target.value})}
+                    >
+                      {rooms?.map(r => (
+                        <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Montant Total ($)</label>
+                    <Input type="number" className="rounded-xl h-11 font-black text-primary bg-primary/5" value={editForm.totalAmount} onChange={(e) => setEditForm({...editForm, totalAmount: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => setActiveDialog(null)}>Annuler</Button>
+              <Button onClick={handleUpdateBooking} className="rounded-xl font-bold uppercase tracking-widest px-8">Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
