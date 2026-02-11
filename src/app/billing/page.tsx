@@ -43,7 +43,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 export default function BillingPage() {
@@ -111,7 +110,6 @@ export default function BillingPage() {
   const generatePDFBlob = async (invoice: any) => {
     const input = document.getElementById('invoice-single-page');
     if (!input) {
-      toast({ variant: "destructive", title: "Erreur technique", description: "Veuillez d'abord ouvrir l'aperçu." });
       return null;
     }
 
@@ -137,7 +135,6 @@ export default function BillingPage() {
       return pdf.output('blob');
     } catch (error) {
       console.error("PDF Generation failed", error);
-      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le document." });
       return null;
     } finally {
       setIsGeneratingPDF(false);
@@ -148,31 +145,24 @@ export default function BillingPage() {
     setSelectedInvoice(invoice);
     setIsInvoiceDialogOpen(true);
 
-    toast({ title: "Préparation de la facture", description: "Génération du PDF Fiesta Hotel..." });
+    toast({ title: "Préparation de l'envoi", description: "Génération du PDF et ouverture de WhatsApp..." });
 
-    // Petit délai pour laisser le dialogue s'ouvrir et le DOM se rendre
     setTimeout(async () => {
       const blob = await generatePDFBlob(invoice);
-      if (!blob) return;
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
 
-      const fileName = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
-      
-      // Téléchargement forcé
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      // Ouverture de WhatsApp avec message
       const phone = invoice.guestPhone?.replace(/\D/g, '');
       const hotel = settings?.hotelName || 'Fiesta Hotel';
       const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
         `Bonjour ${invoice.guestName},\n\n` +
         `Veuillez trouver ci-joint votre facture *#INV-${invoice.id.slice(0, 8).toUpperCase()}*.\n\n` +
-        `• *Montant :* ${Number(invoice.amountDue).toFixed(2)} $\n` +
-        `• *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\n` +
         `Merci pour votre confiance !\n\n` +
         `_Système ImaraPMS_`;
 
@@ -183,8 +173,8 @@ export default function BillingPage() {
       window.open(whatsappUrl, '_blank');
       
       toast({ 
-        title: "Prêt pour WhatsApp", 
-        description: "Veuillez joindre le PDF téléchargé à la discussion ouverte." 
+        title: "WhatsApp ouvert", 
+        description: "Veuillez joindre la facture PDF qui vient d'être téléchargée." 
       });
     }, 1000);
   };

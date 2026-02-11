@@ -114,6 +114,7 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
+    // Délai pour laisser le menu contextuel se fermer proprement
     setTimeout(() => {
       setActiveDialog("manage");
     }, 150);
@@ -122,6 +123,7 @@ export default function ReservationsPage() {
   const handleOpenEdit = (res: any) => {
     setEditForm({ ...res });
     setActiveResId(res.id);
+    // Délai pour laisser le menu contextuel se fermer proprement
     setTimeout(() => {
       setActiveDialog("edit");
     }, 150);
@@ -178,6 +180,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
+    // Création auto de la facture au check-in
     const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
       reservationId: selectedRes.id,
@@ -220,30 +223,18 @@ export default function ReservationsPage() {
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
     
-    // Capturer les IDs avant de réinitialiser l'état
-    const idToDelete = resToDelete.id;
-    const roomIdToRelease = resToDelete.roomId;
-    const statusBeforeDelete = resToDelete.status;
-
-    try {
-      if (roomIdToRelease && statusBeforeDelete !== 'Checked Out') {
-        const roomRef = doc(firestore, 'rooms', roomIdToRelease);
-        updateDocumentNonBlocking(roomRef, { status: "Available" });
-      }
-      
-      const resRef = doc(firestore, 'reservations', idToDelete);
-      deleteDocumentNonBlocking(resRef);
-      
-      // Fermer d'abord pour libérer le focus Radix, puis nettoyer l'état
-      setIsDeleteDialogOpen(false);
-      setTimeout(() => setResToDelete(null), 100);
-      
-      toast({ variant: "destructive", title: "Supprimé", description: "Le dossier a été retiré du registre." });
-    } catch (error) {
-      console.error("Deletion error:", error);
-      setIsDeleteDialogOpen(false);
-      setResToDelete(null);
+    // Libération de la chambre si nécessaire
+    if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
+      const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
+      updateDocumentNonBlocking(roomRef, { status: "Available" });
     }
+    
+    const resRef = doc(firestore, 'reservations', resToDelete.id);
+    deleteDocumentNonBlocking(resRef);
+    
+    setIsDeleteDialogOpen(false);
+    setResToDelete(null);
+    toast({ variant: "destructive", title: "Supprimé", description: "Le dossier a été retiré du registre." });
   };
 
   const handleClearAll = () => {
@@ -346,6 +337,7 @@ export default function ReservationsPage() {
                           <DropdownMenuItem 
                             onSelect={() => { 
                               setResToDelete(res); 
+                              // Délai pour laisser le menu contextuel se fermer proprement
                               setTimeout(() => setIsDeleteDialogOpen(true), 150);
                             }} 
                             className="text-destructive font-bold text-xs uppercase py-2 cursor-pointer"

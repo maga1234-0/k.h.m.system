@@ -63,6 +63,7 @@ export default function DashboardPage() {
     const now = new Date();
     const startMonth = startOfMonth(now).toISOString();
     
+    // On ne compte que les factures payées pour le CA mensuel réel
     const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
     const monthlyPaidInvoices = paidInvoices.filter(inv => inv.paymentDate && inv.paymentDate >= startMonth);
     
