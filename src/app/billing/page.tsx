@@ -137,13 +137,15 @@ export default function BillingPage() {
 
     const phone = invoice.guestPhone.replace(/\D/g, '');
     if (phone) {
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       try {
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        // Security wrap for window.open to prevent InvalidAccessError
-        const win = window.open(url, '_blank', 'noopener,noreferrer');
-        if (win) win.focus();
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.click();
       } catch (e) {
-        console.error("WhatsApp error:", e);
+        console.error("WhatsApp redirection error:", e);
         toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ouvrir WhatsApp." });
       }
     }
