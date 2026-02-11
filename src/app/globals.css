@@ -1,72 +1,72 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --primary: 162 54% 61%;
-    --primary-foreground: 162 54% 10%;
-    --secondary: 162 60% 93%;
-    --secondary-foreground: 162 60% 20%;
-    --background: 162 20% 98%;
-    --foreground: 0 0% 15%;
+    /* Thème Yellow Gold & Prestige */
+    --primary: 45 93% 47%;
+    --primary-foreground: 45 93% 5%;
+    --secondary: 45 93% 94%;
+    --secondary-foreground: 45 93% 20%;
+    --background: 45 20% 98%;
+    --foreground: 0 0% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
-    --accent: 231 44% 64%;
+    --popover-foreground: 0 0% 10%;
+    --accent: 45 93% 47%;
     --accent-foreground: 0 0% 100%;
-    --leafy: 162 54% 61%;
-    --leafy-foreground: 162 54% 10%;
+    --leafy: 45 93% 47%;
+    --leafy-foreground: 45 93% 5%;
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 88%;
     --input: 0 0% 88%;
-    --ring: 162 54% 61%;
-    --radius: 0.75rem;
+    --ring: 45 93% 47%;
+    --radius: 1rem;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 15%;
-    --sidebar-primary: 162 54% 61%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 45 93% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 162 60% 93%;
-    --sidebar-accent-foreground: 162 54% 10%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 162 54% 61%;
+    --sidebar-accent: 45 93% 94%;
+    --sidebar-accent-foreground: 45 93% 10%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 45 93% 47%;
   }
 
   .dark {
-    --background: 162 10% 10%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
-    --card: 162 10% 12%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 98%;
-    --popover: 162 10% 12%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 162 54% 61%;
-    --primary-foreground: 162 54% 10%;
-    --secondary: 162 30% 20%;
-    --secondary-foreground: 162 30% 90%;
-    --leafy: 162 54% 61%;
-    --leafy-foreground: 162 54% 10%;
-    --muted: 162 10% 18%;
-    --muted-foreground: 162 10% 65%;
-    --accent: 231 44% 64%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 45 93% 5%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --leafy: 45 93% 47%;
+    --leafy-foreground: 45 93% 5%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 45 93% 47%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 162 10% 20%;
-    --input: 162 10% 20%;
-    --ring: 162 54% 61%;
-    --sidebar-background: 162 10% 12%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 45 93% 47%;
+    --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 162 54% 61%;
-    --sidebar-primary-foreground: 162 54% 10%;
-    --sidebar-accent: 162 10% 18%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 45 93% 5%;
+    --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 162 10% 20%;
-    --sidebar-ring: 162 54% 61%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 45 93% 47%;
   }
 }
 
@@ -81,32 +81,24 @@
     visibility: hidden !important;
   }
   
-  #invoice-printable, #invoice-printable * {
+  #invoice-single-page, #invoice-single-page * {
     visibility: visible !important;
   }
   
-  #invoice-printable {
+  #invoice-single-page {
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
     width: 210mm !important;
     background: white !important;
-    padding: 20mm !important;
+    padding: 0 !important;
     margin: 0 !important;
     z-index: 9999 !important;
   }
 }
 
-/* Capture Styles for PDF */
-#invoice-printable {
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  background-color: white !important;
-  color: #0f172a !important;
-}
-
-#invoice-printable * {
+/* Stable Invoice Capture */
+#invoice-single-page {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
 }
