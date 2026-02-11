@@ -15,7 +15,6 @@ import {
   Trash2, 
   AlertCircle, 
   FileText, 
-  Download,
   CheckCircle2,
   DollarSign,
   Share2,
@@ -108,10 +107,18 @@ export default function BillingPage() {
     toast({ title: "Paiement Enregistré", description: "La facture a été marquée comme réglée." });
   };
 
-  const generatePDFBlob = async (invoice: any): Promise<Blob | null> => {
-    // Temporarily render or ensure element exists
+  const handleShareInvoice = async (invoice: any) => {
+    setIsSharing(true);
+    setSelectedInvoice(invoice);
+    setIsInvoiceDialogOpen(true);
+    
+    await new Promise(r => setTimeout(r, 500));
+    
     const page = document.getElementById('invoice-single-page');
-    if (!page) return null;
+    if (!page) {
+      setIsSharing(false);
+      return;
+    }
 
     try {
       const canvas = await html2canvas(page, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
@@ -120,64 +127,31 @@ export default function BillingPage() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-      return pdf.output('blob');
-    } catch (error) {
-      console.error('PDF Generation Error:', error);
-      return null;
-    }
-  };
+      const blob = pdf.output('blob');
 
-  const handleShareInvoice = async (invoice: any) => {
-    setIsSharing(true);
-    // Ensure the preview is open or rendered for capture
-    setSelectedInvoice(invoice);
-    setIsInvoiceDialogOpen(true);
-    
-    // Small delay to ensure render
-    await new Promise(r => setTimeout(r, 500));
-    
-    const blob = await generatePDFBlob(invoice);
-    if (!blob) {
-      setIsSharing(false);
-      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération du PDF." });
-      return;
-    }
+      const fileName = `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`;
+      const file = new File([blob], fileName, { type: 'application/pdf' });
 
-    const fileName = `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`;
-    const file = new File([blob], fileName, { type: 'application/pdf' });
-
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: `Facture ImaraPMS - ${invoice.guestName}`,
           text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'ImaraPMS Resort'}.`,
         });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') console.error("Share error", error);
-      } finally {
-        setIsSharing(false);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast({ title: "Téléchargement lancé", description: "La facture est prête." });
       }
-    } else {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-      
-      const phone = invoice.guestPhone.replace(/\D/g, '');
-      const message = `Bonjour ${invoice.guestName}, votre facture est prête (${invoice.amountDue} $). Veuillez trouver ci-joint le PDF téléchargé.`;
-      
-      try {
-        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(waUrl, '_blank', 'noopener,noreferrer');
-      } catch (e) {
-        console.error("WhatsApp error", e);
-      }
-      
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération du PDF." });
+    } finally {
       setIsSharing(false);
-      toast({ title: "Prêt pour WhatsApp", description: "Veuillez joindre manuellement le fichier PDF téléchargé." });
     }
   };
 
@@ -292,7 +266,6 @@ export default function BillingPage() {
           </Card>
         </main>
 
-        {/* Dialog d'aperçu de facture */}
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 rounded-[2rem] border-none shadow-2xl">
             <DialogHeader className="p-6 border-b bg-muted/20">
@@ -333,14 +306,14 @@ export default function BillingPage() {
                   <thead>
                     <tr className="border-b-4 border-slate-900">
                       <th className="text-left py-6 text-xs font-black uppercase tracking-widest text-slate-900">Désignation des Services</th>
-                      <th className="text-right py-6 text-xs font-black uppercase tracking-widest text-slate-900">Montant HT</th>
+                      <th className="text-right py-6 text-xs font-black uppercase tracking-widest text-slate-900">Montant</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     <tr>
                       <td className="py-8">
                         <p className="font-black text-lg text-slate-900">Hébergement & Prestations</p>
-                        <p className="text-sm text-muted-foreground mt-1">Séjour complet incluant les taxes locales et frais de service.</p>
+                        <p className="text-sm text-muted-foreground mt-1">Séjour complet incluant les services et prestations hôtelières.</p>
                       </td>
                       <td className="text-right py-8 font-black text-xl text-slate-900">{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
                     </tr>
@@ -349,16 +322,8 @@ export default function BillingPage() {
 
                 <div className="flex justify-end mb-20">
                   <div className="w-80 space-y-4 p-8 bg-slate-50 rounded-[2rem]">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground font-bold">Sous-total HT</span>
-                      <span className="font-black text-slate-900">{(Number(selectedInvoice.amountDue) * 0.84).toFixed(2)} $</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground font-bold">TVA (16%)</span>
-                      <span className="font-black text-slate-900">{(Number(selectedInvoice.amountDue) * 0.16).toFixed(2)} $</span>
-                    </div>
                     <div className="flex justify-between border-t-2 border-slate-200 pt-4">
-                      <span className="font-black uppercase text-sm tracking-widest text-primary">Total Général</span>
+                      <span className="font-black uppercase text-sm tracking-widest text-primary">Total à Payer</span>
                       <span className="font-black text-3xl text-primary tracking-tighter">{Number(selectedInvoice.amountDue).toFixed(2)} $</span>
                     </div>
                   </div>
