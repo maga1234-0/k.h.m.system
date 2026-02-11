@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from "react";
@@ -22,7 +23,8 @@ import {
   Eye,
   EyeOff,
   Mail,
-  Lock
+  Lock,
+  Trash2
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -195,7 +197,7 @@ function SettingsContent() {
             </TabsList>
 
             <TabsContent value="general" className="animate-in slide-in-from-bottom-2 duration-400">
-              <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+              <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden">
                 <CardHeader>
                   <CardTitle className="font-headline font-bold text-lg">Identité & Signature</CardTitle>
                   <CardDescription>Configurez les informations officielles de l'établissement.</CardDescription>
@@ -221,15 +223,15 @@ function SettingsContent() {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <Input value={formData.managerName} onChange={(e) => setFormData({...formData, managerName: e.target.value})} placeholder="Nom complet du signataire" className="rounded-xl" />
-                        <div className="border-2 border-dashed rounded-2xl p-2 bg-white space-y-2">
-                          <canvas ref={canvasRef} width={300} height={120} className="w-full h-[120px] bg-slate-50 border border-slate-100 rounded-xl cursor-crosshair touch-none" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
+                        <div className="border-2 border-dashed rounded-2xl p-2 bg-slate-50 space-y-2 overflow-hidden">
+                          <canvas ref={canvasRef} width={300} height={120} className="w-full h-[120px] bg-white border border-slate-100 rounded-xl cursor-crosshair touch-none shadow-inner" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="flex-1 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-50 hover:text-rose-600" onClick={clearSignature}><Eraser className="h-3 w-3 mr-2" /> Effacer</Button>
-                            <Button variant="secondary" size="sm" className="flex-1 rounded-lg text-xs font-bold uppercase tracking-widest" onClick={saveSignature}>Capturer</Button>
+                            <Button variant="outline" size="sm" className="flex-1 rounded-xl text-xs font-black uppercase tracking-widest text-destructive hover:bg-destructive/10 border-destructive/20" onClick={clearSignature}><Eraser className="h-4 w-4 mr-2" /> Effacer</Button>
+                            <Button variant="secondary" size="sm" className="flex-1 rounded-xl text-xs font-black uppercase tracking-widest" onClick={saveSignature}>Capturer</Button>
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-center justify-center p-6 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
+                      <div className="flex flex-col items-center justify-center p-6 bg-muted/20 rounded-[1.5rem] border-2 border-dashed border-muted">
                         <span className="text-[9px] font-bold uppercase text-muted-foreground mb-4">Aperçu Facture</span>
                         {formData.signatureUrl ? <img src={formData.signatureUrl} alt="Signature" className="max-h-24 mix-blend-multiply" /> : <div className="text-center opacity-30"><PenTool className="h-8 w-8 mx-auto mb-2" /><p className="text-[10px] uppercase font-bold">Aucune signature</p></div>}
                       </div>
@@ -243,7 +245,7 @@ function SettingsContent() {
             </TabsContent>
 
             <TabsContent value="account" className="animate-in slide-in-from-bottom-2 duration-400">
-              <Card className="border-none shadow-sm rounded-3xl">
+              <Card className="border-none shadow-sm rounded-[2rem]">
                 <CardHeader>
                   <CardTitle className="font-headline font-bold text-lg">Sécurité du Compte</CardTitle>
                   <CardDescription>Gérez vos identifiants de connexion.</CardDescription>
@@ -276,13 +278,13 @@ function SettingsContent() {
                   </div>
                 </CardContent>
                 <CardFooter className="border-t p-6 flex justify-end">
-                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2 rounded-xl h-12 px-8 font-bold uppercase text-xs tracking-widest">{isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Mettre à jour la sécurité</Button>
+                  <Button onClick={handleUpdateAccount} disabled={isUpdatingAccount} className="gap-2 rounded-xl h-12 px-8 font-bold uppercase text-xs tracking-widest shadow-lg shadow-primary/20">{isUpdatingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Mettre à jour la sécurité</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
 
             <TabsContent value="reservations" className="animate-in slide-in-from-bottom-2 duration-400">
-              <Card className="border-none shadow-sm rounded-3xl">
+              <Card className="border-none shadow-sm rounded-[2rem]">
                 <CardHeader><CardTitle className="font-headline font-bold text-lg">Politiques de Séjour</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-2 gap-8 py-6">
                   <div className="space-y-2">
@@ -294,7 +296,7 @@ function SettingsContent() {
                     <div className="relative"><Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" /><Input type="time" value={formData.checkOutTime} onChange={(e) => setFormData({...formData, checkOutTime: e.target.value})} className="pl-10 rounded-xl" /></div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t p-6 flex justify-end"><Button onClick={handleSaveGeneral} className="gap-2 rounded-xl font-bold uppercase text-xs tracking-widest"><Save className="h-4 w-4" /> Sauvegarder</Button></CardFooter>
+                <CardFooter className="border-t p-6 flex justify-end"><Button onClick={handleSaveGeneral} className="gap-2 rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-primary/20"><Save className="h-4 w-4" /> Sauvegarder</Button></CardFooter>
               </Card>
             </TabsContent>
           </Tabs>

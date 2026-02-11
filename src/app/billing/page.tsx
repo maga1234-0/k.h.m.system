@@ -245,7 +245,7 @@ export default function BillingPage() {
               { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
               { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
             ].map((stat, i) => (
-              <Card key={i} className={`border-none shadow-sm bg-muted/30 animate-in slide-in-from-bottom-4 duration-500 rounded-3xl`} style={{ animationDelay: `${i * 100}ms` }}>
+              <Card key={i} className={`border-none shadow-sm bg-muted/30 animate-in slide-in-from-bottom-4 duration-500 rounded-[2rem]`} style={{ animationDelay: `${i * 100}ms` }}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div>
@@ -261,7 +261,7 @@ export default function BillingPage() {
             ))}
           </div>
 
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden animate-in fade-in duration-700">
+          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden animate-in fade-in duration-700">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg font-bold">Registre de Facturation</CardTitle>
@@ -274,14 +274,14 @@ export default function BillingPage() {
                       <Trash2 className="h-4 w-4" /> Purger tout
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-2xl">
+                  <AlertDialogContent className="rounded-3xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Action Irréversible</AlertDialogTitle>
                       <AlertDialogDescription>Voulez-vous vraiment vider le registre complet de facturation ?</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90">Purger tout</AlertDialogAction>
+                      <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger tout</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -311,14 +311,14 @@ export default function BillingPage() {
                         </div>
                         <div className="flex gap-2">
                           {inv.status !== 'Paid' && (
-                            <Button className="h-10 px-4 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setInvoiceForPayment(inv); setIsPaymentDialogOpen(true); }}>
+                            <Button className="h-10 px-4 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" onClick={() => { setInvoiceForPayment(inv); setIsPaymentDialogOpen(true); }}>
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
                           <Button 
                             variant="outline" 
                             size="icon" 
-                            className="h-10 w-10 text-primary rounded-xl border-primary/20" 
+                            className="h-10 w-10 text-primary rounded-xl border-primary/20 hover:bg-primary/5" 
                             onClick={() => handleShareInvoice(inv)}
                             disabled={isSharing}
                           >
@@ -376,7 +376,7 @@ export default function BillingPage() {
             </div>
             <div className="flex justify-center gap-2">
               <Button variant="outline" className="rounded-xl" onClick={() => setIsPaymentDialogOpen(false)}>Annuler</Button>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl" onClick={handleCollectPayment}>Confirmer</Button>
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg" onClick={handleCollectPayment}>Confirmer</Button>
             </div>
           </DialogContent>
         </Dialog>
