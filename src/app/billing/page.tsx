@@ -139,7 +139,9 @@ export default function BillingPage() {
     if (phone) {
       try {
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
+        // Security wrap for window.open to prevent InvalidAccessError
+        const win = window.open(url, '_blank', 'noopener,noreferrer');
+        if (win) win.focus();
       } catch (e) {
         console.error("WhatsApp error:", e);
         toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ouvrir WhatsApp." });
@@ -160,7 +162,7 @@ export default function BillingPage() {
 
     try {
       const canvas = await html2canvas(page, { 
-        scale: 3, 
+        scale: 2, 
         useCORS: true, 
         backgroundColor: '#ffffff',
         logging: false
@@ -210,16 +212,16 @@ export default function BillingPage() {
               { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
               { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
             ].map((stat, i) => (
-              <Card key={i} className={`border-none shadow-sm bg-${stat.color}-500/5 border border-${stat.color}-500/10 animate-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${i * 100}ms` }}>
+              <Card key={i} className={`border-none shadow-sm bg-muted/50 animate-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${i * 100}ms` }}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className={`text-[10px] font-black uppercase tracking-widest text-${stat.color}-600 mb-1`}>{stat.label}</p>
+                      <p className={`text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1`}>{stat.label}</p>
                       <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">
                         {stat.value.toLocaleString('fr-FR')} {stat.isCount ? '' : '$'}
                       </h3>
                     </div>
-                    <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
+                    <stat.icon className={`h-5 w-5 text-primary`} />
                   </div>
                 </CardContent>
               </Card>
@@ -438,7 +440,7 @@ export default function BillingPage() {
                   </div>
                 </div>
                 <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl">
-                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95" onClick={handleDownloadPDF}>
+                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 mx-auto" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     Télécharger la Facture (PDF)
                   </Button>
