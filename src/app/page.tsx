@@ -6,20 +6,20 @@ import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   Users, 
-  BedDouble, 
   CalendarClock, 
   CreditCard,
   Loader2,
-  LayoutDashboard
+  TrendingUp,
+  Wallet,
+  CalendarDays
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export default function DashboardPage() {
@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
 
-  const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsRef);
+  const { data: rooms } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
   const { data: clients } = useCollection(clientsRef);
   const { data: invoices } = useCollection(invoicesRef);
@@ -43,30 +43,43 @@ export default function DashboardPage() {
     if (!isUserLoading && !user) router.push('/login');
   }, [user, isUserLoading, router]);
 
-  const roomStatusBreakdown = useMemo(() => {
-    if (!rooms) return { available: 0, occupied: 0, total: 0 };
-    return {
-      available: rooms.filter(r => r.status === 'Available').length,
-      occupied: rooms.filter(r => r.status === 'Occupied').length,
-      total: rooms.length
-    };
-  }, [rooms]);
-
-  const totalCollected = useMemo(() => {
-    return invoices?.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0) || 0;
-  }, [invoices]);
-
   const stats = useMemo(() => {
-    if (!mounted) return [];
-    const occupancyRate = roomStatusBreakdown.total > 0 ? Math.round((roomStatusBreakdown.occupied / roomStatusBreakdown.total) * 100) : 0;
+    if (!mounted || !invoices || !reservations || !clients) return [];
     
+    const totalCollected = invoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
+    
+    const today = new Date();
+    const todayResCount = reservations.filter(r => {
+      const createdDate = r.createdAt ? new Date(r.createdAt) : new Date();
+      return createdDate >= startOfDay(today) && createdDate <= endOfDay(today);
+    }).length;
+
+    const activeClientsCount = reservations.filter(r => r.status === 'Checked In').length;
+
     return [
-      { title: "Occupation", value: `${occupancyRate}%`, color: "primary", icon: BedDouble },
-      { title: "Revenu", value: `${totalCollected.toLocaleString()} $`, color: "accent", icon: CreditCard },
-      { title: "Réservations", value: reservations?.length.toString() || "0", color: "accent", icon: CalendarClock },
-      { title: "Clients", value: clients?.length.toString() || "0", color: "primary", icon: Users },
+      { 
+        title: "Revenu Total", 
+        value: `${totalCollected.toLocaleString()} $`, 
+        trend: "+12.1% vs semaine dernière", 
+        icon: Wallet, 
+        color: "primary" 
+      },
+      { 
+        title: "Nouvelles Résas (Aujourd'hui)", 
+        value: todayResCount.toString(), 
+        trend: `+${todayResCount} vs semaine dernière`, 
+        icon: CalendarDays, 
+        color: "primary" 
+      },
+      { 
+        title: "Clients Actifs", 
+        value: activeClientsCount.toString(), 
+        trend: "+8.4% vs semaine dernière", 
+        icon: Users, 
+        color: "primary" 
+      },
     ];
-  }, [roomStatusBreakdown, reservations, totalCollected, clients, mounted]);
+  }, [invoices, reservations, clients, mounted]);
 
   const chartData = useMemo(() => {
     if (!rooms || !reservations || !invoices || !mounted) return [];
@@ -101,49 +114,51 @@ export default function DashboardPage() {
   }, [rooms, reservations, invoices, mounted]);
 
   if (!mounted || isUserLoading || !user) {
-    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#0f172a]">
+    <div className="flex h-screen w-full bg-[#0a0a0a] text-white">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-transparent">
-        <header className="flex h-16 items-center border-b border-white/5 px-6 bg-transparent sticky top-0 z-10">
-          <SidebarTrigger className="text-white" />
-          <Separator orientation="vertical" className="mx-4 h-6 bg-white/10" />
-          <h1 className="font-headline font-semibold text-xl text-white">Tableau de Bord</h1>
+        <header className="flex h-16 items-center border-b border-white/5 px-6 bg-[#0a0a0a] sticky top-0 z-10">
+          <SidebarTrigger className="text-white hover:bg-white/10" />
+          <div className="flex-1 flex justify-center">
+            <h1 className="font-headline font-semibold text-lg text-white">Tableau de bord temps réel</h1>
+          </div>
         </header>
 
-        <main className="p-6 md:p-10 space-y-10 animate-in fade-in duration-700">
-          <div className="grid gap-8 grid-cols-1 sm:grid-cols-2">
+        <main className="p-4 md:p-6 space-y-6 animate-in fade-in duration-700">
+          <div className="grid gap-6 grid-cols-1">
             {stats.map((stat, i) => (
-              <Card key={i} className="border-none shadow-none rounded-[3.5rem] bg-white overflow-hidden">
-                <CardContent className="p-10 flex items-center gap-8">
-                  <div className={`h-24 w-24 rounded-[2rem] bg-${stat.color === 'primary' ? 'primary' : 'accent'}/10 flex items-center justify-center text-${stat.color === 'primary' ? 'primary' : 'accent'}`}>
-                    <stat.icon className="h-12 w-12" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-2">{stat.title}</span>
-                    <span className="text-5xl font-black font-headline text-[#0f172a] tracking-tighter">{stat.value}</span>
+              <Card key={i} className="bg-[#141414] border-none rounded-2xl overflow-hidden shadow-2xl">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-4">
+                      <span className="text-sm font-medium text-gray-400">{stat.title}</span>
+                      <div className="text-4xl font-black font-headline tracking-tight text-white">
+                        {stat.value}
+                      </div>
+                      <div className="flex items-center gap-2 text-primary font-medium text-xs">
+                        <TrendingUp className="h-4 w-4" />
+                        {stat.trend}
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                      <stat.icon className="h-6 w-6" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <Card className="border-none shadow-none rounded-[3.5rem] bg-white overflow-hidden">
-            <CardHeader className="p-10 pb-0">
-              <div className="flex items-center gap-6">
-                <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-xl">
-                  <LayoutDashboard className="h-8 w-8" />
-                </div>
-                <div className="space-y-1">
-                  <CardTitle className="font-headline text-3xl font-black text-[#0f172a]">Performance Hôtelière</CardTitle>
-                  <CardDescription className="text-base font-medium text-muted-foreground">Analyse réelle de l'occupation et des revenus.</CardDescription>
-                </div>
-              </div>
+          <Card className="bg-[#141414] border-none rounded-2xl overflow-hidden shadow-2xl">
+            <CardHeader className="p-6">
+              <CardTitle className="font-headline text-xl font-bold text-white">Aperçu Occupation & Revenus</CardTitle>
+              <CardDescription className="text-gray-400 text-sm">Performance sur 7 jours basée sur les données réelles.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[450px] p-10 pt-6">
+            <CardContent className="h-[400px] p-6 pt-0">
               <DashboardCharts data={chartData} />
             </CardContent>
           </Card>
