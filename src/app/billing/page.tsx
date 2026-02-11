@@ -139,7 +139,7 @@ export default function BillingPage() {
     if (phone) {
       try {
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
+        window.open(url, '_blank', 'noopener,noreferrer');
       } catch (e) {
         console.error("WhatsApp error:", e);
         toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ouvrir WhatsApp." });
