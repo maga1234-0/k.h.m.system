@@ -35,7 +35,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { 
   DropdownMenu, 
@@ -220,13 +219,24 @@ export default function ReservationsPage() {
 
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
-    if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
-      updateDocumentNonBlocking(doc(firestore, 'rooms', resToDelete.roomId), { status: "Available" });
+    
+    try {
+      if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
+        const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
+        updateDocumentNonBlocking(roomRef, { status: "Available" });
+      }
+      
+      const resRef = doc(firestore, 'reservations', resToDelete.id);
+      deleteDocumentNonBlocking(resRef);
+      
+      setIsDeleteDialogOpen(false);
+      setResToDelete(null);
+      toast({ variant: "destructive", title: "Supprimé", description: "Le dossier a été retiré du registre." });
+    } catch (error) {
+      console.error("Deletion error:", error);
+      setIsDeleteDialogOpen(false);
+      setResToDelete(null);
     }
-    deleteDocumentNonBlocking(doc(firestore, 'reservations', resToDelete.id));
-    setIsDeleteDialogOpen(false);
-    setResToDelete(null);
-    toast({ variant: "destructive", title: "Supprimé" });
   };
 
   const handleClearAll = () => {
@@ -242,18 +252,18 @@ export default function ReservationsPage() {
   };
 
   const filteredReservations = reservations?.filter(res => 
-    res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    res.roomNumber?.includes(searchTerm)
+    (res.guestName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+    (res.roomNumber || "").includes(searchTerm)
   );
 
   if (!mounted || isAuthLoading || !user) {
-    return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
-    <div className="flex h-screen w-full animate-in fade-in duration-500">
+    <div className="flex h-screen w-full animate-in fade-in duration-500 bg-background">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background">
+      <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
           <div className="flex items-center">
             <SidebarTrigger />
@@ -262,23 +272,13 @@ export default function ReservationsPage() {
           </div>
           <div className="flex gap-2">
             {reservations && reservations.length > 0 && (
-              <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest">
-                    <Trash2 className="h-4 w-4" /> Purger tout
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-3xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
-                    <AlertDialogDescription>C'est irréversible.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90 rounded-xl">Tout supprimer</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button 
+                variant="outline" 
+                className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest"
+                onClick={() => setIsClearDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" /> Purger tout
+              </Button>
             )}
             <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4" /> Nouvelle résa
@@ -332,11 +332,19 @@ export default function ReservationsPage() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 rounded-xl">
-                          <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase py-2">Gérer le séjour</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleOpenEdit(res)} className="font-bold text-xs uppercase py-2"><Edit2 className="mr-2 h-4 w-4" /> Modifier</DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl">
+                          <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase py-2 cursor-pointer">Gérer le séjour</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleOpenEdit(res)} className="font-bold text-xs uppercase py-2 cursor-pointer"><Edit2 className="mr-2 h-4 w-4" /> Modifier</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => { setResToDelete(res); setIsDeleteDialogOpen(true); }} className="text-destructive font-bold text-xs uppercase py-2"><Trash2 className="mr-2 h-4 w-4" /> Supprimer</DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onSelect={() => { 
+                              setResToDelete(res); 
+                              setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                            }} 
+                            className="text-destructive font-bold text-xs uppercase py-2 cursor-pointer"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -435,14 +443,27 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
+        <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+          <AlertDialogContent className="rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
+              <AlertDialogDescription>Cette action supprimera toutes les réservations. C'est irréversible.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90 rounded-xl">Tout supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-3xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmer la suppression ?</AlertDialogTitle>
-              <AlertDialogDescription>Le dossier de <strong>{resToDelete?.guestName}</strong> sera retiré.</AlertDialogDescription>
+              <AlertDialogDescription>Le dossier de <strong>{resToDelete?.guestName}</strong> sera définitivement retiré du registre.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+              <AlertDialogCancel className="rounded-xl" onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive text-white hover:bg-destructive/90 rounded-xl">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -451,3 +472,4 @@ export default function ReservationsPage() {
     </div>
   );
 }
+

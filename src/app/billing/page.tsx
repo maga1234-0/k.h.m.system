@@ -42,7 +42,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
@@ -157,7 +156,7 @@ export default function BillingPage() {
 
       const fileName = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
       
-      // Téléchargement forcé pour que l'utilisateur ait le fichier prêt à être joint
+      // Téléchargement forcé
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -183,8 +182,8 @@ export default function BillingPage() {
       window.open(whatsappUrl, '_blank');
       
       toast({ 
-        title: "PDF Téléchargé", 
-        description: "Veuillez joindre le fichier téléchargé dans WhatsApp." 
+        title: "Prêt pour WhatsApp", 
+        description: "Veuillez joindre le PDF téléchargé à la discussion ouverte." 
       });
     }, 1000);
   };
@@ -194,9 +193,9 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex h-screen w-full animate-in fade-in duration-500">
+    <div className="flex h-screen w-full animate-in fade-in duration-500 bg-background">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background">
+      <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
@@ -233,23 +232,14 @@ export default function BillingPage() {
                 <CardDescription>Suivi des documents officiels et encaissements.</CardDescription>
               </div>
               {invoices && invoices.length > 0 && (
-                <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive gap-2 h-8 text-xs font-bold uppercase tracking-widest">
-                      <Trash2 className="h-4 w-4" /> Purger tout
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-3xl">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Action Irréversible</AlertDialogTitle>
-                      <AlertDialogDescription>Purger le registre complet ?</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-destructive gap-2 h-8 text-xs font-bold uppercase tracking-widest"
+                  onClick={() => setIsClearDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4" /> Purger tout
+                </Button>
               )}
             </CardHeader>
             <CardContent>
@@ -437,11 +427,24 @@ export default function BillingPage() {
           </DialogContent>
         </Dialog>
 
+        <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+          <AlertDialogContent className="rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Action Irréversible</AlertDialogTitle>
+              <AlertDialogDescription>Purger le registre complet de facturation ?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={isDeleteIndividualDialogOpen} onOpenChange={setIsDeleteIndividualDialogOpen}>
           <AlertDialogContent className="rounded-3xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer la facture ?</AlertDialogTitle>
-              <AlertDialogDescription>Action définitive pour <strong>{invoiceToDelete?.guestName}</strong>.</AlertDialogDescription>
+              <AlertDialogDescription>Ceci supprimera définitivement le document pour <strong>{invoiceToDelete?.guestName}</strong>.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
@@ -467,3 +470,4 @@ export default function BillingPage() {
     </div>
   );
 }
+

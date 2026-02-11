@@ -103,7 +103,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-background">
+    <div className="flex h-screen w-full bg-background animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-16 items-center border-b px-6 bg-background/80 backdrop-blur-xl sticky top-0 z-50 justify-between">
@@ -311,3 +311,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
