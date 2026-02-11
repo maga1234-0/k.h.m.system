@@ -26,6 +26,7 @@ import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -127,22 +128,11 @@ export default function BillingPage() {
       return;
     }
     
-    const extras = getExtrasForInvoice(invoice);
-    const totalExtras = extras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
-    const basePrice = Math.max(0, Number(invoice.amountDue) - totalExtras);
     const hotelName = settings?.hotelName || 'ImaraPMS Resort';
-    
     let message = `*${hotelName.toUpperCase()} - FACTURE OFFICIELLE*\n\n`;
     message += `Cher(e) ${invoice.guestName},\n\n`;
-    message += `Veuillez trouver ci-dessous le détail de votre séjour :\n\n`;
-    message += `*Détails des prestations :*\n`;
-    message += `- Hébergement : ${basePrice.toFixed(2)} $\n`;
-    
-    extras.forEach(extra => {
-      message += `- ${extra.type} (${extra.description}) : ${parseFloat(extra.amount).toFixed(2)} $\n`;
-    });
-    
-    message += `\n*MONTANT NET À RÉGLER : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
+    message += `Veuillez trouver ci-joint votre facture PDF concernant votre séjour.\n\n`;
+    message += `*MONTANT TOTAL : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
     message += `Merci de votre confiance.\nCordialement,\nLa Direction.`;
 
     const phone = invoice.guestPhone.replace(/\D/g, '');
@@ -162,11 +152,10 @@ export default function BillingPage() {
 
     try {
       const canvas = await html2canvas(page, { 
-        scale: 2, 
+        scale: 3, 
         useCORS: true, 
         backgroundColor: '#ffffff',
-        logging: false,
-        windowWidth: 1000
+        logging: false
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -176,10 +165,10 @@ export default function BillingPage() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
       pdf.save(`FACTURE-${selectedInvoice.guestName.toUpperCase().replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "Succès", description: "La facture a été téléchargée dans votre explorateur." });
+      toast({ title: "Succès", description: "La facture est prête dans votre explorateur." });
     } catch (error) {
       console.error('PDF Error:', error);
-      toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération." });
+      toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération PDF." });
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -213,7 +202,7 @@ export default function BillingPage() {
               { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
               { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
             ].map((stat, i) => (
-              <Card key={i} className={`border-none shadow-sm bg-${stat.color}-500/5 border border-${stat.color}-500/10 animate-in slide-in-from-bottom-4 duration-500 delay-${i * 100}`}>
+              <Card key={i} className={`border-none shadow-sm bg-${stat.color}-500/5 border border-${stat.color}-500/10 animate-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${i * 100}ms` }}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div>
@@ -229,7 +218,7 @@ export default function BillingPage() {
             ))}
           </div>
 
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden animate-in fade-in duration-700 delay-300">
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden animate-in fade-in duration-700">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg font-bold">Registre de Facturation</CardTitle>
@@ -301,7 +290,7 @@ export default function BillingPage() {
         </main>
 
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-          <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogContent className="sm:max-w-md rounded-3xl animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Valider le Paiement</DialogTitle>
             </DialogHeader>
@@ -319,120 +308,135 @@ export default function BillingPage() {
         </Dialog>
 
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-          <DialogContent className="max-w-4xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl">
+          <DialogContent className="max-w-4xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl animate-in zoom-in-95">
             <DialogHeader className="sr-only">
               <DialogTitle>Facture Officielle</DialogTitle>
             </DialogHeader>
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
-                <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center">
-                  <div className="w-full max-w-[210mm] bg-white p-12 shadow-2xl min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page">
-                    <div className="mb-12 border-b-2 border-primary pb-8">
-                       <table className="w-full">
+                <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-slate-100">
+                  {/* Structure Tabulaire Stable pour éviter chevauchements PDF */}
+                  <div className="w-full max-w-[210mm] bg-white p-12 shadow-2xl min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page" style={{ margin: '0 auto' }}>
+                    
+                    {/* Header Stable */}
+                    <div className="mb-12 border-b-4 border-primary pb-8">
+                       <table style={{ width: '100%' }}>
                           <tbody>
                             <tr>
-                              <td className="w-2/3 align-middle">
-                                <div className="flex items-center gap-4">
-                                  <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center text-white shrink-0"><Hotel className="h-10 w-10" /></div>
+                              <td style={{ width: '65%', verticalAlign: 'middle' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                  <div style={{ height: '60px', width: '60px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                    <Hotel size={35} />
+                                  </div>
                                   <div>
-                                    <h1 className="font-headline font-black text-3xl text-primary leading-none uppercase">{settings?.hotelName || 'ImaraPMS'}</h1>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Hôtellerie de Prestige • Excellence</p>
+                                    <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
+                                      {settings?.hotelName || 'ImaraPMS'}
+                                    </h1>
+                                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="w-1/3 text-right align-middle">
-                                <h2 className="text-3xl font-black uppercase text-slate-900 mb-0">FACTURE</h2>
-                                <p className="text-lg font-bold text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
-                                <p className="text-xs text-slate-400 font-bold">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                              <td style={{ width: '35%', textAlign: 'right', verticalAlign: 'middle' }}>
+                                <h2 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: '#0f172a' }}>FACTURE</h2>
+                                <p style={{ fontSize: '14px', fontWeight: 800, color: 'hsl(var(--primary))', margin: '2px 0' }}>#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                                <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, margin: 0 }}>{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                               </td>
                             </tr>
                           </tbody>
                        </table>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-12 mb-12">
-                      <div className="space-y-2">
-                        <h4 className="text-[10px] font-black text-primary uppercase border-b border-slate-100 pb-1">DESTINATAIRE</h4>
-                        <div className="pt-2">
-                          <p className="text-2xl font-black text-slate-900 leading-tight">{selectedInvoice.guestName}</p>
-                          <p className="text-sm font-bold text-slate-500 mt-1">{selectedInvoice.guestPhone}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-right">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 pb-1">ÉMETTEUR</h4>
-                        <div className="pt-2">
-                          <p className="text-lg font-black leading-tight">{settings?.hotelName || 'ImaraPMS Resort'}</p>
-                          <p className="text-xs text-slate-400 font-bold max-w-[200px] ml-auto mt-1">{settings?.address || 'République Démocratique du Congo'}</p>
-                        </div>
-                      </div>
+                    {/* Infos Destinataire Stable */}
+                    <div style={{ marginBottom: '40px' }}>
+                       <table style={{ width: '100%' }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ width: '50%', paddingRight: '20px' }}>
+                                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--primary))', textTransform: 'uppercase' }}>DESTINATAIRE</span>
+                                </div>
+                                <p style={{ fontSize: '18px', fontWeight: 900, margin: 0, color: '#0f172a' }}>{selectedInvoice.guestName}</p>
+                                <p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0' }}>{selectedInvoice.guestPhone}</p>
+                              </td>
+                              <td style={{ width: '50%', textAlign: 'right' }}>
+                                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>ÉMETTEUR</span>
+                                </div>
+                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'ImaraPMS Resort'}</p>
+                                <p style={{ fontSize: '10px', color: '#64748b', margin: '5px 0' }}>{settings?.address || 'République Démocratique du Congo'}</p>
+                              </td>
+                            </tr>
+                          </tbody>
+                       </table>
                     </div>
 
-                    <div className="flex-1 mb-12">
-                      <table className="w-full border-collapse">
+                    {/* Table des Services Stable */}
+                    <div style={{ flex: 1 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                          <tr className="bg-slate-900 text-white text-[10px] font-bold uppercase">
-                            <th className="py-4 px-6 text-left border-r border-slate-700">DESCRIPTION DES SERVICES</th>
-                            <th className="py-4 px-6 text-right w-40">TOTAL ($)</th>
+                          <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
+                            <th style={{ padding: '12px 15px', textAlign: 'left', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', borderRadius: '8px 0 0 0' }}>Description des Services</th>
+                            <th style={{ padding: '12px 15px', textAlign: 'right', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', width: '120px', borderRadius: '0 8px 0 0' }}>Montant ($)</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 border-b-2 border-slate-900">
-                          <tr>
-                            <td className="py-6 px-6">
-                              <p className="font-black text-lg text-slate-900 leading-tight">Hébergement & Prestations Incluses</p>
-                              <p className="text-xs text-slate-400 mt-1">Séjour du {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                        <tbody>
+                          <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '20px 15px' }}>
+                              <p style={{ fontWeight: 900, fontSize: '14px', margin: 0 }}>Hébergement & Services Inclus</p>
+                              <p style={{ fontSize: '10px', color: '#94a3b8', margin: '4px 0 0 0' }}>Séjour officiel - Chambre {selectedInvoice.roomNumber || 'N/A'}</p>
                             </td>
-                            <td className="py-6 px-6 text-right font-black text-xl text-slate-900 align-top">{basePriceValue.toFixed(2)} $</td>
+                            <td style={{ padding: '20px 15px', textAlign: 'right', fontWeight: 900, fontSize: '14px' }}>{basePriceValue.toFixed(2)}</td>
                           </tr>
                           {invoiceExtras.map((e, i) => (
-                            <tr key={i} className="bg-slate-50/50">
-                              <td className="py-4 px-6">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-[9px] font-black bg-slate-200 px-2 py-0.5 rounded text-slate-500 shrink-0">{e.date}</span>
-                                  <span className="font-bold text-sm text-slate-700 leading-tight">{e.type} : {e.description}</span>
+                            <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
+                              <td style={{ padding: '12px 15px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '8px', fontWeight: 900, backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>{e.date}</span>
+                                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>{e.type} : {e.description}</span>
                                 </div>
                               </td>
-                              <td className="py-4 px-6 text-right font-bold text-slate-600 align-top">+{parseFloat(e.amount).toFixed(2)} $</td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right', fontWeight: 700, color: '#475569', fontSize: '12px' }}>+{parseFloat(e.amount).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
 
-                    <div className="mt-auto pt-8">
-                       <table className="w-full">
+                    {/* Footer Signature Stable */}
+                    <div style={{ marginTop: '50px' }}>
+                       <table style={{ width: '100%' }}>
                           <tbody>
                             <tr>
-                              <td className="w-1/2 align-bottom pb-4">
-                                <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE & CACHET</p>
-                                <div className="min-h-[140px] flex flex-col justify-end">
-                                  {settings?.signatureUrl ? (
-                                    <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
-                                  ) : (
-                                    <div className="h-20 w-48 border-b-2 border-dashed border-slate-200 mb-2" />
-                                  )}
-                                  <p className="text-sm font-black uppercase tracking-widest">{settings?.managerName || 'La Direction'}</p>
-                                  <p className="text-[9px] font-bold text-slate-400 uppercase">Manager Officiel Fiesta Hotel</p>
-                                </div>
+                              <td style={{ width: '60%', verticalAlign: 'bottom' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 900, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase' }}>Cachet & Signature</p>
+                                {settings?.signatureUrl ? (
+                                  <img src={settings.signatureUrl} alt="Signature" style={{ maxHeight: '70px', display: 'block', marginBottom: '5px' }} />
+                                ) : (
+                                  <div style={{ height: '50px', width: '150px', borderBottom: '1px dashed #cbd5e1', marginBottom: '10px' }}></div>
+                                )}
+                                <p style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{settings?.managerName || 'La Direction'}</p>
+                                <p style={{ fontSize: '8px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>Fiesta Hotel Manager</p>
                               </td>
-                              <td className="w-1/2 text-right align-bottom">
-                                <div className="inline-block bg-primary/5 p-8 rounded-3xl border-2 border-primary/20">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase mb-2">MONTANT NET À RÉGLER</p>
-                                  <div className="text-5xl font-black text-slate-900 flex items-baseline justify-end gap-2">
-                                    {Number(selectedInvoice.amountDue).toFixed(2)} <span className="text-2xl text-primary font-black">$</span>
-                                  </div>
+                              <td style={{ width: '40%', textAlign: 'right', verticalAlign: 'bottom' }}>
+                                <div style={{ backgroundColor: '#f1f5f9', padding: '25px', borderRadius: '20px', border: '2px solid hsl(var(--primary))' }}>
+                                  <p style={{ fontSize: '9px', fontWeight: 900, color: '#64748b', margin: '0 0 5px 0', textTransform: 'uppercase' }}>NET À PAYER</p>
+                                  <p style={{ fontSize: '32px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
+                                    {Number(selectedInvoice.amountDue).toFixed(2)} <span style={{ fontSize: '16px', color: 'hsl(var(--primary))' }}>$</span>
+                                  </p>
                                 </div>
                               </td>
                             </tr>
                           </tbody>
                        </table>
-                       <div className="mt-12 text-center">
-                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-[0.3em]">ImaraPMS - Logiciel de gestion hôtelière certifié - Document Officiel</p>
+                       <div style={{ marginTop: '50px', textAlign: 'center' }}>
+                          <p style={{ fontSize: '8px', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>ImaraPMS v2.5 - Document de Gestion Certifié</p>
                        </div>
                     </div>
                   </div>
                 </div>
+                {/* Bouton parfaitement centré */}
                 <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl">
-                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg" onClick={handleDownloadPDF}>
+                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     Télécharger la Facture (PDF)
                   </Button>

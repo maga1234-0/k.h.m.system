@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -103,7 +103,7 @@ export default function RoomsPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Automatic Price Calculation
+  // Automatic Price Calculation for quick booking
   useEffect(() => {
     if (selectedRoom && bookingForm.checkInDate && bookingForm.checkOutDate) {
       const start = new Date(bookingForm.checkInDate);
@@ -188,7 +188,7 @@ export default function RoomsPage() {
   if (isUserLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-background">
         <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
@@ -197,13 +197,13 @@ export default function RoomsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl">Gestion des Chambres</h1>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2">
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary gap-2 transition-transform hover:scale-105">
             <Plus className="h-4 w-4" /> Ajouter une chambre
           </Button>
         </header>
 
         <main className="p-6">
-          <div className="relative mb-6">
+          <div className="relative mb-6 animate-in slide-in-from-top-2 duration-500">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Rechercher par numéro ou type..." className="pl-9 bg-background max-w-md" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
@@ -214,8 +214,8 @@ export default function RoomsPage() {
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredRooms?.map((room) => (
-                <Card key={room.id} className="overflow-hidden border-none shadow-sm hover:shadow-md transition-shadow group">
+              {filteredRooms?.map((room, idx) => (
+                <Card key={room.id} className="overflow-hidden border-none shadow-sm hover:shadow-md transition-all hover:scale-[1.02] animate-in fade-in duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                   <div className={`h-1.5 w-full ${room.status === 'Available' ? 'bg-emerald-500' : room.status === 'Occupied' ? 'bg-amber-500' : room.status === 'Maintenance' ? 'bg-rose-500' : 'bg-blue-500'}`} />
                   <CardHeader className="p-4">
                     <div className="flex justify-between items-start">
@@ -253,7 +253,7 @@ export default function RoomsPage() {
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Nouvelle Chambre</DialogTitle>
               <DialogDescription>Ajouter une nouvelle chambre à l'inventaire.</DialogDescription>
@@ -300,7 +300,7 @@ export default function RoomsPage() {
         </Dialog>
 
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Réservation Rapide</DialogTitle>
               <DialogDescription>Chambre {selectedRoom?.roomNumber} - {selectedRoom?.roomType}</DialogDescription>
@@ -326,7 +326,7 @@ export default function RoomsPage() {
               </div>
               <div className="space-y-1">
                 <Label>Montant Total Automatique ($)</Label>
-                <Input type="number" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
+                <Input type="number" value={bookingForm.totalAmount} readOnly className="bg-muted font-bold" />
                 <p className="text-[10px] text-muted-foreground">Calculé sur la base de {selectedRoom?.pricePerNight} $/nuit.</p>
               </div>
             </div>
@@ -338,7 +338,7 @@ export default function RoomsPage() {
         </Dialog>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Modifier Chambre</DialogTitle>
               <DialogDescription>Mettre à jour les informations.</DialogDescription>
@@ -387,18 +387,18 @@ export default function RoomsPage() {
         </Dialog>
 
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Détails Chambre</DialogTitle>
               <DialogDescription>Fiche technique.</DialogDescription>
             </DialogHeader>
             {selectedRoom && (
               <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border">
+                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border animate-in slide-in-from-top-2">
                   <span className="text-xs font-bold uppercase text-muted-foreground">Statut</span>
                   {getStatusBadge(selectedRoom.status)}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-bottom-2">
                   <div className="p-3 rounded-lg border">
                     <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Capacité</p>
                     <p className="font-bold flex items-center gap-2"><UsersIcon className="h-4 w-4" /> {selectedRoom.capacity} Pers.</p>
@@ -408,7 +408,7 @@ export default function RoomsPage() {
                     <p className="font-bold">{selectedRoom.roomType}</p>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in fade-in duration-700">
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Équipements</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedRoom.amenities?.map((a: string, i: number) => <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>)}
