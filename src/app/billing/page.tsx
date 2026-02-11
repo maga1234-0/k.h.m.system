@@ -19,7 +19,8 @@ import {
   Download,
   Hotel,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Share2
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking, useUser, useDoc } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -53,6 +54,7 @@ export default function BillingPage() {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [invoiceForPayment, setInvoiceForPayment] = useState<any>(null);
   
@@ -122,68 +124,77 @@ export default function BillingPage() {
     toast({ title: "Paiement Enregistré", description: "La facture a été marquée comme réglée." });
   };
 
-  const handleSendWhatsApp = (invoice: any) => {
-    if (!invoice || !invoice.guestPhone) {
-      toast({ variant: "destructive", title: "Erreur", description: "Numéro de téléphone manquant." });
+  const generatePDFBlob = async (invoice: any): Promise<Blob | null> => {
+    setSelectedInvoice(invoice);
+    // On attend un cycle de rendu pour que le DOM se mette à jour avec selectedInvoice
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const page = document.getElementById('invoice-single-page');
+    if (!page) return null;
+
+    try {
+      const canvas = await html2canvas(page, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+      return pdf.output('blob');
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      return null;
+    }
+  };
+
+  const handleShareInvoice = async (invoice: any) => {
+    if (!navigator.share) {
+      toast({ variant: "destructive", title: "Non supporté", description: "Votre navigateur ne supporte pas le partage direct. Veuillez télécharger le PDF." });
       return;
     }
-    
-    const hotelName = settings?.hotelName || 'Fiesta Hotel';
-    let message = `*${hotelName.toUpperCase()} - FACTURE OFFICIELLE*\n\n`;
-    message += `Cher(e) ${invoice.guestName},\n\n`;
-    message += `Veuillez trouver ci-joint votre facture PDF concernant votre séjour.\n\n`;
-    message += `*MONTANT TOTAL : ${Number(invoice.amountDue).toFixed(2)} $*\n\n`;
-    message += `Merci de votre confiance.\nCordialement,\nLa Direction.`;
 
-    const phone = invoice.guestPhone.replace(/\D/g, '');
-    if (phone) {
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-      try {
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.click();
-      } catch (e) {
-        console.error("WhatsApp redirection error:", e);
-        toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ouvrir WhatsApp." });
+    setIsSharing(true);
+    const blob = await generatePDFBlob(invoice);
+    if (!blob) {
+      setIsSharing(false);
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération du PDF." });
+      return;
+    }
+
+    const file = new File([blob], `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`, { type: 'application/pdf' });
+
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Facture ImaraPMS - ${invoice.guestName}`,
+          text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'Fiesta Hotel'}.`,
+        });
+      } else {
+        throw new Error("Cannot share files");
       }
+    } catch (error) {
+      console.error("Share error:", error);
+      toast({ variant: "destructive", title: "Partage échoué", description: "Utilisez le bouton télécharger." });
+    } finally {
+      setIsSharing(false);
+      setSelectedInvoice(null);
     }
   };
 
   const handleDownloadPDF = async () => {
     if (!selectedInvoice) return;
-
     setIsGeneratingPdf(true);
-    const page = document.getElementById('invoice-single-page');
-    
-    if (!page) {
-      setIsGeneratingPdf(false);
-      return;
+    const blob = await generatePDFBlob(selectedInvoice);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `FACTURE-${selectedInvoice.guestName.replace(/\s+/g, '-')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Succès", description: "Facture téléchargée." });
     }
-
-    try {
-      const canvas = await html2canvas(page, { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        logging: false
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-      pdf.save(`FACTURE-${selectedInvoice.guestName.toUpperCase().replace(/\s+/g, '-')}.pdf`);
-      
-      toast({ title: "Succès", description: "La facture est prête dans votre explorateur." });
-    } catch (error) {
-      console.error('PDF Error:', error);
-      toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération PDF." });
-    } finally {
-      setIsGeneratingPdf(false);
-    }
+    setIsGeneratingPdf(false);
   };
 
   const invoiceExtras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
@@ -284,7 +295,15 @@ export default function BillingPage() {
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
-                          <Button variant="outline" size="icon" className="h-10 w-10 text-[#25D366] rounded-xl border-[#25D366]/20" onClick={() => handleSendWhatsApp(inv)}><MessageCircle className="h-5 w-5" /></Button>
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-10 w-10 text-[#25D366] rounded-xl border-[#25D366]/20" 
+                            onClick={() => handleShareInvoice(inv)}
+                            disabled={isSharing}
+                          >
+                            {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
+                          </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
                         </div>
                       </div>
@@ -451,6 +470,57 @@ export default function BillingPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Hidden Container for generating sharing PDF */}
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+             {selectedInvoice && !isInvoiceDialogOpen && (
+                <div className="w-[210mm] bg-white p-12 min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page">
+                    {/* Même contenu que ci-dessus pour la génération PDF */}
+                    <div className="mb-12 border-b-4 border-primary pb-8">
+                       <table style={{ width: '100%' }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ width: '65%', verticalAlign: 'middle' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                  <div style={{ height: '60px', width: '60px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                    <Hotel size={35} />
+                                  </div>
+                                  <div>
+                                    <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
+                                      {settings?.hotelName || 'Fiesta Hotel'}
+                                    </h1>
+                                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ width: '35%', textAlign: 'right', verticalAlign: 'middle' }}>
+                                <h2 style={{ fontSize: '24px', fontWeight: 900, margin: 0 }}>FACTURE</h2>
+                                <p style={{ fontSize: '14px', fontWeight: 800, color: 'hsl(var(--primary))' }}>#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                              </td>
+                            </tr>
+                          </tbody>
+                       </table>
+                    </div>
+                    {/* ... (Reste de la structure identique) */}
+                    <div style={{ flex: 1, padding: '40px 0' }}>
+                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                             <thead>
+                                 <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
+                                     <th style={{ padding: '12px', textAlign: 'left' }}>Description</th>
+                                     <th style={{ padding: '12px', textAlign: 'right' }}>Total</th>
+                                 </tr>
+                             </thead>
+                             <tbody>
+                                 <tr>
+                                     <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>Hébergement Chambre {selectedInvoice.roomNumber}</td>
+                                     <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
+                                 </tr>
+                             </tbody>
+                         </table>
+                    </div>
+                </div>
+             )}
+        </div>
       </SidebarInset>
     </div>
   );
