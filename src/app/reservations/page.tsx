@@ -41,7 +41,8 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { 
   useFirestore, 
@@ -62,6 +63,8 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [resToDelete, setResToDelete] = useState<any>(null);
   
   const [activeResId, setActiveResId] = useState<string | null>(null);
   const [activeDialog, setActiveDialog] = useState<"manage" | null>(null);
@@ -178,14 +181,28 @@ export default function ReservationsPage() {
     toast({ variant: "destructive", title: "Réservation Annulée", description: "La chambre est à nouveau disponible." });
   };
 
+  const handleDeleteIndividual = () => {
+    if (!resToDelete) return;
+    
+    // Liberer la chambre avant de supprimer le dossier
+    if (resToDelete.roomId) {
+      updateDocumentNonBlocking(doc(firestore, 'rooms', resToDelete.roomId), { status: "Available" });
+    }
+    
+    deleteDocumentNonBlocking(doc(firestore, 'reservations', resToDelete.id));
+    setIsDeleteDialogOpen(false);
+    setResToDelete(null);
+    toast({ variant: "destructive", title: "Supprimé", description: "La réservation a été retirée du registre." });
+  };
+
   const handleClearAll = () => {
     if (!reservations) return;
     reservations.forEach((res) => {
-      // Liberer la chambre d'abord
+      // Liberer chaque chambre
       if (res.roomId) {
         updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Available" });
       }
-      // Supprimer la réservation
+      // Supprimer le document
       deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
     });
     setIsClearDialogOpen(false);
@@ -213,14 +230,14 @@ export default function ReservationsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Réservations</h1>
+            <h1 className="font-headline font-semibold text-xl text-primary">Réservations</h1>
           </div>
           <div className="flex gap-2">
             {reservations && reservations.length > 0 && (
               <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest">
-                    <Trash2 className="h-4 w-4" /> Purger
+                    <Trash2 className="h-4 w-4" /> Purger tout
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="rounded-3xl">
@@ -290,9 +307,19 @@ export default function ReservationsPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 hover:scale-110 transition-transform"><MoreHorizontal className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 animate-in slide-in-from-top-1 rounded-xl">
+                          <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-1 rounded-xl">
                             <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase tracking-widest py-2">
                               Gérer le séjour
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onSelect={() => {
+                                setResToDelete(res);
+                                setTimeout(() => setIsDeleteDialogOpen(true), 150);
+                              }} 
+                              className="text-destructive font-bold text-xs uppercase tracking-widest py-2"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Supprimer du registre
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -403,8 +430,24 @@ export default function ReservationsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent className="rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-headline font-bold">Confirmer la suppression ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Le dossier de <strong>{resToDelete?.guestName}</strong> sera retiré du registre et la chambre {resToDelete?.roomNumber} sera libérée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl">
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
 }
-
