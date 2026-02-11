@@ -84,7 +84,7 @@ export default function BillingPage() {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Action effectuée", description: "Le registre des factures a été purgé." });
+    toast({ variant: "destructive", title: "Registre purgé" });
   };
 
   const handleDeleteIndividual = () => {
@@ -92,7 +92,7 @@ export default function BillingPage() {
     deleteDocumentNonBlocking(doc(firestore, 'invoices', invoiceToDelete.id));
     setIsDeleteIndividualDialogOpen(false);
     setInvoiceToDelete(null);
-    toast({ variant: "destructive", title: "Facture Supprimée", description: "Le document a été retiré du registre." });
+    toast({ variant: "destructive", title: "Facture Supprimée" });
   };
 
   const handleCollectPayment = () => {
@@ -105,7 +105,7 @@ export default function BillingPage() {
     });
     setIsPaymentDialogOpen(false);
     setInvoiceForPayment(null);
-    toast({ title: "Paiement Enregistré", description: "La facture a été marquée comme réglée." });
+    toast({ title: "Paiement Enregistré" });
   };
 
   const handleShareInvoice = async (invoice: any) => {
@@ -137,7 +137,7 @@ export default function BillingPage() {
         await navigator.share({
           files: [file],
           title: `Facture ImaraPMS - ${invoice.guestName}`,
-          text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'ImaraPMS Resort'}.`,
+          text: `Bonjour ${invoice.guestName}, voici votre facture.`,
         });
       } else {
         const url = URL.createObjectURL(blob);
@@ -146,11 +146,11 @@ export default function BillingPage() {
         link.download = fileName;
         link.click();
         URL.revokeObjectURL(url);
-        toast({ title: "Téléchargement lancé", description: "La facture est prête." });
+        toast({ title: "Téléchargement lancé" });
       }
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      toast({ variant: "destructive", title: "Erreur", description: "Échec de génération du PDF." });
+      toast({ variant: "destructive", title: "Erreur" });
     } finally {
       setIsSharing(false);
     }
@@ -167,7 +167,7 @@ export default function BillingPage() {
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl text-primary tracking-tight">Finance & Facturation</h1>
+          <h1 className="font-headline font-semibold text-xl text-primary">Finance & Facturation</h1>
         </header>
 
         <main className="p-4 md:p-6 space-y-6">
@@ -177,7 +177,7 @@ export default function BillingPage() {
               { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
               { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
             ].map((stat, i) => (
-              <Card key={i} className={`border-none shadow-sm bg-muted/30 animate-in slide-in-from-bottom-4 duration-500 rounded-[2rem]`} style={{ animationDelay: `${i * 100}ms` }}>
+              <Card key={i} className={`border-none shadow-sm bg-muted/30 rounded-[2rem]`}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div>
@@ -193,7 +193,7 @@ export default function BillingPage() {
             ))}
           </div>
 
-          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden animate-in fade-in duration-700">
+          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg font-bold">Registre de Facturation</CardTitle>
@@ -209,11 +209,11 @@ export default function BillingPage() {
                   <AlertDialogContent className="rounded-3xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Action Irréversible</AlertDialogTitle>
-                      <AlertDialogDescription>Voulez-vous vraiment vider le registre complet de facturation ?</AlertDialogDescription>
+                      <AlertDialogDescription>Purger le registre complet ?</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger tout</AlertDialogAction>
+                      <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -224,7 +224,7 @@ export default function BillingPage() {
                 <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
               ) : invoices && invoices.length > 0 ? (
                 <div className="space-y-3">
-                  {invoices.map((inv, idx) => (
+                  {invoices.map((inv) => (
                     <div key={inv.id} className="flex items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all group">
                       <div className="flex items-center gap-4">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
@@ -270,7 +270,7 @@ export default function BillingPage() {
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 rounded-[2rem] border-none shadow-2xl">
             <DialogHeader className="p-6 border-b bg-muted/20">
-              <DialogTitle className="font-headline font-black text-2xl text-primary">Aperçu de la Facture Officielle</DialogTitle>
+              <DialogTitle className="font-headline font-black text-2xl text-primary">Facture Officielle</DialogTitle>
             </DialogHeader>
             {selectedInvoice && (
               <div id="invoice-single-page" className="p-16 bg-white text-slate-900 font-sans min-h-[297mm] flex flex-col">
@@ -299,7 +299,8 @@ export default function BillingPage() {
                   <div>
                     <h4 className="text-[9px] font-black uppercase text-primary tracking-[0.2em] mb-6 opacity-50">Destinataire</h4>
                     <p className="font-black text-2xl text-slate-900 leading-tight mb-1">{selectedInvoice.guestName}</p>
-                    <p className="text-sm font-bold text-slate-500">{selectedInvoice.guestPhone || 'Aucun contact enregistré'}</p>
+                    <p className="text-sm font-bold text-slate-500">{selectedInvoice.guestPhone || 'Aucun contact'}</p>
+                    {selectedInvoice.guestEmail && <p className="text-xs text-slate-400">{selectedInvoice.guestEmail}</p>}
                   </div>
                   <div className="text-right">
                     <h4 className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] mb-6">Émetteur</h4>
@@ -322,12 +323,11 @@ export default function BillingPage() {
                       {/* Main stay charge */}
                       <div className="grid grid-cols-[1fr_150px] items-center p-8 border-b border-slate-100">
                         <div>
-                          <p className="font-black text-xl text-slate-900 mb-1">Hébergement & Prestations Incluses</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Séjour du {new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
+                          <p className="font-black text-xl text-slate-900 mb-1">Hébergement & Séjour (Ch. {selectedInvoice.roomNumber})</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type: {selectedInvoice.roomType || 'Standard'} • Du {selectedInvoice.checkInDate} au {selectedInvoice.checkOutDate}</p>
                         </div>
                         <p className="text-right font-black text-2xl text-slate-900">
-                          {/* We estimate the base amount if detailed breakdown is missing */}
-                          {(Number(selectedInvoice.amountDue) - (selectedInvoice.notes?.split('\n').filter((l: string) => l.includes('(+')).reduce((acc: number, l: string) => acc + (parseFloat(l.match(/\(\+(\d+(?:\.\d+)?)\s*\$\)/)?.[1] || '0')), 0) || 0)).toFixed(2)} $
+                          {(Number(selectedInvoice.stayAmount) || Number(selectedInvoice.amountDue)).toFixed(2)} $
                         </p>
                       </div>
 
@@ -400,7 +400,7 @@ export default function BillingPage() {
           <AlertDialogContent className="rounded-3xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer la facture ?</AlertDialogTitle>
-              <AlertDialogDescription>Cette action supprimera définitivement le document pour <strong>{invoiceToDelete?.guestName}</strong>.</AlertDialogDescription>
+              <AlertDialogDescription>Action définitive pour <strong>{invoiceToDelete?.guestName}</strong>.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>

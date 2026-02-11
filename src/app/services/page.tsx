@@ -130,12 +130,14 @@ function ServicesContent() {
     const dateStr = new Date().toLocaleDateString('fr-FR');
     const noteLine = `[${dateStr}] ${serviceType}: ${chargeData.description} (+${additionalAmount} $)`;
     
+    // Update Reservation
     const resUpdateRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resUpdateRef, {
       totalAmount: (Number(res.totalAmount) || 0) + additionalAmount,
       notes: (res.notes || "") + (res.notes ? "\n" : "") + noteLine
     });
 
+    // Update Invoice
     const invoice = invoices?.find(inv => inv.reservationId === res.id);
     if (invoice) {
       const invoiceUpdateRef = doc(firestore, 'invoices', invoice.id);
@@ -189,7 +191,7 @@ function ServicesContent() {
                   <Plus className="h-4 w-4" /> Nouvelle Vente
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] rounded-[2rem] animate-in zoom-in-95">
+              <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-black font-headline">Facturer un service</DialogTitle>
                   <DialogDescription className="font-medium">Ajout de frais au dossier client.</DialogDescription>
@@ -231,7 +233,7 @@ function ServicesContent() {
 
         <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500">
+            <Card className="border-none shadow-sm rounded-3xl bg-card">
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <DollarSign className="h-7 w-7" />
@@ -246,7 +248,7 @@ function ServicesContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
+            <Card className="border-none shadow-sm rounded-3xl bg-card">
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                   <Utensils className="h-7 w-7" />
@@ -258,7 +260,7 @@ function ServicesContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm rounded-3xl bg-card animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
+            <Card className="border-none shadow-sm rounded-3xl bg-card">
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <Coffee className="h-7 w-7" />
@@ -271,7 +273,7 @@ function ServicesContent() {
             </Card>
           </div>
 
-          <Card className="border-none shadow-sm rounded-[2.5rem] bg-card overflow-hidden animate-in fade-in duration-700">
+          <Card className="border-none shadow-sm rounded-[2.5rem] bg-card overflow-hidden">
             <CardHeader className="border-b bg-muted/20 p-8">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md">
@@ -279,7 +281,7 @@ function ServicesContent() {
                 </div>
                 <div>
                   <CardTitle className="font-headline text-2xl font-black">Registre des Consommations</CardTitle>
-                  <CardDescription className="text-muted-foreground">Facturation directe par chambre pour le séjour en cours.</CardDescription>
+                  <CardDescription className="text-muted-foreground">Facturation directe par chambre.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -289,7 +291,7 @@ function ServicesContent() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Rechercher par chambre ou nom..." 
-                    className="pl-9 bg-muted/30 border-none rounded-xl h-11 shadow-inner" 
+                    className="pl-9 bg-muted/30 border-none rounded-xl h-11" 
                     value={searchTerm} 
                     onChange={(e) => setSearchTerm(e.target.value)} 
                   />
@@ -334,7 +336,6 @@ function ServicesContent() {
                       <ConciergeBell className="h-10 w-10 text-muted-foreground/30" />
                     </div>
                     <p className="font-black uppercase tracking-[0.2em] text-sm text-muted-foreground">Aucun client en séjour actif</p>
-                    <p className="text-xs text-muted-foreground/60 mt-2">Seuls les clients ayant effectué leur Check-in apparaissent ici.</p>
                   </div>
                 )}
               </div>

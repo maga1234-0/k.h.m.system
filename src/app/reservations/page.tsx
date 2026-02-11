@@ -109,21 +109,6 @@ export default function ReservationsPage() {
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
-  useEffect(() => {
-    if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
-      const selectedRoom = rooms.find(r => r.id === editForm.roomId);
-      if (selectedRoom) {
-        const start = new Date(editForm.checkInDate);
-        const end = new Date(editForm.checkOutDate);
-        if (end > start) {
-          const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
-          setEditForm((prev: any) => ({ ...prev, totalAmount: total.toString() }));
-        }
-      }
-    }
-  }, [editForm?.roomId, editForm?.checkInDate, editForm?.checkOutDate, rooms]);
-
   const selectedRes = useMemo(() => 
     reservations?.find(r => r.id === activeResId) || null
   , [reservations, activeResId]);
@@ -154,7 +139,8 @@ export default function ReservationsPage() {
 
     const reservationData = { 
       ...bookingForm, 
-      roomNumber: selectedRoom.roomNumber, 
+      roomNumber: selectedRoom.roomNumber,
+      roomType: selectedRoom.roomType || "Standard",
       status: "Confirmée", 
       totalAmount: Number(bookingForm.totalAmount) || 0,
       createdAt: new Date().toISOString() 
@@ -165,7 +151,7 @@ export default function ReservationsPage() {
 
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Succès", description: "La réservation a été créée et la chambre bloquée." });
+    toast({ title: "Succès", description: "La réservation a été créée." });
   };
 
   const handleUpdateBooking = () => {
@@ -178,13 +164,14 @@ export default function ReservationsPage() {
     const updatedData = {
       ...editForm,
       roomNumber: selectedRoom.roomNumber,
+      roomType: selectedRoom.roomType || "Standard",
       totalAmount: Number(editForm.totalAmount) || 0
     };
 
     updateDocumentNonBlocking(resRef, updatedData);
     setActiveDialog(null);
     setEditForm(null);
-    toast({ title: "Mise à jour réussie", description: "Le dossier a été actualisé." });
+    toast({ title: "Mise à jour réussie" });
   };
 
   const handleCheckIn = () => {
@@ -197,12 +184,18 @@ export default function ReservationsPage() {
       reservationId: selectedRes.id,
       guestName: selectedRes.guestName,
       guestPhone: selectedRes.guestPhone,
+      guestEmail: selectedRes.guestEmail || "",
       roomNumber: selectedRes.roomNumber,
-      amountDue: selectedRes.totalAmount,
+      roomType: selectedRes.roomType || "Standard",
+      checkInDate: selectedRes.checkInDate,
+      checkOutDate: selectedRes.checkOutDate,
+      stayAmount: Number(selectedRes.totalAmount) || 0,
+      amountDue: Number(selectedRes.totalAmount) || 0,
       amountPaid: 0,
       status: 'Unpaid',
       invoiceDate: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 86400000).toISOString()
+      dueDate: new Date(Date.now() + 86400000).toISOString(),
+      notes: ""
     });
 
     setActiveDialog(null);
@@ -222,18 +215,18 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
     setActiveDialog(null);
-    toast({ variant: "destructive", title: "Réservation Annulée", description: "La chambre est à nouveau disponible." });
+    toast({ variant: "destructive", title: "Réservation Annulée" });
   };
 
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
-    if (resToDelete.roomId) {
+    if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
       updateDocumentNonBlocking(doc(firestore, 'rooms', resToDelete.roomId), { status: "Available" });
     }
     deleteDocumentNonBlocking(doc(firestore, 'reservations', resToDelete.id));
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Supprimé", description: "La réservation a été retirée du registre." });
+    toast({ variant: "destructive", title: "Supprimé" });
   };
 
   const handleClearAll = () => {
@@ -245,7 +238,7 @@ export default function ReservationsPage() {
       deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
     });
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre Purgé", description: "Toutes les réservations ont été supprimées et les chambres libérées." });
+    toast({ variant: "destructive", title: "Registre Purgé" });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -254,11 +247,7 @@ export default function ReservationsPage() {
   );
 
   if (!mounted || isAuthLoading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -282,130 +271,115 @@ export default function ReservationsPage() {
                 <AlertDialogContent className="rounded-3xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action supprimera toutes les réservations et libérera toutes les chambres occupées. C'est irréversible.
-                    </AlertDialogDescription>
+                    <AlertDialogDescription>C'est irréversible.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl">Tout supprimer</AlertDialogAction>
+                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90 rounded-xl">Tout supprimer</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4" /> Nouvelle résa
             </Button>
           </div>
         </header>
 
         <main className="p-4 md:p-6">
-          <div className="bg-card rounded-[2rem] shadow-sm border overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+          <div className="bg-card rounded-[2rem] shadow-sm border overflow-hidden">
             <div className="p-6 border-b bg-muted/20">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Rechercher par nom ou chambre..." 
-                  className="pl-9 bg-background rounded-xl border-none shadow-inner" 
+                  className="pl-9 bg-background rounded-xl" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
               </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest">Client</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest">Chambre</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest">Séjour</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest">Prix Total</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest">Statut</TableHead>
-                    <TableHead className="text-right font-black text-[10px] uppercase tracking-widest">Action</TableHead>
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Client</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Chambre</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Séjour</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Prix Total</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Statut</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isResLoading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+                ) : filteredReservations?.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">Aucun dossier trouvé.</TableCell></TableRow>
+                ) : filteredReservations?.map((res) => (
+                  <TableRow key={res.id} className="hover:bg-primary/5 transition-colors">
+                    <TableCell className="font-black text-xs">{res.guestName}</TableCell>
+                    <TableCell><Badge variant="outline" className="font-bold border-primary/20 bg-primary/5 text-primary">N° {res.roomNumber}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</TableCell>
+                    <TableCell className="font-black text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
+                    <TableCell>
+                      <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'destructive' : 'outline'} className="text-[10px] font-black uppercase tracking-widest">
+                        {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Checked Out' ? 'Départ' : res.status === 'Cancelled' ? 'Annulé' : res.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                          <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase py-2">Gérer le séjour</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleOpenEdit(res)} className="font-bold text-xs uppercase py-2"><Edit2 className="mr-2 h-4 w-4" /> Modifier</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => { setResToDelete(res); setIsDeleteDialogOpen(true); }} className="text-destructive font-bold text-xs uppercase py-2"><Trash2 className="mr-2 h-4 w-4" /> Supprimer</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isResLoading ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
-                  ) : filteredReservations?.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium italic">Aucun dossier trouvé dans le registre.</TableCell></TableRow>
-                  ) : filteredReservations?.map((res, idx) => (
-                    <TableRow key={res.id} className="animate-in fade-in duration-500 hover:bg-primary/5 transition-colors" style={{ animationDelay: `${idx * 50}ms` }}>
-                      <TableCell className="font-black text-xs text-foreground">{res.guestName}</TableCell>
-                      <TableCell><Badge variant="outline" className="font-bold border-primary/20 bg-primary/5 text-primary">N° {res.roomNumber}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-medium">{res.checkInDate} au {res.checkOutDate}</TableCell>
-                      <TableCell className="font-black text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
-                      <TableCell>
-                        <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'destructive' : 'outline'} className="text-[10px] font-black uppercase tracking-widest">
-                          {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Checked Out' ? 'Départ' : res.status === 'Cancelled' ? 'Annulé' : res.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:scale-110 transition-transform"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-1 rounded-xl">
-                            <DropdownMenuItem onSelect={() => handleOpenManage(res.id)} className="font-bold text-xs uppercase tracking-widest py-2">Gérer le séjour</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleOpenEdit(res)} className="font-bold text-xs uppercase tracking-widest py-2">
-                              <Edit2 className="mr-2 h-4 w-4" /> Modifier les détails
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onSelect={() => {
-                                setResToDelete(res);
-                                setTimeout(() => setIsDeleteDialogOpen(true), 150);
-                              }} 
-                              className="text-destructive font-bold text-xs uppercase tracking-widest py-2"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Supprimer du registre
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
+          <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Nouvelle Réservation</DialogTitle>
-              <DialogDescription className="font-medium">Veuillez renseigner les informations du client.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Client</label>
+                <label className="text-[10px] font-black uppercase text-muted-foreground">Client</label>
                 <Input placeholder="Nom complet" className="rounded-xl h-11" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Téléphone</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Téléphone</label>
                   <Input placeholder="+243..." className="rounded-xl h-11" value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">E-mail</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">E-mail</label>
                   <Input placeholder="client@exemple.com" className="rounded-xl h-11" value={bookingForm.guestEmail} onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Arrivée</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Arrivée</label>
                   <Input type="date" className="rounded-xl h-11" value={bookingForm.checkInDate} onChange={(e) => setBookingForm({...bookingForm, checkInDate: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Départ</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Départ</label>
                   <Input type="date" className="rounded-xl h-11" value={bookingForm.checkOutDate} onChange={(e) => setBookingForm({...bookingForm, checkOutDate: e.target.value})} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Chambre</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Chambre</label>
                   <select 
                     className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                     value={bookingForm.roomId} 
@@ -418,7 +392,7 @@ export default function ReservationsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Montant Total ($)</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Montant Total ($)</label>
                   <Input type="number" className="rounded-xl h-11 font-black text-primary bg-primary/5" value={bookingForm.totalAmount} onChange={(e) => setBookingForm({...bookingForm, totalAmount: e.target.value})} />
                 </div>
               </div>
@@ -430,80 +404,20 @@ export default function ReservationsPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={activeDialog === "edit"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black font-headline">Modifier Réservation</DialogTitle>
-              <DialogDescription className="font-medium">Mettre à jour les informations du dossier client.</DialogDescription>
-            </DialogHeader>
-            {editForm && (
-              <div className="grid gap-6 py-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Client</label>
-                  <Input placeholder="Nom complet" className="rounded-xl h-11" value={editForm.guestName} onChange={(e) => setEditForm({...editForm, guestName: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Téléphone</label>
-                    <Input placeholder="+243..." className="rounded-xl h-11" value={editForm.guestPhone} onChange={(e) => setEditForm({...editForm, guestPhone: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">E-mail</label>
-                    <Input placeholder="client@exemple.com" className="rounded-xl h-11" value={editForm.guestEmail} onChange={(e) => setEditForm({...editForm, guestEmail: e.target.value})} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Arrivée</label>
-                    <Input type="date" className="rounded-xl h-11" value={editForm.checkInDate} onChange={(e) => setEditForm({...editForm, checkInDate: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Départ</label>
-                    <Input type="date" className="rounded-xl h-11" value={editForm.checkOutDate} onChange={(e) => setEditForm({...editForm, checkOutDate: e.target.value})} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Chambre</label>
-                    <select 
-                      className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
-                      value={editForm.roomId} 
-                      onChange={(e) => setEditForm({...editForm, roomId: e.target.value})}
-                    >
-                      {rooms?.map(r => (
-                        <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Montant Total ($)</label>
-                    <Input type="number" className="rounded-xl h-11 font-black text-primary bg-primary/5" value={editForm.totalAmount} onChange={(e) => setEditForm({...editForm, totalAmount: e.target.value})} />
-                  </div>
-                </div>
-              </div>
-            )}
-            <DialogFooter className="gap-2">
-              <Button variant="outline" className="rounded-xl" onClick={() => setActiveDialog(null)}>Annuler</Button>
-              <Button onClick={handleUpdateBooking} className="rounded-xl font-bold uppercase tracking-widest px-8">Enregistrer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
         <Dialog open={activeDialog === "manage"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <DialogContent className="sm:max-w-md rounded-[2rem] animate-in zoom-in-95">
+          <DialogContent className="sm:max-w-md rounded-[2rem]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Gestion du Séjour</DialogTitle>
-              <DialogDescription className="font-medium">Actions requises pour le cycle du client.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-6">
-                <div className="grid grid-cols-2 gap-4 p-6 bg-primary/5 rounded-[1.5rem] border border-primary/10 animate-in fade-in duration-500">
+                <div className="grid grid-cols-2 gap-4 p-6 bg-primary/5 rounded-[1.5rem] border border-primary/10">
                   <div>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Client</p>
-                    <p className="font-black text-sm text-foreground">{selectedRes.guestName}</p>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1">Client</p>
+                    <p className="font-black text-sm">{selectedRes.guestName}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Chambre</p>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1">Chambre</p>
                     <p className="font-black text-sm text-primary">N° {selectedRes.roomNumber}</p>
                   </div>
                 </div>
@@ -514,23 +428,22 @@ export default function ReservationsPage() {
                   {selectedRes.status === 'Checked In' && (
                     <Button onClick={handleCheckOut} className="h-14 bg-primary hover:bg-primary/90 font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-out</Button>
                   )}
-                  <Button variant="outline" onClick={handleCancelReservation} className="h-14 text-destructive border-destructive/20 hover:bg-destructive/5 font-black rounded-xl uppercase tracking-widest text-[10px]">Annuler la réservation</Button>
+                  <Button variant="outline" onClick={handleCancelReservation} className="h-14 text-destructive border-destructive/20 font-black rounded-xl uppercase tracking-widest text-[10px]">Annuler la réservation</Button>
                 </div>
               </div>
             )}
-            <DialogFooter><Button variant="ghost" className="w-full rounded-xl uppercase font-bold text-[10px] tracking-widest" onClick={() => setActiveDialog(null)}>Fermer</Button></DialogFooter>
           </DialogContent>
         </Dialog>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-3xl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-headline font-bold">Confirmer la suppression ?</AlertDialogTitle>
-              <AlertDialogDescription>Le dossier de <strong>{resToDelete?.guestName}</strong> sera retiré du registre et la chambre {resToDelete?.roomNumber} sera libérée.</AlertDialogDescription>
+              <AlertDialogTitle>Confirmer la suppression ?</AlertDialogTitle>
+              <AlertDialogDescription>Le dossier de <strong>{resToDelete?.guestName}</strong> sera retiré.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl">Supprimer</AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive text-white hover:bg-destructive/90 rounded-xl">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
