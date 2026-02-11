@@ -240,11 +240,11 @@ export default function BillingPage() {
         <main className="p-4 md:p-6 space-y-6">
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-3">
             {[
-              { label: "Dettes Clients", value: stats.unpaid, icon: AlertCircle, color: "rose" },
+              { label: "Dettes Clients", value: stats.unpaid, icon: AlertCircle, color: "destructive" },
               { label: "Total Encaissé", value: stats.revenue, icon: CreditCard, color: "primary" },
               { label: "Nombre Factures", value: stats.totalCount, icon: FileText, color: "accent", isCount: true }
             ].map((stat, i) => (
-              <Card key={i} className={`border-none shadow-sm bg-muted/50 animate-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${i * 100}ms` }}>
+              <Card key={i} className={`border-none shadow-sm bg-muted/30 animate-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${i * 100}ms` }}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div>
@@ -294,7 +294,7 @@ export default function BillingPage() {
                   {invoices.map((inv, idx) => (
                     <div key={inv.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all gap-4 animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Receipt className="h-6 w-6" />}
                         </div>
                         <div className="flex flex-col">
@@ -461,7 +461,7 @@ export default function BillingPage() {
                                   <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>{e.type} : {e.description}</span>
                                 </div>
                               </td>
-                              <td style={{ padding: '12px 15px', textAlign: 'right', fontWeight: 700, color: '#475569', fontSize: '12px' }}>+{parseFloat(e.amount).toFixed(2)}</td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right', fontWeight: 700, color: '#475569', fontSize: '12px' }}>+{parseFloat(e.amount).toFixed(2) || "0.00"}</td>
                             </tr>
                           ))}
                         </tbody>
