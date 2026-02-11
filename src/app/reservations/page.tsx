@@ -88,7 +88,6 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Automatic Price Calculation
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);

@@ -137,8 +137,13 @@ export default function BillingPage() {
 
     const phone = invoice.guestPhone.replace(/\D/g, '');
     if (phone) {
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
+      try {
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+      } catch (e) {
+        console.error("WhatsApp error:", e);
+        toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ouvrir WhatsApp." });
+      }
     }
   };
 
@@ -318,10 +323,8 @@ export default function BillingPage() {
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
                 <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-slate-100">
-                  {/* Structure Tabulaire Stable pour éviter chevauchements PDF */}
                   <div className="w-full max-w-[210mm] bg-white p-12 shadow-2xl min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page" style={{ margin: '0 auto' }}>
                     
-                    {/* Header Stable */}
                     <div className="mb-12 border-b-4 border-primary pb-8">
                        <table style={{ width: '100%' }}>
                           <tbody>
@@ -349,7 +352,6 @@ export default function BillingPage() {
                        </table>
                     </div>
 
-                    {/* Infos Destinataire Stable */}
                     <div style={{ marginBottom: '40px' }}>
                        <table style={{ width: '100%' }}>
                           <tbody>
@@ -373,7 +375,6 @@ export default function BillingPage() {
                        </table>
                     </div>
 
-                    {/* Table des Services Stable */}
                     <div style={{ flex: 1 }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
@@ -405,7 +406,6 @@ export default function BillingPage() {
                       </table>
                     </div>
 
-                    {/* Footer Signature Stable */}
                     <div style={{ marginTop: '50px' }}>
                        <table style={{ width: '100%' }}>
                           <tbody>
@@ -437,7 +437,6 @@ export default function BillingPage() {
                     </div>
                   </div>
                 </div>
-                {/* Bouton parfaitement centré */}
                 <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl">
                   <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
