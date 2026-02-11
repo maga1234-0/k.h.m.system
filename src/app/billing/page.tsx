@@ -165,7 +165,7 @@ export default function BillingPage() {
         });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          toast({ variant: "destructive", title: "Erreur de partage", description: "Le partage a échoué." });
+          console.error("Share error", error);
         }
       } finally {
         setIsSharing(false);
@@ -182,7 +182,7 @@ export default function BillingPage() {
       const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Le fichier PDF a été téléchargé, veuillez le joindre au message.`;
       
       try {
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+        window.location.assign(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`);
       } catch (e) {
         console.error("WhatsApp error", e);
       }

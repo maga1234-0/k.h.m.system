@@ -97,7 +97,7 @@ export default function ReservationsPage() {
         const end = new Date(bookingForm.checkOutDate);
         if (end > start) {
           const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          const total = nights * (Number(selectedRoom.pricePerNight) || 0);
+          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
           setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
         }
       }
@@ -336,7 +336,7 @@ export default function ReservationsPage() {
                   >
                     <option value="">Sélectionner...</option>
                     {rooms?.filter(r => r.status === 'Available').map(r => (
-                      <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType})</option>
+                      <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType || r.type})</option>
                     ))}
                   </select>
                 </div>

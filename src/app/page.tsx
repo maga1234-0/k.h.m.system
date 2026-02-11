@@ -34,10 +34,12 @@ export default function DashboardPage() {
   const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
   const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
+  const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
 
   const { data: rooms, isLoading: isRoomsLoading } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
   const { data: clients } = useCollection(clientsRef);
+  const { data: invoices } = useCollection(invoicesRef);
 
   useEffect(() => {
     setMounted(true);
@@ -101,7 +103,8 @@ export default function DashboardPage() {
       ? Math.round((occupiedRooms / roomStatusBreakdown.total) * 100) 
       : 0;
     
-    const totalRevenue = reservations?.reduce((acc, r) => acc + (Number(r.totalAmount) || 0), 0) || 0;
+    // Revenu encaissé réel basé sur les factures (amountPaid)
+    const totalCollected = invoices?.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0) || 0;
     
     const todayStr = new Date().toISOString().split('T')[0];
     const newBookingsToday = reservations?.filter(r => {
@@ -109,16 +112,15 @@ export default function DashboardPage() {
       return createdDate === todayStr;
     })?.length || 0;
 
-    // Comptage des dossiers de réservation actifs (ceux qui ont le statut 'Checked In')
     const activeReservationsCount = reservations?.filter(r => r.status === 'Checked In').length || 0;
 
     return [
       { title: "Occupation Actuelle", value: `${occupancyRate}%`, change: "+2.1%", trend: "up", icon: BedDouble },
-      { title: "Revenu Total", value: `${totalRevenue.toLocaleString()} $`, change: "+12.1%", trend: "up", icon: CreditCard },
+      { title: "Revenu Encaissé", value: `${totalCollected.toLocaleString()} $`, change: "+12.1%", trend: "up", icon: CreditCard },
       { title: "Nouvelles Résas (Aujourd'hui)", value: newBookingsToday.toString(), change: `+${newBookingsToday}`, trend: "up", icon: CalendarClock },
       { title: "Clients Actifs", value: activeReservationsCount.toString(), change: "+8.4%", trend: "up", icon: Users },
     ];
-  }, [rooms, reservations, mounted, roomStatusBreakdown]);
+  }, [rooms, reservations, invoices, mounted, roomStatusBreakdown]);
 
   const recentReservations = useMemo(() => {
     if (!reservations) return [];
@@ -142,13 +144,13 @@ export default function DashboardPage() {
         <header className="flex h-16 items-center border-b px-6 bg-background sticky top-0 z-10">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-4 h-6" />
-          <h1 className="font-headline font-semibold text-xl">Tableau de bord temps réel</h1>
+          <h1 className="font-headline font-semibold text-xl text-primary">Tableau de bord temps réel</h1>
         </header>
 
         <main className="p-4 md:p-6 space-y-6">
           <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => (
-              <Card key={stat.title} className="shadow-sm border-none bg-card hover:shadow-md transition-shadow">
+              <Card key={stat.title} className="shadow-sm border-none bg-card hover:shadow-md transition-shadow animate-in slide-in-from-bottom-4 duration-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
                   <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
@@ -174,10 +176,10 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
-            <Card className="lg:col-span-4 border-none shadow-sm h-fit">
+            <Card className="lg:col-span-4 border-none shadow-sm h-fit animate-in fade-in duration-700">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Aperçu Occupation & Revenus</CardTitle>
-                <CardDescription>Performance sur 7 jours basée sur les données réelles.</CardDescription>
+                <CardDescription>Performance sur 7 jours basée sur les encaissements réels.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] md:h-[350px]">
                 <DashboardCharts data={chartData} />
@@ -185,7 +187,7 @@ export default function DashboardPage() {
             </Card>
 
             <div className="lg:col-span-3 space-y-6">
-              <Card className="border-none shadow-sm">
+              <Card className="border-none shadow-sm animate-in slide-in-from-right-4 duration-700">
                 <CardHeader className="pb-2">
                   <CardTitle className="font-headline text-lg">Statut de l'Inventaire</CardTitle>
                   <CardDescription>Répartition en direct de vos {roomStatusBreakdown.total} chambres.</CardDescription>
@@ -232,7 +234,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm">
+              <Card className="border-none shadow-sm animate-in slide-in-from-right-4 duration-1000">
                 <CardHeader className="pb-2">
                   <CardTitle className="font-headline text-lg">Réservations Récentes</CardTitle>
                   <CardDescription>Dernières mises à jour de la réception.</CardDescription>
