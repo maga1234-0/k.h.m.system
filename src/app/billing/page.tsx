@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -41,7 +40,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
@@ -242,7 +240,7 @@ export default function BillingPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className={`text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1`}>{stat.label}</p>
-                      <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter">
+                      <h3 className="text-2xl md:text-3xl font-black font-headline tracking-tighter text-foreground">
                         {stat.value.toLocaleString('fr-FR')} {stat.isCount ? '' : '$'}
                       </h3>
                     </div>
@@ -292,14 +290,14 @@ export default function BillingPage() {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs text-primary uppercase tracking-widest">#INV-{inv.id.slice(0, 6).toUpperCase()}</span>
-                          <span className="text-sm font-bold text-slate-900">{inv.guestName}</span>
+                          <span className="text-sm font-bold text-foreground">{inv.guestName}</span>
                           <span className="text-[10px] text-muted-foreground">{new Date(inv.invoiceDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between md:justify-end gap-6">
                         <div className="text-right">
                           <span className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Montant Du</span>
-                          <span className="font-black text-lg tracking-tight">{Number(inv.amountDue).toFixed(2)} $</span>
+                          <span className="font-black text-lg tracking-tight text-foreground">{Number(inv.amountDue).toFixed(2)} $</span>
                         </div>
                         <div className="flex gap-2">
                           {inv.status !== 'Paid' && (
@@ -335,7 +333,7 @@ export default function BillingPage() {
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
           <DialogContent className="sm:max-w-md rounded-3xl animate-in zoom-in-95">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black font-headline">Valider le Paiement</DialogTitle>
+              <DialogTitle className="text-2xl font-black font-headline text-foreground">Valider le Paiement</DialogTitle>
             </DialogHeader>
             <div className="py-8">
               <div className="p-6 bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/10 text-center">

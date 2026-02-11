@@ -123,18 +123,18 @@ export function AppSidebar() {
           <Logo size={32} />
         </div>
         <div className="flex flex-col">
-          <span className="font-headline font-bold text-xl tracking-tight leading-none text-foreground">ImaraPMS</span>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 mt-1">Gestion Hôtelière</span>
+          <span className="font-headline font-bold text-xl tracking-tight leading-none text-sidebar-foreground">ImaraPMS</span>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-primary mt-1">Gestion Hôtelière</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Réception</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Réception</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -147,12 +147,12 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Inventaire &amp; Ménage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Inventaire &amp; Ménage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {inventoryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -165,12 +165,12 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Services &amp; Extras</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Services &amp; Extras</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {serviceItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/services') && (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('tab') === item.url.split('=')[1])} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/services') && (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('tab') === item.url.split('=')[1])} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -183,12 +183,12 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Business &amp; Finance</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Business &amp; Finance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -201,12 +201,12 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Administration</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {adminItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title} className="text-sidebar-foreground hover:text-white">
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -223,7 +223,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton tooltip="Changer l'apparence">
+                <SidebarMenuButton tooltip="Changer l'apparence" className="text-sidebar-foreground">
                   <div className="flex items-center gap-2">
                     <div className="flex h-5 w-5 items-center justify-center rounded-md border bg-background">
                       {mounted && (
@@ -254,13 +254,13 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground text-sidebar-foreground">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">{getInitials()}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">{getInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{displayName}</span>
-                    <span className="truncate text-xs">{user?.email}</span>
+                    <span className="truncate font-semibold text-sidebar-foreground">{displayName}</span>
+                    <span className="truncate text-[10px] text-sidebar-foreground/60">{user?.email}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
