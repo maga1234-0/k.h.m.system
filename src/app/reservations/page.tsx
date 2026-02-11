@@ -133,7 +133,6 @@ export default function ReservationsPage() {
     };
 
     addDocumentNonBlocking(resCollection, reservationData);
-    // Mark room as Occupied immediately
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
 
     setIsAddDialogOpen(false);

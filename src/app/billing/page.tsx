@@ -12,7 +12,6 @@ import {
   Receipt, 
   Loader2, 
   CreditCard, 
-  MessageCircle, 
   Trash2, 
   AlertCircle, 
   FileText, 
@@ -126,8 +125,7 @@ export default function BillingPage() {
 
   const generatePDFBlob = async (invoice: any): Promise<Blob | null> => {
     setSelectedInvoice(invoice);
-    // On attend un cycle de rendu pour que le DOM se mette à jour avec selectedInvoice
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     const page = document.getElementById('invoice-single-page');
     if (!page) return null;
@@ -147,11 +145,6 @@ export default function BillingPage() {
   };
 
   const handleShareInvoice = async (invoice: any) => {
-    if (!navigator.share) {
-      toast({ variant: "destructive", title: "Non supporté", description: "Votre navigateur ne supporte pas le partage direct. Veuillez télécharger le PDF." });
-      return;
-    }
-
     setIsSharing(true);
     const blob = await generatePDFBlob(invoice);
     if (!blob) {
@@ -162,22 +155,27 @@ export default function BillingPage() {
 
     const file = new File([blob], `FACTURE-${invoice.guestName.replace(/\s+/g, '-')}.pdf`, { type: 'application/pdf' });
 
-    try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      try {
         await navigator.share({
           files: [file],
           title: `Facture ImaraPMS - ${invoice.guestName}`,
           text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'Fiesta Hotel'}.`,
         });
-      } else {
-        throw new Error("Cannot share files");
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          toast({ variant: "destructive", title: "Erreur de partage", description: "Le partage a échoué." });
+        }
+      } finally {
+        setIsSharing(false);
       }
-    } catch (error) {
-      console.error("Share error:", error);
-      toast({ variant: "destructive", title: "Partage échoué", description: "Utilisez le bouton télécharger." });
-    } finally {
+    } else {
+      // Fallback: Just open WhatsApp with text if file share is not supported
+      const phone = invoice.guestPhone.replace(/\D/g, '');
+      const text = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $.`;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
       setIsSharing(false);
-      setSelectedInvoice(null);
+      toast({ title: "WhatsApp ouvert", description: "Veuillez joindre le PDF manuellement si nécessaire." });
     }
   };
 
@@ -470,57 +468,6 @@ export default function BillingPage() {
             )}
           </DialogContent>
         </Dialog>
-
-        {/* Hidden Container for generating sharing PDF */}
-        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-             {selectedInvoice && !isInvoiceDialogOpen && (
-                <div className="w-[210mm] bg-white p-12 min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page">
-                    {/* Même contenu que ci-dessus pour la génération PDF */}
-                    <div className="mb-12 border-b-4 border-primary pb-8">
-                       <table style={{ width: '100%' }}>
-                          <tbody>
-                            <tr>
-                              <td style={{ width: '65%', verticalAlign: 'middle' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                  <div style={{ height: '60px', width: '60px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                                    <Hotel size={35} />
-                                  </div>
-                                  <div>
-                                    <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
-                                      {settings?.hotelName || 'Fiesta Hotel'}
-                                    </h1>
-                                    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ width: '35%', textAlign: 'right', verticalAlign: 'middle' }}>
-                                <h2 style={{ fontSize: '24px', fontWeight: 900, margin: 0 }}>FACTURE</h2>
-                                <p style={{ fontSize: '14px', fontWeight: 800, color: 'hsl(var(--primary))' }}>#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
-                              </td>
-                            </tr>
-                          </tbody>
-                       </table>
-                    </div>
-                    {/* ... (Reste de la structure identique) */}
-                    <div style={{ flex: 1, padding: '40px 0' }}>
-                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                             <thead>
-                                 <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
-                                     <th style={{ padding: '12px', textAlign: 'left' }}>Description</th>
-                                     <th style={{ padding: '12px', textAlign: 'right' }}>Total</th>
-                                 </tr>
-                             </thead>
-                             <tbody>
-                                 <tr>
-                                     <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>Hébergement Chambre {selectedInvoice.roomNumber}</td>
-                                     <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>{Number(selectedInvoice.amountDue).toFixed(2)} $</td>
-                                 </tr>
-                             </tbody>
-                         </table>
-                    </div>
-                </div>
-             )}
-        </div>
       </SidebarInset>
     </div>
   );
