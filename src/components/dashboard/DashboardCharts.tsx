@@ -14,7 +14,7 @@ interface DashboardChartsProps {
 export function DashboardCharts({ data }: DashboardChartsProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-3xl">
+      <div className="flex h-full w-full items-center justify-center text-muted-foreground text-sm italic border-2 border-dashed rounded-3xl">
         Données insuffisantes pour générer les tendances hebdomadaires.
       </div>
     );
@@ -26,56 +26,56 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
         <AreaChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorOccupancy" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#66d3b2" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="#66d3b2" stopOpacity={0}/>
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
             </linearGradient>
             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+              <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff" opacity={0.05} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
           <XAxis 
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: "#9ca3af", fontWeight: 500 }}
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }}
             dy={10}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: "#9ca3af" }}
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
           />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '12px', color: '#fff' }}
+            contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
           />
           <Legend 
             verticalAlign="top" 
             align="right" 
             iconType="circle" 
-            wrapperStyle={{ fontSize: 11, paddingBottom: 25, color: '#9ca3af' }} 
+            wrapperStyle={{ fontSize: 11, paddingBottom: 25, color: 'hsl(var(--muted-foreground))' }} 
           />
           <Area 
             type="monotone" 
             dataKey="occupancy" 
-            stroke="#66d3b2" 
+            stroke="hsl(var(--primary))" 
             fillOpacity={1} 
             fill="url(#colorOccupancy)" 
             strokeWidth={3}
             animationDuration={1500}
-            name="occupancy"
+            name="Occupation (%)"
           />
           <Area 
             type="monotone" 
             dataKey="revenue" 
-            stroke="#8b5cf6" 
+            stroke="hsl(var(--accent))" 
             fillOpacity={1} 
             fill="url(#colorRevenue)" 
             strokeWidth={3}
             animationDuration={1500}
-            name="revenue"
+            name="Revenus ($)"
           />
         </AreaChart>
       </ResponsiveContainer>
