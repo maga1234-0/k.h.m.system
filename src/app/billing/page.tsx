@@ -19,6 +19,7 @@ import {
   DollarSign,
   Share2,
   Printer,
+  Download,
   ChevronRight
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, updateDocumentNonBlocking, useUser, useDoc } from "@/firebase"
@@ -26,6 +27,8 @@ import { collection, doc } from "firebase/firestore"
 import { toast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/ui/logo"
+import html2canvas from "html2canvas"
+import { jsPDF } from "jspdf"
 import {
   Dialog,
   DialogContent,
@@ -55,6 +58,7 @@ export default function BillingPage() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [invoiceForPayment, setInvoiceForPayment] = useState<any>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const firestore = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'general'), [firestore]);
@@ -105,39 +109,71 @@ export default function BillingPage() {
     toast({ title: "Paiement Enregistré" });
   };
 
-  const handleShareInvoice = (invoice: any) => {
-    // Nettoyer le numéro de téléphone pour WhatsApp
-    const phone = invoice.guestPhone?.replace(/\D/g, '');
-    
-    if (!phone) {
-      toast({ 
-        variant: "destructive", 
-        title: "Numéro manquant", 
-        description: "Impossible de rediriger vers WhatsApp sans numéro de téléphone." 
+  const generatePDF = async (invoice: any) => {
+    const input = document.getElementById('invoice-single-page');
+    if (!input) return null;
+
+    setIsGeneratingPDF(true);
+    try {
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
       });
-      return;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const fileName = `facture-${invoice.guestName.replace(/\s+/g, '-').toLowerCase()}-${invoice.id.slice(0, 8)}.pdf`;
+      pdf.save(fileName);
+      return fileName;
+    } catch (error) {
+      console.error("PDF Generation failed", error);
+      toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le document." });
+      return null;
+    } finally {
+      setIsGeneratingPDF(false);
     }
+  };
 
-    const hotel = settings?.hotelName || 'Fiesta Hotel';
-    const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
-      `Bonjour ${invoice.guestName},\n\n` +
-      `Voici le résumé de votre facture hôtelière :\n\n` +
-      `• *Référence :* #INV-${invoice.id.slice(0, 8).toUpperCase()}\n` +
-      `• *Chambre :* ${invoice.roomNumber} (${invoice.roomType || 'Standard'})\n` +
-      `• *Période :* du ${invoice.checkInDate} au ${invoice.checkOutDate}\n` +
-      `• *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n\n` +
-      `Merci pour votre confiance !\n\n` +
-      `_Généré par ImaraPMS_`;
+  const handleShareInvoice = async (invoice: any) => {
+    // Étape 1: Ouvrir l'aperçu temporairement si pas déjà fait pour charger le DOM
+    setSelectedInvoice(invoice);
+    setIsInvoiceDialogOpen(true);
 
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    
-    // Ouvrir WhatsApp dans un nouvel onglet
-    window.open(whatsappUrl, '_blank');
-    
-    toast({ 
-      title: "WhatsApp", 
-      description: `Ouverture de la discussion avec ${invoice.guestName}...` 
-    });
+    // Attendre un court instant que le DOM soit rendu
+    setTimeout(async () => {
+      // Étape 2: Générer et télécharger le PDF
+      await generatePDF(invoice);
+
+      // Étape 3: Redirection WhatsApp
+      const phone = invoice.guestPhone?.replace(/\D/g, '');
+      if (!phone) {
+        toast({ variant: "destructive", title: "Numéro manquant", description: "Le PDF a été téléchargé, mais impossible d'ouvrir WhatsApp." });
+        return;
+      }
+
+      const hotel = settings?.hotelName || 'Fiesta Hotel';
+      const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
+        `Bonjour ${invoice.guestName},\n\n` +
+        `Veuillez trouver ci-joint votre facture #INV-${invoice.id.slice(0, 8).toUpperCase()} au format PDF (téléchargée sur cet appareil).\n\n` +
+        `• *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n` +
+        `• *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\n` +
+        `Merci pour votre confiance !\n\n` +
+        `_ImaraPMS - Système de Gestion Certifié_`;
+
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      
+      toast({ title: "WhatsApp & PDF", description: "Facture téléchargée. Vous pouvez maintenant l'attacher sur WhatsApp." });
+    }, 500);
   };
 
   if (!mounted || isAuthLoading || !user) {
@@ -231,8 +267,8 @@ export default function BillingPage() {
                               <DollarSign className="h-4 w-4" /> Encaisser
                             </Button>
                           )}
-                          <Button variant="outline" size="icon" className="h-10 w-10 text-primary rounded-xl" onClick={() => handleShareInvoice(inv)}>
-                            <Share2 className="h-5 w-5" />
+                          <Button variant="outline" size="icon" className="h-10 w-10 text-primary rounded-xl" onClick={() => handleShareInvoice(inv)} disabled={isGeneratingPDF}>
+                            {isGeneratingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
                           </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
                           <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}><Trash2 className="h-5 w-5" /></Button>
@@ -258,7 +294,6 @@ export default function BillingPage() {
             </DialogHeader>
             {selectedInvoice && (
               <div id="invoice-single-page" className="p-16 bg-white text-slate-900 font-sans min-h-[297mm] flex flex-col">
-                {/* Header Section */}
                 <div className="flex justify-between items-center mb-10">
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20">
@@ -278,7 +313,6 @@ export default function BillingPage() {
 
                 <div className="h-0.5 w-full bg-primary/20 mb-12" />
 
-                {/* Billing Info */}
                 <div className="grid grid-cols-2 gap-20 mb-16">
                   <div>
                     <h4 className="text-[9px] font-black uppercase text-primary tracking-[0.2em] mb-6 opacity-50">Destinataire</h4>
@@ -295,7 +329,6 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Services Table */}
                 <div className="flex-1">
                   <div className="w-full overflow-hidden rounded-t-2xl shadow-sm">
                     <div className="grid grid-cols-[1fr_150px] bg-[#0f172a] text-white p-5">
@@ -304,7 +337,6 @@ export default function BillingPage() {
                     </div>
                     
                     <div className="bg-slate-50/50">
-                      {/* Main stay charge */}
                       <div className="grid grid-cols-[1fr_150px] items-center p-8 border-b border-slate-100">
                         <div>
                           <p className="font-black text-xl text-slate-900 mb-1">Hébergement & Séjour (Ch. {selectedInvoice.roomNumber})</p>
@@ -315,7 +347,6 @@ export default function BillingPage() {
                         </p>
                       </div>
 
-                      {/* Additional services from notes */}
                       {selectedInvoice.notes && selectedInvoice.notes.split('\n').map((line: string, i: number) => {
                         const amountMatch = line.match(/\(\+(\d+(?:\.\d+)?)\s*\$\)/);
                         if (!amountMatch) return null;
@@ -341,7 +372,6 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Footer Totals */}
                 <div className="mt-12 flex justify-between items-end">
                   <div>
                     <h4 className="text-[9px] font-black uppercase text-primary tracking-[0.2em] mb-6">Signature & Cachet</h4>
@@ -373,8 +403,12 @@ export default function BillingPage() {
             )}
             <div className="p-6 border-t bg-muted/20 flex justify-end gap-4">
               <Button variant="outline" className="rounded-xl font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsInvoiceDialogOpen(false)}>Fermer</Button>
+              <Button variant="secondary" className="rounded-xl font-bold uppercase text-[10px] tracking-widest gap-2" onClick={() => generatePDF(selectedInvoice)} disabled={isGeneratingPDF}>
+                {isGeneratingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                Télécharger PDF
+              </Button>
               <Button className="rounded-xl font-bold uppercase text-[10px] tracking-widest gap-2 bg-primary shadow-lg shadow-primary/20" onClick={() => window.print()}>
-                <Printer className="h-4 w-4" /> Imprimer / PDF
+                <Printer className="h-4 w-4" /> Imprimer
               </Button>
             </div>
           </DialogContent>
