@@ -50,6 +50,13 @@ export default function DashboardPage() {
     if (!isUserLoading && !user) router.push('/login');
   }, [user, isUserLoading, router]);
 
+  const formatSafeTime = (dateStr: any) => {
+    if (!dateStr) return '--:--';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '--:--';
+    return format(date, 'HH:mm', { locale: fr });
+  };
+
   const kpis = useMemo(() => {
     if (!rooms || !reservations || !invoices) return { monthlyRev: 0, adr: 0, revpar: 0, occupancy: 0 };
     
@@ -236,7 +243,7 @@ export default function DashboardPage() {
                           <div className="font-bold text-lg text-foreground">{res.guestName}</div>
                           <div className="text-xs text-muted-foreground flex items-center gap-2">
                             <Clock className="h-3 w-3" /> 
-                            {res.createdAt ? format(new Date(res.createdAt), 'HH:mm', { locale: fr }) : '--:--'}
+                            {formatSafeTime(res.createdAt)}
                             <Separator orientation="vertical" className="h-3 mx-1" />
                             {res.numberOfGuests || 1} client(s)
                           </div>
@@ -311,4 +318,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

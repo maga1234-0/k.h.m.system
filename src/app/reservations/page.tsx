@@ -220,17 +220,24 @@ export default function ReservationsPage() {
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
     
+    // Capturer les IDs avant de réinitialiser l'état
+    const idToDelete = resToDelete.id;
+    const roomIdToRelease = resToDelete.roomId;
+    const statusBeforeDelete = resToDelete.status;
+
     try {
-      if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
-        const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
+      if (roomIdToRelease && statusBeforeDelete !== 'Checked Out') {
+        const roomRef = doc(firestore, 'rooms', roomIdToRelease);
         updateDocumentNonBlocking(roomRef, { status: "Available" });
       }
       
-      const resRef = doc(firestore, 'reservations', resToDelete.id);
+      const resRef = doc(firestore, 'reservations', idToDelete);
       deleteDocumentNonBlocking(resRef);
       
+      // Fermer d'abord pour libérer le focus Radix, puis nettoyer l'état
       setIsDeleteDialogOpen(false);
-      setResToDelete(null);
+      setTimeout(() => setResToDelete(null), 100);
+      
       toast({ variant: "destructive", title: "Supprimé", description: "Le dossier a été retiré du registre." });
     } catch (error) {
       console.error("Deletion error:", error);
@@ -472,4 +479,3 @@ export default function ReservationsPage() {
     </div>
   );
 }
-
