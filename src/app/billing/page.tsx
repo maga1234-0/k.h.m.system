@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast"
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { Badge } from "@/components/ui/badge"
+import { Logo } from "@/components/ui/logo"
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
@@ -169,12 +169,10 @@ export default function BillingPage() {
         await navigator.share({
           files: [file],
           title: `Facture ImaraPMS - ${invoice.guestName}`,
-          text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'Fiesta Hotel'}.`,
+          text: `Bonjour ${invoice.guestName}, voici votre facture pour votre séjour au ${settings?.hotelName || 'ImaraPMS Resort'}.`,
         });
       } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          console.error("Share error", error);
-        }
+        if (error.name !== 'AbortError') console.error("Share error", error);
       } finally {
         setIsSharing(false);
       }
@@ -187,7 +185,7 @@ export default function BillingPage() {
       URL.revokeObjectURL(url);
       
       const phone = invoice.guestPhone.replace(/\D/g, '');
-      const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Veuillez trouver ci-joint le document PDF téléchargé.`;
+      const message = `Bonjour ${invoice.guestName}, votre facture est prête (${invoice.amountDue} $). Veuillez trouver ci-joint le PDF téléchargé.`;
       
       try {
         const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -318,7 +316,7 @@ export default function BillingPage() {
                           <Button 
                             variant="outline" 
                             size="icon" 
-                            className="h-10 w-10 text-[#25D366] rounded-xl border-[#25D366]/20" 
+                            className="h-10 w-10 text-primary rounded-xl border-primary/20" 
                             onClick={() => handleShareInvoice(inv)}
                             disabled={isSharing}
                           >
@@ -383,28 +381,19 @@ export default function BillingPage() {
 
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
           <DialogContent className="max-w-4xl w-[98vw] p-0 bg-slate-100 border-none shadow-2xl overflow-hidden rounded-3xl animate-in zoom-in-95">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Facture Officielle</DialogTitle>
-            </DialogHeader>
+            <DialogHeader className="sr-only"><DialogTitle>Facture Officielle</DialogTitle></DialogHeader>
             {selectedInvoice && (
               <div className="flex flex-col h-full max-h-[92vh]">
                 <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-slate-100">
                   <div className="w-full max-w-[210mm] bg-white p-12 shadow-2xl min-h-[297mm] flex flex-col text-slate-900 font-sans" id="invoice-single-page" style={{ margin: '0 auto' }}>
-                    
                     <div className="mb-12 border-b-4 border-primary pb-8">
                        <table style={{ width: '100%' }}>
                           <tbody>
                             <tr>
                               <td style={{ width: '65%', verticalAlign: 'middle' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                  <div style={{ height: '65px', width: '65px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M30 80V35L40 25V80H30Z" fill="currentColor" />
-                                      <path d="M70 80V35L60 25V80H70Z" fill="currentColor" />
-                                      <path d="M40 45C40 45 45 40 50 40C55 40 60 45 60 45V60C60 60 55 65 50 65C45 65 40 60 40 60V45Z" fill="currentColor" opacity="0.9" />
-                                      <circle cx="50" cy="50" r="4" fill="white" />
-                                      <path d="M48 50L52 50L54 58L46 58Z" fill="white" />
-                                    </svg>
+                                  <div style={{ height: '75px', width: '75px', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))' }}>
+                                    <Logo size={60} />
                                   </div>
                                   <div>
                                     <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
@@ -503,14 +492,11 @@ export default function BillingPage() {
                             </tr>
                           </tbody>
                        </table>
-                       <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                          <p style={{ fontSize: '8px', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>ImaraPMS v2.5 - Système de Gestion Certifié</p>
-                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="bg-white p-6 border-t flex justify-center items-center rounded-b-3xl">
-                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 mx-auto" onClick={handleDownloadPDF}>
+                  <Button disabled={isGeneratingPdf} className="h-12 px-12 font-black uppercase text-xs gap-3 rounded-xl shadow-lg mx-auto" onClick={handleDownloadPDF}>
                     {isGeneratingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     Télécharger la Facture (PDF)
                   </Button>

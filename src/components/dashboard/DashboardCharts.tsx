@@ -1,4 +1,3 @@
-
 "use client"
 
 import { CartesianGrid, XAxis, ResponsiveContainer, YAxis, Legend, AreaChart, Area } from "recharts"
@@ -14,11 +13,11 @@ interface DashboardChartsProps {
 
 const chartConfig = {
   occupancy: {
-    label: "Occupancy %",
+    label: "Occupation %",
     color: "hsl(var(--primary))",
   },
   revenue: {
-    label: "Daily Rev $",
+    label: "Revenu Quotidien $",
     color: "hsl(var(--accent))",
   },
 }
@@ -27,7 +26,7 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center text-muted-foreground text-sm italic">
-        Insufficient data to generate performance trends.
+        Données insuffisantes pour générer les tendances.
       </div>
     );
   }
@@ -72,7 +71,7 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
             stroke="hsl(var(--primary))" 
             fillOpacity={1} 
             fill="url(#colorOccupancy)" 
-            strokeWidth={2}
+            strokeWidth={3}
           />
           <Area 
             type="monotone" 
@@ -80,7 +79,7 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
             stroke="hsl(var(--accent))" 
             fillOpacity={1} 
             fill="url(#colorRevenue)" 
-            strokeWidth={2}
+            strokeWidth={3}
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Thème Seafoam Teal & Prestige - PRD Compliant */
+    /* Thème Seafoam Teal & Prestige */
     --primary: 162 55% 61%;
     --primary-foreground: 162 55% 10%;
     --secondary: 163 67% 93%;
@@ -97,7 +97,6 @@
   }
 }
 
-/* Stable Invoice Capture */
 #invoice-single-page {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
