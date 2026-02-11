@@ -28,7 +28,7 @@ import { toast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/ui/logo"
 import html2canvas from "html2canvas"
-import { jsPDF } from "jsPDF"
+import { jsPDF } from "jspdf"
 import {
   Dialog,
   DialogContent,
@@ -149,46 +149,29 @@ export default function BillingPage() {
     setSelectedInvoice(invoice);
     setIsInvoiceDialogOpen(true);
 
-    toast({ title: "Préparation du PDF...", description: "Génération du document pour WhatsApp." });
+    toast({ title: "Préparation de la facture", description: "Génération du PDF Fiesta Hotel..." });
 
-    // Attendre que le dialogue soit rendu
     setTimeout(async () => {
-      const pdfBlob = await generatePDFBlob(invoice);
-      if (!pdfBlob) return;
+      const blob = await generatePDFBlob(invoice);
+      if (!blob) return;
 
       const fileName = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
-      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      const file = new File([blob], fileName, { type: 'application/pdf' });
 
-      // Tentative d'utilisation de l'API Web Share (idéal sur mobile)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: `Facture ${invoice.guestName}`,
-            text: `Bonjour ${invoice.guestName}, voici votre facture de ${settings?.hotelName || 'Fiesta Hotel'}.`,
-          });
-          toast({ title: "Facture partagée avec succès" });
-          return;
-        } catch (error) {
-          console.log("Share canceled or failed", error);
-        }
-      }
-
-      // Fallback : Téléchargement + Message WhatsApp si Web Share n'est pas supporté (Desktop)
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Action de secours : Téléchargement immédiat
+      const pdfUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = fileName;
+      a.click();
       URL.revokeObjectURL(pdfUrl);
 
+      // Préparation du message WhatsApp
       const phone = invoice.guestPhone?.replace(/\D/g, '');
       const hotel = settings?.hotelName || 'Fiesta Hotel';
       const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
         `Bonjour ${invoice.guestName},\n\n` +
-        `Veuillez trouver ci-joint votre facture *#INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF (téléchargée).\n\n` +
+        `Veuillez trouver ci-joint votre facture *#INV-${invoice.id.slice(0, 8).toUpperCase()}*.\n\n` +
         `• *Montant :* ${Number(invoice.amountDue).toFixed(2)} $\n` +
         `• *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\n` +
         `Merci pour votre confiance !\n\n` +
@@ -202,7 +185,7 @@ export default function BillingPage() {
       
       toast({ 
         title: "PDF Prêt", 
-        description: "Le PDF a été généré. Veuillez l'attacher dans WhatsApp." 
+        description: "Le PDF a été téléchargé. Veuillez le sélectionner dans WhatsApp." 
       });
     }, 800);
   };
@@ -244,7 +227,7 @@ export default function BillingPage() {
             ))}
           </div>
 
-          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden">
+          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-headline text-lg font-bold">Registre de Facturation</CardTitle>
@@ -276,7 +259,7 @@ export default function BillingPage() {
               ) : invoices && invoices.length > 0 ? (
                 <div className="space-y-3">
                   {invoices.map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between p-4 rounded-2xl border bg-card hover:border-primary/30 transition-all group">
+                    <div key={inv.id} className="flex items-center justify-between p-4 rounded-2xl border bg-background hover:border-primary/30 transition-all group">
                       <div className="flex items-center gap-4">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Receipt className="h-6 w-6" />}

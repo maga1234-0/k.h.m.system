@@ -103,7 +103,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-background/50">
+    <div className="flex h-screen w-full bg-background">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-16 items-center border-b px-6 bg-background/80 backdrop-blur-xl sticky top-0 z-50 justify-between">
@@ -132,7 +132,7 @@ export default function DashboardPage() {
               { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, icon: Hotel, trend: "+5%", color: "text-primary", bg: "bg-primary/5" },
               { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-amber-600", bg: "bg-amber-50" }
             ].map((kpi, i) => (
-              <Card key={i} className="border-none rounded-3xl overflow-hidden group hover:shadow-md transition-all duration-300">
+              <Card key={i} className="border-none rounded-3xl overflow-hidden group hover:shadow-md transition-all duration-300 shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className={`p-3 rounded-2xl ${kpi.bg} group-hover:scale-110 transition-transform ${kpi.color}`}>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="lg:col-span-2 border-none rounded-[2.5rem] overflow-hidden shadow-sm">
+            <Card className="lg:col-span-2 border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-card">
               <CardHeader className="p-8 pb-0">
                 <div className="flex justify-between items-center">
                   <div>
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                   { label: "NETTOYAGE", count: inventoryStats.cleaning, icon: Clock, color: "text-blue-600", bg: "bg-blue-500/10", percent: rooms?.length ? (inventoryStats.cleaning / rooms.length) * 100 : 0 },
                   { label: "MAINTENANCE", count: inventoryStats.maintenance, icon: Wrench, color: "text-rose-600", bg: "bg-rose-500/10", percent: rooms?.length ? (inventoryStats.maintenance / rooms.length) * 100 : 0 }
                 ].map((stat, i) => (
-                  <Card key={i} className="border-none rounded-3xl overflow-hidden hover:translate-x-2 transition-transform duration-300 shadow-sm">
+                  <Card key={i} className="border-none rounded-3xl overflow-hidden hover:translate-x-2 transition-transform duration-300 shadow-sm bg-card">
                     <CardContent className="p-5 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={`h-12 w-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="lg:col-span-2 border-none rounded-[2.5rem] overflow-hidden shadow-sm">
+            <Card className="lg:col-span-2 border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-card">
               <CardHeader className="p-8">
                 <div className="flex justify-between items-center">
                   <div>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-gradient-to-br from-card to-muted/20">
+            <Card className="border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-card">
               <CardHeader className="p-8">
                 <CardTitle className="font-headline text-lg font-black text-primary flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" /> Recap Opérationnel
@@ -283,7 +283,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-background/50 border space-y-4">
+                <div className="p-6 rounded-3xl bg-background border space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
                       <Users className="h-5 w-5" />
