@@ -7,6 +7,9 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
   Bed, 
@@ -25,7 +28,6 @@ import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebas
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { format, subDays, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -108,7 +110,7 @@ export default function DashboardPage() {
         <header className="flex h-16 items-center border-b border-white/5 px-6 bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-50 justify-between">
           <div className="flex items-center">
             <SidebarTrigger className="text-white hover:bg-white/10" />
-            <Separator orientation="vertical" className="mx-4 h-6 opacity-10" />
+            <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-bold text-lg tracking-tight">Console de Gestion Prestige</h1>
           </div>
           <div className="flex items-center gap-4">
