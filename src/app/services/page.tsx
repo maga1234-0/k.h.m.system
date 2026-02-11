@@ -128,18 +128,20 @@ function ServicesContent() {
     const additionalAmount = Number(chargeData.amount) || 0;
     const serviceType = getServiceTitle(activeTab).toUpperCase();
     const dateStr = new Date().toLocaleDateString('fr-FR');
+    const noteLine = `[${dateStr}] ${serviceType}: ${chargeData.description} (+${additionalAmount} $)`;
     
     const resUpdateRef = doc(firestore, 'reservations', res.id);
     updateDocumentNonBlocking(resUpdateRef, {
       totalAmount: (Number(res.totalAmount) || 0) + additionalAmount,
-      notes: (res.notes || "") + (res.notes ? "\n" : "") + `[${dateStr}] ${serviceType}: ${chargeData.description} (+${additionalAmount} $)`
+      notes: (res.notes || "") + (res.notes ? "\n" : "") + noteLine
     });
 
     const invoice = invoices?.find(inv => inv.reservationId === res.id);
     if (invoice) {
       const invoiceUpdateRef = doc(firestore, 'invoices', invoice.id);
       updateDocumentNonBlocking(invoiceUpdateRef, {
-        amountDue: (Number(invoice.amountDue) || 0) + additionalAmount
+        amountDue: (Number(invoice.amountDue) || 0) + additionalAmount,
+        notes: (invoice.notes || "") + (invoice.notes ? "\n" : "") + noteLine
       });
     }
 
