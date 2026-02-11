@@ -109,7 +109,7 @@ export default function BillingPage() {
     toast({ title: "Paiement Enregistré" });
   };
 
-  const generatePDF = async (invoice: any) => {
+  const generatePDFBlob = async (invoice: any) => {
     const input = document.getElementById('invoice-single-page');
     if (!input) {
       toast({ variant: "destructive", title: "Erreur technique", description: "Le rendu de la facture n'est pas prêt." });
@@ -135,9 +135,7 @@ export default function BillingPage() {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      const fileName = `facture-${invoice.guestName.replace(/\s+/g, '-').toLowerCase()}-${invoice.id.slice(0, 8)}.pdf`;
-      pdf.save(fileName);
-      return fileName;
+      return pdf.output('blob');
     } catch (error) {
       console.error("PDF Generation failed", error);
       toast({ variant: "destructive", title: "Erreur PDF", description: "Impossible de générer le document." });
@@ -148,51 +146,63 @@ export default function BillingPage() {
   };
 
   const handleShareInvoice = async (invoice: any) => {
-    // Étape 1: On s'assure que l'invoice est sélectionnée et le dialogue ouvert
-    // Car html2canvas a besoin que l'élément soit rendu dans le DOM visible
     setSelectedInvoice(invoice);
     setIsInvoiceDialogOpen(true);
 
-    toast({ title: "Préparation du PDF...", description: "Génération de la facture haute résolution." });
+    toast({ title: "Préparation du PDF...", description: "Génération du document pour WhatsApp." });
 
-    // On laisse un court délai pour que le composant Dialogue s'affiche
+    // Attendre que le dialogue soit rendu
     setTimeout(async () => {
-      // Étape 2: Générer et télécharger le PDF
-      const pdfFileName = await generatePDF(invoice);
-      
-      if (!pdfFileName) {
-        toast({ variant: "destructive", title: "Erreur de partage", description: "Échec de la génération du PDF." });
-        return;
+      const pdfBlob = await generatePDFBlob(invoice);
+      if (!pdfBlob) return;
+
+      const fileName = `facture-${invoice.id.slice(0, 8).toUpperCase()}.pdf`;
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      // Tentative d'utilisation de l'API Web Share (idéal sur mobile)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Facture ${invoice.guestName}`,
+            text: `Bonjour ${invoice.guestName}, voici votre facture de ${settings?.hotelName || 'Fiesta Hotel'}.`,
+          });
+          toast({ title: "Facture partagée avec succès" });
+          return;
+        } catch (error) {
+          console.log("Share canceled or failed", error);
+        }
       }
 
-      // Étape 3: Redirection WhatsApp
+      // Fallback : Téléchargement + Message WhatsApp si Web Share n'est pas supporté (Desktop)
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(pdfUrl);
+
       const phone = invoice.guestPhone?.replace(/\D/g, '');
-      if (!phone) {
-        toast({ 
-          variant: "destructive", 
-          title: "Numéro manquant", 
-          description: "Le PDF est téléchargé, mais le client n'a pas de numéro enregistré pour WhatsApp." 
-        });
-        return;
-      }
-
       const hotel = settings?.hotelName || 'Fiesta Hotel';
       const message = `*FACTURE OFFICIELLE - ${hotel.toUpperCase()}*\n\n` +
         `Bonjour ${invoice.guestName},\n\n` +
-        `Veuillez trouver ci-joint votre facture *#INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF (téléchargée sur votre appareil).\n\n` +
-        `• *Montant Total :* ${Number(invoice.amountDue).toFixed(2)} $\n` +
-        `• *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE DE PAIEMENT'}\n\n` +
+        `Veuillez trouver ci-joint votre facture *#INV-${invoice.id.slice(0, 8).toUpperCase()}* au format PDF (téléchargée).\n\n` +
+        `• *Montant :* ${Number(invoice.amountDue).toFixed(2)} $\n` +
+        `• *Statut :* ${invoice.status === 'Paid' ? 'PAYÉE' : 'EN ATTENTE'}\n\n` +
         `Merci pour votre confiance !\n\n` +
-        `_Système de Gestion ImaraPMS_`;
+        `_Système ImaraPMS_`;
 
-      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = phone 
+        ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
       
-      // On ouvre WhatsApp
       window.open(whatsappUrl, '_blank');
       
       toast({ 
-        title: "Redirection WhatsApp", 
-        description: "PDF prêt. Veuillez l'attacher dans la discussion qui vient de s'ouvrir." 
+        title: "PDF Prêt", 
+        description: "Le PDF a été généré. Veuillez l'attacher dans WhatsApp." 
       });
     }, 800);
   };
@@ -424,7 +434,17 @@ export default function BillingPage() {
             )}
             <div className="p-6 border-t bg-muted/20 flex justify-end gap-4">
               <Button variant="outline" className="rounded-xl font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsInvoiceDialogOpen(false)}>Fermer</Button>
-              <Button variant="secondary" className="rounded-xl font-bold uppercase text-[10px] tracking-widest gap-2" onClick={() => generatePDF(selectedInvoice)} disabled={isGeneratingPDF}>
+              <Button variant="secondary" className="rounded-xl font-bold uppercase text-[10px] tracking-widest gap-2" onClick={async () => {
+                const blob = await generatePDFBlob(selectedInvoice);
+                if (blob) {
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `facture-${selectedInvoice.id.slice(0, 8)}.pdf`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }} disabled={isGeneratingPDF}>
                 {isGeneratingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 Télécharger PDF
               </Button>
