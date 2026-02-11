@@ -33,7 +33,7 @@ import {
   Info
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, getDocs, collection } from "firebase/firestore";
 import { updatePassword, updateEmail } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -62,6 +62,7 @@ function SettingsContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [formData, setFormData] = useState({
     hotelName: "",
@@ -196,6 +197,38 @@ function SettingsContent() {
       setIsRefreshing(false);
       toast({ title: "Système Optimisé", description: "Le cache local a été purgé avec succès." });
     }, 1500);
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const collectionsToExport = ['rooms', 'reservations', 'clients', 'invoices', 'staff', 'settings'];
+      const exportedData: Record<string, any[]> = {};
+
+      for (const colName of collectionsToExport) {
+        const querySnapshot = await getDocs(collection(firestore, colName));
+        exportedData[colName] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+
+      const jsonString = JSON.stringify(exportedData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `imara-pms-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Exportation réussie", description: "Vos données ont été téléchargées." });
+    } catch (error) {
+      console.error("Export failed", error);
+      toast({ variant: "destructive", title: "Erreur d'exportation", description: "Impossible de générer le fichier JSON." });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (isAuthLoading || !user) return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -410,8 +443,8 @@ function SettingsContent() {
                           <p className="text-[10px] text-muted-foreground font-medium">Téléchargez l'intégralité des données d'inventaire.</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="rounded-xl font-bold text-[10px] uppercase tracking-widest h-8">
-                        Exporter
+                      <Button variant="outline" size="sm" className="rounded-xl font-bold text-[10px] uppercase tracking-widest h-8" onClick={handleExportData} disabled={isExporting}>
+                        {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Exporter"}
                       </Button>
                     </div>
                   </CardContent>
