@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, Suspense } from "react"
@@ -5,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { AppSidebar } from "@/components/layout/AppSidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,13 +14,13 @@ import {
   Utensils, 
   Shirt, 
   ConciergeBell, 
-  PlusCircle, 
   Loader2, 
   Search,
   Plus,
   DollarSign,
   Coffee,
-  ChefHat
+  ChefHat,
+  ArrowRight
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
@@ -40,6 +41,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 
 function ServicesContent() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -150,7 +152,7 @@ function ServicesContent() {
       case 'restaurant': return <ChefHat className="h-6 w-6" />;
       case 'laundry': return <Shirt className="h-6 w-6" />;
       case 'room-service': return <ConciergeBell className="h-6 w-6" />;
-      default: return <PlusCircle className="h-6 w-6" />;
+      default: return <Plus className="h-6 w-6" />;
     }
   };
 
@@ -168,32 +170,34 @@ function ServicesContent() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full animate-in fade-in duration-500">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-[#0a0a0a]">
-        <header className="flex h-16 items-center border-b border-white/5 px-6 justify-between bg-[#0a0a0a] sticky top-0 z-10">
+      <SidebarInset className="flex flex-col overflow-auto bg-background/50">
+        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
           <div className="flex items-center">
-            <SidebarTrigger className="text-white" />
-            <Separator orientation="vertical" className="mx-4 h-6 bg-white/10" />
-            <h1 className="font-headline font-semibold text-xl text-white">Service {getServiceTitle(activeTab)}</h1>
+            <SidebarTrigger />
+            <Separator orientation="vertical" className="mx-4 h-6" />
+            <h1 className="font-headline font-semibold text-xl text-primary">{getServiceTitle(activeTab)}</h1>
           </div>
           <Dialog open={isAddChargeOpen} onOpenChange={setIsAddChargeOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-xs">
+              <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 h-9 rounded-xl">
                 <Plus className="h-4 w-4" /> Nouvelle Vente
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] rounded-[2rem] animate-in zoom-in-95">
               <DialogHeader>
-                <DialogTitle>Facturer un service</DialogTitle>
-                <DialogDescription>Ajout de frais au dossier client.</DialogDescription>
+                <DialogTitle className="text-2xl font-black font-headline">Facturer un service</DialogTitle>
+                <DialogDescription className="font-medium">Ajout de frais au dossier client.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="space-y-2">
-                  <Label>Nom du client</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom du client</Label>
                   <Select value={chargeData.reservationId} onValueChange={(val) => setChargeData({...chargeData, reservationId: val})}>
-                    <SelectTrigger><SelectValue placeholder="Choisir un client..." /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Choisir un client..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
                       {activeReservations.length > 0 ? activeReservations.map((res) => (
                         <SelectItem key={res.id} value={res.id}>Ch. {res.roomNumber} - {res.guestName}</SelectItem>
                       )) : <div className="p-4 text-center text-xs text-muted-foreground italic">Aucun client en séjour.</div>}
@@ -201,103 +205,130 @@ function ServicesContent() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Désignation</Label>
-                  <Input placeholder="Entrez la description..." value={chargeData.description} onChange={(e) => setChargeData({...chargeData, description: e.target.value})} />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Désignation</Label>
+                  <Input placeholder="Entrez la description..." className="h-11 rounded-xl" value={chargeData.description} onChange={(e) => setChargeData({...chargeData, description: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Montant ($)</Label>
-                  <Input type="number" placeholder="0.00" value={chargeData.amount} onChange={(e) => setChargeData({...chargeData, amount: e.target.value})} />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Montant ($)</Label>
+                  <Input type="number" placeholder="0.00" className="h-11 rounded-xl font-bold bg-primary/5 border-primary/10" value={chargeData.amount} onChange={(e) => setChargeData({...chargeData, amount: e.target.value})} />
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
-                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount}>Confirmer</Button>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" className="rounded-xl" onClick={() => setIsAddChargeOpen(false)}>Annuler</Button>
+                <Button onClick={handleAddCharge} disabled={!chargeData.reservationId || !chargeData.amount} className="rounded-xl font-bold uppercase text-[10px] tracking-widest h-11 px-8">Confirmer</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </header>
 
-        <main className="p-6 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-[#141414] border-none shadow-xl">
+        <main className="p-4 md:p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500">
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <DollarSign className="h-7 w-7" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Ventes du Jour</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Ventes du Jour</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black font-headline text-white tracking-tighter">{dynamicStats.dailySales.toFixed(2)}</span>
+                    <span className="text-3xl font-black font-headline text-foreground tracking-tighter">{dynamicStats.dailySales.toFixed(2)}</span>
                     <span className="text-lg font-bold text-primary">$</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-[#141414] border-none shadow-xl">
+            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                   <Utensils className="h-7 w-7" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Commandes</span>
-                  <span className="text-3xl font-black font-headline text-white tracking-tighter">{dynamicStats.orders}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Commandes</span>
+                  <span className="text-3xl font-black font-headline text-foreground tracking-tighter">{dynamicStats.orders}</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-[#141414] border-none shadow-xl">
+            <Card className="border-none shadow-sm rounded-3xl bg-white animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
               <CardContent className="p-6 flex items-center gap-5">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <Coffee className="h-7 w-7" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Service Populaire</span>
-                  <span className="text-xl font-black font-headline text-white truncate max-w-[150px]">{dynamicStats.popular}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Plus Demandé</span>
+                  <span className="text-xl font-black font-headline text-foreground truncate max-w-[150px]">{dynamicStats.popular}</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="bg-[#141414] border-none shadow-xl text-white">
-            <CardHeader>
+          <Card className="border-none shadow-sm rounded-[2rem] bg-white overflow-hidden animate-in fade-in duration-700">
+            <CardHeader className="border-b bg-muted/20 pb-4">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
+                <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md">
                   {getServiceIcon(activeTab)}
                 </div>
                 <div>
-                  <CardTitle className="font-headline text-xl">{getServiceTitle(activeTab)}</CardTitle>
-                  <CardDescription className="text-zinc-500">Facturation directe par chambre.</CardDescription>
+                  <CardTitle className="font-headline text-xl font-bold">Registre des Consommations</CardTitle>
+                  <CardDescription>Facturation directe par chambre pour le séjour en cours.</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                <Input placeholder="Rechercher..." className="pl-9 bg-zinc-900 border-none text-white placeholder:text-zinc-600" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <CardContent className="p-0">
+              <div className="p-4 md:p-6 border-b">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Rechercher par chambre ou nom..." 
+                    className="pl-9 bg-muted/30 border-none rounded-xl h-11" 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                  />
+                </div>
               </div>
-              <div className="grid gap-4">
-                {activeReservations.length > 0 ? activeReservations.map((res) => {
+              <div className="divide-y">
+                {activeReservations.length > 0 ? activeReservations.map((res, idx) => {
                   const inv = invoices?.find(i => i.reservationId === res.id);
                   return (
-                    <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition-all group">
+                    <div key={res.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 hover:bg-primary/5 transition-all group animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black">Ch. {res.roomNumber}</div>
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex flex-col items-center justify-center text-primary font-black border border-primary/20">
+                          <span className="text-[8px] uppercase tracking-tighter">Chambre</span>
+                          <span className="text-xl">{res.roomNumber}</span>
+                        </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-lg text-white">{res.guestName}</span>
-                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">En séjour</span>
+                          <span className="font-black text-lg text-foreground">{res.guestName}</span>
+                          <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="text-[8px] uppercase font-black bg-emerald-500/5 text-emerald-600 border-emerald-500/10">Actif</Badge>
+                             <span className="text-[10px] text-muted-foreground font-medium">Arrivé le {res.checkInDate}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 mt-4 md:mt-0">
+                      <div className="flex items-center gap-6 mt-6 md:mt-0">
                         <div className="text-right">
-                          <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Facturé</span>
-                          <span className="text-xl font-black font-headline text-primary">{Number(inv?.amountDue || 0).toLocaleString()} $</span>
+                          <span className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Encours Facturé</span>
+                          <span className="text-2xl font-black font-headline text-primary tracking-tighter">{Number(inv?.amountDue || 0).toLocaleString()} <span className="text-sm">$</span></span>
                         </div>
-                        <Button className="bg-white text-black hover:bg-zinc-200 font-bold text-[10px] uppercase tracking-widest h-10 px-6 rounded-lg" onClick={() => { setChargeData({...chargeData, reservationId: res.id}); setIsAddChargeOpen(true); }}>Ajouter Frais</Button>
+                        <Button 
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase tracking-widest h-12 px-8 rounded-xl shadow-md transition-transform active:scale-95 flex gap-2" 
+                          onClick={() => { setChargeData({...chargeData, reservationId: res.id}); setIsAddChargeOpen(true); }}
+                        >
+                          Ajouter Frais
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   );
-                }) : <div className="py-20 text-center opacity-20 border-2 border-dashed border-zinc-800 rounded-3xl"><p className="font-bold uppercase tracking-widest text-sm">Aucun client en séjour.</p></div>}
+                }) : (
+                  <div className="py-32 text-center">
+                    <div className="h-20 w-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ConciergeBell className="h-10 w-10 text-muted-foreground/30" />
+                    </div>
+                    <p className="font-black uppercase tracking-[0.2em] text-sm text-muted-foreground">Aucun client en séjour actif</p>
+                    <p className="text-xs text-muted-foreground/60 mt-2">Seuls les clients ayant effectué leur Check-in apparaissent ici.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
