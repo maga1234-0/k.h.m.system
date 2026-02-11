@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { 
   Users, 
-  CalendarClock, 
-  CreditCard,
   Loader2,
   TrendingUp,
   Wallet,
-  CalendarDays
+  CalendarDays,
+  ArrowUpRight,
+  Activity
 } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -30,12 +30,10 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const roomsRef = useMemoFirebase(() => user ? collection(firestore, 'rooms') : null, [firestore, user]);
   const resRef = useMemoFirebase(() => user ? collection(firestore, 'reservations') : null, [firestore, user]);
-  const clientsRef = useMemoFirebase(() => user ? collection(firestore, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
 
   const { data: rooms } = useCollection(roomsRef);
   const { data: reservations } = useCollection(resRef);
-  const { data: clients } = useCollection(clientsRef);
   const { data: invoices } = useCollection(invoicesRef);
 
   useEffect(() => {
@@ -44,7 +42,7 @@ export default function DashboardPage() {
   }, [user, isUserLoading, router]);
 
   const stats = useMemo(() => {
-    if (!mounted || !invoices || !reservations || !clients) return [];
+    if (!mounted || !invoices || !reservations) return [];
     
     const totalCollected = invoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
     
@@ -60,26 +58,26 @@ export default function DashboardPage() {
       { 
         title: "Revenu Total", 
         value: `${totalCollected.toLocaleString()} $`, 
-        trend: "+12.1% vs semaine dernière", 
+        trend: "+12.1%", 
         icon: Wallet, 
         color: "primary" 
       },
       { 
-        title: "Nouvelles Résas (Aujourd'hui)", 
+        title: "Nouvelles Résas", 
         value: todayResCount.toString(), 
-        trend: `+${todayResCount} vs semaine dernière`, 
+        trend: `+${todayResCount}`, 
         icon: CalendarDays, 
         color: "primary" 
       },
       { 
         title: "Clients Actifs", 
         value: activeClientsCount.toString(), 
-        trend: "+8.4% vs semaine dernière", 
+        trend: "+8.4%", 
         icon: Users, 
         color: "primary" 
       },
     ];
-  }, [invoices, reservations, clients, mounted]);
+  }, [invoices, reservations, mounted]);
 
   const chartData = useMemo(() => {
     if (!rooms || !reservations || !invoices || !mounted) return [];
@@ -123,29 +121,31 @@ export default function DashboardPage() {
       <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-16 items-center border-b border-white/5 px-6 bg-[#0a0a0a] sticky top-0 z-10">
           <SidebarTrigger className="text-white hover:bg-white/10" />
-          <div className="flex-1 flex justify-center">
-            <h1 className="font-headline font-semibold text-lg text-white">Tableau de bord temps réel</h1>
+          <Separator orientation="vertical" className="mx-4 h-6 opacity-10" />
+          <div className="flex-1 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            <h1 className="font-headline font-semibold text-sm uppercase tracking-widest text-white/70">Console de Performance</h1>
           </div>
         </header>
 
-        <main className="p-4 md:p-6 space-y-6 animate-in fade-in duration-700">
-          <div className="grid gap-6 grid-cols-1">
+        <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
             {stats.map((stat, i) => (
-              <Card key={i} className="bg-[#141414] border-none rounded-2xl overflow-hidden shadow-2xl">
-                <CardContent className="p-6">
+              <Card key={i} className="bg-[#141414] border-none rounded-[2rem] overflow-hidden shadow-2xl transition-transform hover:scale-[1.02]">
+                <CardContent className="p-8">
                   <div className="flex justify-between items-start">
                     <div className="space-y-4">
-                      <span className="text-sm font-medium text-gray-400">{stat.title}</span>
-                      <div className="text-4xl font-black font-headline tracking-tight text-white">
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{stat.title}</span>
+                      <div className="text-4xl font-black font-headline tracking-tighter text-white">
                         {stat.value}
                       </div>
-                      <div className="flex items-center gap-2 text-primary font-medium text-xs">
-                        <TrendingUp className="h-4 w-4" />
-                        {stat.trend}
+                      <div className="flex items-center gap-2 text-primary font-black text-xs">
+                        <ArrowUpRight className="h-4 w-4" />
+                        {stat.trend} <span className="text-gray-600 font-medium">vs hier</span>
                       </div>
                     </div>
-                    <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                      <stat.icon className="h-6 w-6" />
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                      <stat.icon className="h-7 w-7" />
                     </div>
                   </div>
                 </CardContent>
@@ -153,12 +153,26 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <Card className="bg-[#141414] border-none rounded-2xl overflow-hidden shadow-2xl">
-            <CardHeader className="p-6">
-              <CardTitle className="font-headline text-xl font-bold text-white">Aperçu Occupation & Revenus</CardTitle>
-              <CardDescription className="text-gray-400 text-sm">Performance sur 7 jours basée sur les données réelles.</CardDescription>
+          <Card className="bg-[#141414] border-none rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <CardHeader className="p-8 pb-0">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="font-headline text-2xl font-black text-white">Performances Hebdomadaires</CardTitle>
+                  <CardDescription className="text-gray-500 text-sm mt-1">Analyse croisée de l'occupation et des revenus réels.</CardDescription>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Occupation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-accent" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Revenus</span>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="h-[400px] p-6 pt-0">
+            <CardContent className="h-[450px] p-8">
               <DashboardCharts data={chartData} />
             </CardContent>
           </Card>

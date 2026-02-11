@@ -2,7 +2,6 @@
 "use client"
 
 import { CartesianGrid, XAxis, ResponsiveContainer, YAxis, Legend, AreaChart, Area, Tooltip } from "recharts"
-import { ChartContainer } from "@/components/ui/chart"
 
 interface DashboardChartsProps {
   data: {
@@ -10,17 +9,6 @@ interface DashboardChartsProps {
     occupancy: number;
     revenue: number;
   }[];
-}
-
-const chartConfig = {
-  occupancy: {
-    label: "occupancy",
-    color: "hsl(var(--primary))",
-  },
-  revenue: {
-    label: "revenue",
-    color: "hsl(var(--accent))",
-  },
 }
 
 export function DashboardCharts({ data }: DashboardChartsProps) {
