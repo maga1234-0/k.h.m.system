@@ -15,7 +15,6 @@ import {
   AlertCircle, 
   FileText, 
   Download,
-  Hotel,
   CheckCircle2,
   DollarSign,
   Share2
@@ -188,7 +187,7 @@ export default function BillingPage() {
       URL.revokeObjectURL(url);
       
       const phone = invoice.guestPhone.replace(/\D/g, '');
-      const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Le fichier PDF a été téléchargé, veuillez le joindre au message.`;
+      const message = `Bonjour ${invoice.guestName}, votre facture est prête. Montant: ${invoice.amountDue} $. Veuillez trouver ci-joint le document PDF téléchargé.`;
       
       try {
         const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -198,7 +197,7 @@ export default function BillingPage() {
       }
       
       setIsSharing(false);
-      toast({ title: "Prêt pour WhatsApp", description: "Veuillez joindre le fichier téléchargé manuellement." });
+      toast({ title: "Prêt pour WhatsApp", description: "Veuillez joindre manuellement le fichier PDF téléchargé." });
     }
   };
 
@@ -398,12 +397,18 @@ export default function BillingPage() {
                             <tr>
                               <td style={{ width: '65%', verticalAlign: 'middle' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                  <div style={{ height: '60px', width: '60px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                                    <Hotel size={35} />
+                                  <div style={{ height: '65px', width: '65px', borderRadius: '15px', backgroundColor: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M30 80V35L40 25V80H30Z" fill="currentColor" />
+                                      <path d="M70 80V35L60 25V80H70Z" fill="currentColor" />
+                                      <path d="M40 45C40 45 45 40 50 40C55 40 60 45 60 45V60C60 60 55 65 50 65C45 65 40 60 40 60V45Z" fill="currentColor" opacity="0.9" />
+                                      <circle cx="50" cy="50" r="4" fill="white" />
+                                      <path d="M48 50L52 50L54 58L46 58Z" fill="white" />
+                                    </svg>
                                   </div>
                                   <div>
                                     <h1 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900, fontSize: '28px', color: 'hsl(var(--primary))', margin: 0, textTransform: 'uppercase' }}>
-                                      {settings?.hotelName || 'Fiesta Hotel'}
+                                      {settings?.hotelName || 'ImaraPMS'}
                                     </h1>
                                     <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', margin: '2px 0 0 0' }}>Excellence & Prestige</p>
                                   </div>
@@ -434,7 +439,7 @@ export default function BillingPage() {
                                 <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '5px', marginBottom: '10px' }}>
                                   <span style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>ÉMETTEUR</span>
                                 </div>
-                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'Fiesta Hotel Resort'}</p>
+                                <p style={{ fontSize: '14px', fontWeight: 900, margin: 0 }}>{settings?.hotelName || 'ImaraPMS Resort'}</p>
                                 <p style={{ fontSize: '10px', color: '#64748b', margin: '5px 0' }}>{settings?.address || 'République Démocratique du Congo'}</p>
                               </td>
                             </tr>
@@ -485,7 +490,7 @@ export default function BillingPage() {
                                   <div style={{ height: '50px', width: '150px', borderBottom: '1px dashed #cbd5e1', marginBottom: '10px' }}></div>
                                 )}
                                 <p style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>{settings?.managerName || 'La Direction'}</p>
-                                <p style={{ fontSize: '8px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>Fiesta Hotel Manager</p>
+                                <p style={{ fontSize: '8px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>ImaraPMS Manager</p>
                               </td>
                               <td style={{ width: '40%', textAlign: 'right', verticalAlign: 'bottom' }}>
                                 <div style={{ backgroundColor: '#f1f5f9', padding: '25px', borderRadius: '20px', border: '2px solid hsl(var(--primary))' }}>
@@ -499,7 +504,7 @@ export default function BillingPage() {
                           </tbody>
                        </table>
                        <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                          <p style={{ fontSize: '8px', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>ImaraPMS v2.5 - Document de Gestion Certifié</p>
+                          <p style={{ fontSize: '8px', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>ImaraPMS v2.5 - Système de Gestion Certifié</p>
                        </div>
                     </div>
                   </div>
