@@ -171,7 +171,7 @@ export default function ClientsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Registre des Voyageurs</h1>
+            <h1 className="font-headline font-semibold text-xl">Registre des Clients</h1>
           </div>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -183,7 +183,7 @@ export default function ClientsPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Inscription Client</DialogTitle>
-                <DialogDescription>Créez un profil pour un voyageur.</DialogDescription>
+                <DialogDescription>Créez un profil pour un client.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">

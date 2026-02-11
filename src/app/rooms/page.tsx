@@ -338,7 +338,7 @@ export default function RoomsPage() {
           <DialogContent className="sm:max-w-[425px] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle>Modifier Chambre</DialogTitle>
-              <DialogDescription>Mettre à jour les informations.</DialogDescription>
+              <DialogDescription>Mettre à jour les informations de l'unité.</DialogDescription>
             </DialogHeader>
             {editRoomData && (
               <div className="grid gap-4 py-4">
@@ -416,7 +416,7 @@ export default function RoomsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Capacité</p>
-                    <p className="font-bold">{selectedRoom.capacity} Voyageurs</p>
+                    <p className="font-bold">{selectedRoom.capacity} Clients</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Tarif</p>

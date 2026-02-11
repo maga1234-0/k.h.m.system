@@ -376,7 +376,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Nouvelle Réservation</DialogTitle>
-              <DialogDescription className="font-medium">Veuillez renseigner les informations du voyageur.</DialogDescription>
+              <DialogDescription className="font-medium">Veuillez renseigner les informations du client.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="space-y-2">
@@ -434,7 +434,7 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-[550px] animate-in zoom-in-95 duration-300 rounded-[2rem]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Modifier Réservation</DialogTitle>
-              <DialogDescription className="font-medium">Mettre à jour les informations du dossier.</DialogDescription>
+              <DialogDescription className="font-medium">Mettre à jour les informations du dossier client.</DialogDescription>
             </DialogHeader>
             {editForm && (
               <div className="grid gap-6 py-4">
@@ -493,13 +493,13 @@ export default function ReservationsPage() {
           <DialogContent className="sm:max-w-md rounded-[2rem] animate-in zoom-in-95">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black font-headline">Gestion du Séjour</DialogTitle>
-              <DialogDescription className="font-medium">Actions requises pour le cycle du voyageur.</DialogDescription>
+              <DialogDescription className="font-medium">Actions requises pour le cycle du client.</DialogDescription>
             </DialogHeader>
             {selectedRes && (
               <div className="space-y-6 py-6">
                 <div className="grid grid-cols-2 gap-4 p-6 bg-primary/5 rounded-[1.5rem] border border-primary/10 animate-in fade-in duration-500">
                   <div>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Voyageur</p>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground mb-1 tracking-widest">Client</p>
                     <p className="font-black text-sm text-foreground">{selectedRes.guestName}</p>
                   </div>
                   <div>

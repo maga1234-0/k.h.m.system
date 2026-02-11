@@ -215,7 +215,7 @@ export default function DashboardPage() {
               <CardHeader className="p-8">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle className="font-headline text-2xl font-black text-foreground">Flux des Voyageurs</CardTitle>
+                    <CardTitle className="font-headline text-2xl font-black text-foreground">Flux des Clients</CardTitle>
                     <CardDescription className="text-muted-foreground text-sm mt-1">Dernières interactions de la réception.</CardDescription>
                   </div>
                   <Button variant="ghost" className="text-[10px] font-black uppercase text-primary hover:bg-primary/10 rounded-xl" onClick={() => router.push('/reservations')}>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                             <Clock className="h-3 w-3" /> 
                             {res.createdAt ? format(new Date(res.createdAt), 'HH:mm', { locale: fr }) : '--:--'}
                             <Separator orientation="vertical" className="h-3 mx-1" />
-                            {res.numberOfGuests || 1} voyageur(s)
+                            {res.numberOfGuests || 1} client(s)
                           </div>
                         </div>
                       </div>
