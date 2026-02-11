@@ -176,7 +176,7 @@ export default function BillingPage() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
       pdf.save(`FACTURE-${selectedInvoice.guestName.toUpperCase().replace(/\s+/g, '-')}.pdf`);
       
-      toast({ title: "Succès", description: "La facture a été téléchargée." });
+      toast({ title: "Succès", description: "La facture a été téléchargée dans votre explorateur." });
     } catch (error) {
       console.error('PDF Error:', error);
       toast({ variant: "destructive", title: "Échec", description: "Erreur lors de la génération." });
@@ -186,11 +186,11 @@ export default function BillingPage() {
   };
 
   const invoiceExtras = useMemo(() => getExtrasForInvoice(selectedInvoice), [selectedInvoice, reservations]);
-  const totalExtras = invoiceExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+  const totalExtrasValue = invoiceExtras.reduce((acc, e) => acc + parseFloat(e.amount), 0);
   const basePriceValue = useMemo(() => {
     if (!selectedInvoice) return 0;
-    return Math.max(0, Number(selectedInvoice.amountDue) - totalExtras);
-  }, [selectedInvoice, totalExtras]);
+    return Math.max(0, Number(selectedInvoice.amountDue) - totalExtrasValue);
+  }, [selectedInvoice, totalExtrasValue]);
 
   if (!mounted || isAuthLoading || !user) {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -419,8 +419,8 @@ export default function BillingPage() {
                               <td className="w-1/2 align-bottom pb-4">
                                 <p className="text-[10px] font-black uppercase text-primary mb-2">SIGNATURE & CACHET</p>
                                 <div className="min-h-[140px] flex flex-col justify-end">
-                                  {settings?.signatureUrl ? (
-                                    <img src={settings.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
+                                  {formData.signatureUrl ? (
+                                    <img src={formData.signatureUrl} alt="Signature" className="h-24 w-auto object-contain mb-2 block mix-blend-multiply" />
                                   ) : (
                                     <div className="h-20 w-48 border-b-2 border-dashed border-slate-200 mb-2" />
                                   )}

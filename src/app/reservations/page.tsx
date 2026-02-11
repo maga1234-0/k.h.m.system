@@ -135,12 +135,12 @@ export default function ReservationsPage() {
     // Save Reservation
     addDocumentNonBlocking(resCollection, reservationData);
     
-    // Update Room Status to mark it as not available
+    // Update Room Status: once booked, it becomes occupied
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRoom.id), { status: "Occupied" });
 
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Succès", description: "La réservation a été créée et la chambre est bloquée." });
+    toast({ title: "Succès", description: "La réservation a été créée et la chambre est marquée comme Occupée." });
   };
 
   const handleCheckIn = () => {
