@@ -114,7 +114,7 @@ export default function StaffPage() {
 
   const handleAddStaff = () => {
     if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !staffCollection) {
-      toast({ title: "Champs requis", description: "Veuillez remplir tous les champs, y compris le mot de passe." });
+      toast({ title: "Champs requis", description: "Veuillez remplir tous les champs." });
       return;
     }
 
@@ -157,6 +157,7 @@ export default function StaffPage() {
     const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
     
+    // Supprimer aussi de la table admin si présent
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
@@ -300,7 +301,7 @@ export default function StaffPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-black text-primary font-mono text-sm tracking-wider">••••••••</span>
                         <div className="flex gap-2">
-                           <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-black">MANAGER-ONLY</Badge>
+                           <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-black">CONFIDENTIEL</Badge>
                         </div>
                       </div>
                     </div>
@@ -320,13 +321,12 @@ export default function StaffPage() {
           )}
         </main>
 
-        {/* Dialogues */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">L'administrateur définit le mot de passe initial.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">Définissez les accès de votre personnel.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
@@ -367,7 +367,7 @@ export default function StaffPage() {
                       value={newStaff.accessCode} 
                       onChange={(e) => setNewStaff({...newStaff, accessCode: e.target.value})} 
                       className="h-12 rounded-2xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
-                      placeholder="Assigner MDP"
+                      placeholder="Définir MDP"
                     />
                     <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -388,7 +388,7 @@ export default function StaffPage() {
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Modifier Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">Mise à jour des informations et du mot de passe.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">Mise à jour des informations d'accès.</DialogDescription>
               </DialogHeader>
             </div>
             {editStaffData && (
@@ -449,9 +449,9 @@ export default function StaffPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
-              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-14 px-8 border-none bg-slate-100">Garder</AlertDialogCancel>
+              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-14 px-8 border-none bg-slate-100">Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-14 px-10 bg-primary shadow-lg shadow-primary/20 text-white">
-                Confirmer
+                Confirmer la suppression
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
