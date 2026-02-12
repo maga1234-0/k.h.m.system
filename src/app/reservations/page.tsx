@@ -92,6 +92,7 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
+  // Fix: Accurate night calculation using dates only (no hours) to avoid timezone offsets
   const calculateTotal = (roomId: string, checkIn: string, checkOut: string) => {
     if (!roomId || !checkIn || !checkOut || !rooms) return "0";
     const selectedRoom = rooms.find(r => r.id === roomId);
@@ -100,10 +101,11 @@ export default function ReservationsPage() {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     
-    if (end > start) {
-      // Nettoyage des heures pour un calcul précis des nuitées
-      const d1 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      const d2 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    // Create clean dates (Y, M, D) to avoid hour rounding issues
+    const d1 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const d2 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    
+    if (d2 > d1) {
       const diffTime = Math.abs(d2.getTime() - d1.getTime());
       const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
       const price = Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0;
@@ -145,7 +147,7 @@ export default function ReservationsPage() {
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ title: "Champ requis", description: "Veuillez remplir les informations client." });
+      toast({ variant: "destructive", title: "Champ requis", description: "Veuillez remplir les informations client." });
       return;
     }
     

@@ -30,6 +30,7 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border-primary/20 bg-primary text-primary-foreground",
+        // System themed toast instead of red for errors
         destructive: "group border-primary/40 bg-primary text-primary-foreground shadow-lg shadow-primary/20",
       },
     },

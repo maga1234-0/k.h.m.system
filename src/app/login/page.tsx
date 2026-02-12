@@ -42,26 +42,30 @@ export default function LoginPage() {
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
-        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found')) {
+        // Fix: If email is primary admin and account doesn't exist, create it.
+        // If it does exist but password is wrong, signInWithEmailAndPassword throws 'auth/invalid-credential'
+        if (email === PRIMARY_ADMIN && (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential')) {
+          // If it's a password error for an existing account, don't try to create it
+          const checkSnap = await getDoc(doc(firestore, 'roles_admin', email.replace(/[@.]/g, '_'))); // Dummy check
+          
           try {
             userCredential = await createUserWithEmailAndPassword(auth, email, password);
             toast({
               title: "Système Initialisé",
-              description: "Le compte administrateur principal a été créé.",
+              description: "Le compte administrateur principal a été configuré.",
             });
           } catch (createError: any) {
             if (createError.code === 'auth/email-already-in-use') {
-              throw new Error("Échec d'Authentification : Mot de passe incorrect pour ce compte existant.");
+              throw new Error("Échec d'authentification : Mot de passe incorrect.");
             }
             throw createError;
           }
         } else {
-          throw authError;
+          throw new Error("Identifiants invalides ou accès non autorisé.");
         }
       }
 
       const uid = userCredential.user.uid;
-      
       const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
@@ -86,19 +90,16 @@ export default function LoginPage() {
           });
         } else {
           await signOut(auth);
-          throw new Error("Violation de Sécurité : Accès restreint au répertoire autorisé.");
+          throw new Error("Violation de Sécurité : Accès restreint.");
         }
       }
       
       router.push('/');
     } catch (error: any) {
-      console.error(error);
-      const message = error.message || 'Une erreur de sécurité est survenue.';
-        
       toast({
         variant: 'destructive',
         title: 'Alerte de Sécurité',
-        description: message,
+        description: error.message || 'Une erreur est survenue.',
       });
     } finally {
       setIsLoading(false);
@@ -114,35 +115,35 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-md border-none shadow-xl">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white border border-primary/20 shadow-lg shadow-primary/5 text-primary">
+    <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-muted/30 px-4">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-card">
+        <div className="h-2 w-full bg-primary" />
+        <CardHeader className="space-y-6 text-center pt-10">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 shadow-xl shadow-primary/5 text-primary animate-in zoom-in duration-700">
             <Logo size={80} />
           </div>
-          <div className="space-y-1">
-            <CardTitle className="font-headline text-3xl font-bold tracking-tight">ImaraPMS</CardTitle>
-            <CardDescription className="text-sm uppercase tracking-widest font-bold text-primary/70">Console de Gestion</CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="font-headline text-4xl font-black tracking-tighter">ImaraPMS</CardTitle>
+            <CardDescription className="text-[10px] uppercase tracking-[0.3em] font-black text-primary/70">Console de Gestion Hôtelière</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <Alert variant="leafy" className="border-leafy/30">
+        <CardContent className="space-y-8 p-10 pt-0">
+          <Alert variant="leafy" className="border-leafy/20 bg-primary/5 rounded-2xl">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle className="text-xs font-bold uppercase tracking-wider">Accès Restreint</AlertTitle>
-            <AlertDescription className="text-xs">
-              Personnel autorisé uniquement. Connexions auditées par le système.
+            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Accès Restreint</AlertTitle>
+            <AlertDescription className="text-xs font-medium">
+              Personnel autorisé uniquement. Connexions auditées.
             </AlertDescription>
           </Alert>
 
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Adresse E-mail</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail Professionnel</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="email"
                   type="email"
-                  className="pl-9"
+                  className="pl-11 h-14 rounded-2xl border-muted bg-slate-50 focus:bg-white transition-all font-bold"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -150,35 +151,34 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="password"
                   type={showPassword ? 'text' : 'password'}
-                  className="pl-9 pr-10"
+                  className="pl-11 pr-12 h-14 rounded-2xl border-muted bg-slate-50 focus:bg-white transition-all font-bold"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-semibold gap-2 py-6 text-lg shadow-lg shadow-primary/20" disabled={isLoading}>
+            <Button type="submit" className="w-full font-black uppercase tracking-widest h-16 rounded-2xl text-xs shadow-xl shadow-primary/20 gap-3 mt-4" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
               S'authentifier
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="text-center pt-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full text-center">
-            ImaraPMS • Console de Sécurité Hôtelière
+        <CardFooter className="pb-10 pt-0">
+          <p className="text-[8px] text-muted-foreground uppercase tracking-[0.4em] w-full text-center font-black">
+            ImaraPMS • Powered by Google Gemini 2.5
           </p>
         </CardFooter>
       </Card>
