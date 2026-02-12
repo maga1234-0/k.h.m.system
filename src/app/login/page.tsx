@@ -9,10 +9,10 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/card';
 import { Loader2, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/alert';
 import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
@@ -43,10 +43,8 @@ export default function LoginPage() {
       let userCredential;
 
       try {
-        // 1. Attempt standard login
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // 2. If failed, check if it's a staff invitation
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -55,16 +53,13 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
-          // Verify access code (acts as initial password)
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès ou mot de passe incorrect.");
           }
 
-          // 3. Create Auth account
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
-          // 4. Automatic Admin rights if Manager role
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -74,20 +69,18 @@ export default function LoginPage() {
             });
           }
 
-          // 5. Finalize staff profile (UID as document ID)
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" // Security: clear temporary code
+            accessCode: "" 
           });
 
-          // 6. Cleanup invitation if ID changed
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Cleanup warning (usually permissions):", err);
+              console.warn("Cleanup invitation skipped (already processed or no permission):", err);
             }
           }
 
@@ -99,7 +92,6 @@ export default function LoginPage() {
         }
       }
 
-      // 7. Initialize primary admin rights
       const uid = userCredential.user.uid;
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
@@ -168,23 +160,23 @@ export default function LoginPage() {
 
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-100 ml-1">E-mail Professionnel</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 ml-1">E-mail Professionnel</Label>
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                className="h-14 rounded-xl border-2 border-slate-300 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-100 ml-1">Mot de Passe</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 ml-1">Mot de Passe</Label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-300 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

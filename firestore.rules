@@ -39,8 +39,8 @@ service cloud.firestore {
      */
     match /staff/{staffId} {
       allow read, list: if true; 
-      allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
-      // Allow a user to delete a record if they are the owner OR if it matches their email (for cleanup)
+      allow create: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
+      allow update: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
       allow delete: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || resource.data.email == request.auth.token.email));
     }
 

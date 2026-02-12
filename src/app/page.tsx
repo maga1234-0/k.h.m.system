@@ -8,7 +8,6 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
@@ -17,10 +16,7 @@ import {
   Wrench,
   Loader2,
   TrendingUp,
-  DollarSign,
   Users,
-  ArrowUpRight,
-  Calendar,
   Zap
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";

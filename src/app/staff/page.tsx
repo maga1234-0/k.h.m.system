@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,11 @@ import {
   UserPlus, 
   Mail, 
   Phone, 
-  Shield, 
   Loader2,
   Edit2,
   Trash2,
   Eye,
-  EyeOff,
-  ShieldCheck,
-  MoreHorizontal
+  EyeOff
 } from "lucide-react";
 import { 
   Dialog, 
@@ -135,7 +132,6 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // If role is promoted to Manager, also ensure they are in roles_admin
     if (dataToUpdate.role === 'Manager') {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
@@ -157,7 +153,6 @@ export default function StaffPage() {
     const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
     
-    // Also remove admin rights if they had them
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
@@ -207,7 +202,6 @@ export default function StaffPage() {
             ) : filteredStaff?.map((member) => (
               <Card key={member.id} className="border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden relative">
                 
-                {/* Direct Action Buttons */}
                 <div className="absolute top-6 right-6 z-20 flex gap-2">
                   <Button 
                     variant="ghost" 
