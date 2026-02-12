@@ -49,6 +49,7 @@ export default function LoginPage() {
              userCredential = await createUserWithEmailAndPassword(auth, email, password);
           } 
           else {
+            // Check staff registry for invitation
             const staffCol = collection(firestore, 'staff');
             const q = query(staffCol, where("email", "==", email), where("accessCode", "==", password));
             const staffSnap = await getDocs(q);
@@ -59,6 +60,7 @@ export default function LoginPage() {
               
               const uid = userCredential.user.uid;
               
+              // If role is Manager, grant admin access automatically
               if (staffData.role === 'Manager') {
                 await setDoc(doc(firestore, 'roles_admin', uid), {
                   id: uid,
@@ -68,6 +70,7 @@ export default function LoginPage() {
                 });
               }
 
+              // Save finalized staff profile
               await setDoc(doc(firestore, 'staff', uid), {
                 ...staffData,
                 id: uid,
@@ -111,7 +114,7 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: 'Accès refusé',
-        description: error.message || 'Une erreur est survenue.',
+        description: error.message || 'Vérifiez vos identifiants.',
       });
     } finally {
       setIsLoading(false);
@@ -144,7 +147,7 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Sécurité Active</AlertTitle>
             <AlertDescription className="text-[11px] font-bold">
-              Utilisez votre email et votre mot de passe assigné.
+              Connectez-vous avec vos identifiants professionnels.
             </AlertDescription>
           </Alert>
 
@@ -154,7 +157,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
+                className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -166,7 +169,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
+                  className="pr-12 h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

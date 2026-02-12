@@ -18,16 +18,10 @@ import {
   Phone, 
   Shield, 
   Clock,
-  MessageSquare,
   Loader2,
-  Send,
   Edit2,
   Trash2,
   RefreshCw,
-  Lock,
-  Copy,
-  Check,
-  X,
   MoreHorizontal,
   Eye,
   EyeOff
@@ -39,7 +33,6 @@ import {
   DialogTitle, 
   DialogFooter,
   DialogDescription,
-  DialogClose
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -64,7 +57,6 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger,
-  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { 
   useFirestore, 
@@ -114,7 +106,7 @@ export default function StaffPage() {
 
   const handleAddStaff = () => {
     if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !newStaff.phoneNumber || !staffCollection) {
-      toast({ title: "Champs requis", description: "Veuillez remplir toutes les informations, y compris le téléphone." });
+      toast({ title: "Champs requis", description: "Veuillez remplir toutes les informations (nom, email, téléphone et mot de passe)." });
       return;
     }
 
@@ -131,8 +123,8 @@ export default function StaffPage() {
     
     setIsAddDialogOpen(false);
     toast({
-      title: "Membre ajouté",
-      description: `Le profil de ${staffData.firstName} a été créé avec succès.`,
+      title: "Collaborateur Ajouté",
+      description: `Le profil de ${staffData.firstName} a été créé.`,
     });
   };
 
@@ -143,12 +135,24 @@ export default function StaffPage() {
     const { id, ...dataToUpdate } = editStaffData;
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
+
+    // If role changed to Manager and we have a UID (account already initialized)
+    // In many cases ID becomes UID after login page runs its init logic.
+    if (dataToUpdate.role === 'Manager' && editStaffData.id.length > 20) {
+      const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
+      setDocumentNonBlocking(adminRef, {
+        id: editStaffData.id,
+        email: editStaffData.email,
+        role: 'Administrateur',
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    }
     
     setIsEditDialogOpen(false);
     setEditStaffData(null);
     toast({
       title: "Profil mis à jour",
-      description: `Les modifications pour ${editStaffData.firstName} ont été enregistrées.`,
+      description: "Les modifications ont été enregistrées.",
     });
   };
 
@@ -161,8 +165,8 @@ export default function StaffPage() {
     deleteDocumentNonBlocking(adminRef);
 
     toast({
-      title: "Membre retiré",
-      description: "Le profil a été supprimé du registre avec succès.",
+      title: "Membre supprimé",
+      description: "Le profil a été retiré du système.",
     });
     
     setMemberToDelete(null);
@@ -189,7 +193,7 @@ export default function StaffPage() {
             <Separator orientation="vertical" className="h-8" />
             <div className="flex flex-col">
               <h1 className="font-headline font-black text-xl text-primary tracking-tight leading-none">Ressources Humaines</h1>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Gestion des accès et rôles</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Gestion des accès • Full Manager Access</span>
             </div>
           </div>
           <Button onClick={() => {
@@ -299,7 +303,7 @@ export default function StaffPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-black text-primary font-mono text-sm tracking-wider">••••••••</span>
                         <div className="flex gap-2">
-                           <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-black">CONFIDENTIEL</Badge>
+                           <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-black">SÉCURISÉ</Badge>
                         </div>
                       </div>
                     </div>
@@ -324,7 +328,7 @@ export default function StaffPage() {
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">Définissez les accès de votre personnel.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">Définissez les accès et le rôle du personnel.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
@@ -356,7 +360,7 @@ export default function StaffPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
-                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="Manager">Manager (Accès Total)</SelectItem>
                       <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
                       <SelectItem value="Gouvernance">Gouvernance</SelectItem>
                       <SelectItem value="Sécurité">Sécurité</SelectItem>
