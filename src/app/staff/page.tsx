@@ -113,8 +113,8 @@ export default function StaffPage() {
   }, [user, isAuthLoading, router]);
 
   const handleAddStaff = () => {
-    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !staffCollection) {
-      toast({ title: "Champs requis", description: "Veuillez remplir tous les champs." });
+    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !newStaff.phoneNumber || !staffCollection) {
+      toast({ title: "Champs requis", description: "Veuillez remplir toutes les informations, y compris le téléphone." });
       return;
     }
 
@@ -157,7 +157,6 @@ export default function StaffPage() {
     const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
     
-    // Supprimer aussi de la table admin si présent
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
@@ -239,7 +238,6 @@ export default function StaffPage() {
               {filteredStaff?.map((member, idx) => (
                 <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden animate-in fade-in slide-in-from-bottom-4 relative" style={{ animationDelay: `${idx * 100}ms` }}>
                   
-                  {/* Actions Rapides */}
                   <div className="absolute top-6 right-6 z-20 flex gap-2">
                     <Button 
                       variant="ghost" 
@@ -340,9 +338,15 @@ export default function StaffPage() {
                   <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail Professionnel</Label>
-                <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail Pro</Label>
+                  <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">N° Téléphone</Label>
+                  <Input type="tel" value={newStaff.phoneNumber} onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" placeholder="+243..." />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -401,6 +405,16 @@ export default function StaffPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom</Label>
                     <Input value={editStaffData.lastName} onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail</Label>
+                    <Input value={editStaffData.email} onChange={(e) => setEditStaffData({...editStaffData, email: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Téléphone</Label>
+                    <Input value={editStaffData.phoneNumber} onChange={(e) => setEditStaffData({...editStaffData, phoneNumber: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
