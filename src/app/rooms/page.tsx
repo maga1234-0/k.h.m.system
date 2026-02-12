@@ -109,7 +109,8 @@ export default function RoomsPage() {
       const start = new Date(bookingForm.checkInDate);
       const end = new Date(bookingForm.checkOutDate);
       if (end > start) {
-        const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        // Utilisation de Math.round pour éviter le doublage du prix (200 -> 400) dû aux fuseaux horaires
+        const nights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
         const total = nights * (Number(selectedRoom.pricePerNight) || 0);
         setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
       }
@@ -155,6 +156,7 @@ export default function RoomsPage() {
       guestPhone: bookingForm.guestPhone,
       roomId: selectedRoom.id,
       roomNumber: selectedRoom.roomNumber,
+      roomType: selectedRoom.roomType || "Standard",
       checkInDate: bookingForm.checkInDate,
       checkOutDate: bookingForm.checkOutDate,
       totalAmount: Number(bookingForm.totalAmount) || 0,

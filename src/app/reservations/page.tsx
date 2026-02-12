@@ -52,7 +52,7 @@ import {
   deleteDocumentNonBlocking,
   useUser 
 } from "@/firebase";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query, where, getDocs } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
 export default function ReservationsPage() {
@@ -93,6 +93,7 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
+  // Calcul du montant pour la création
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -100,7 +101,8 @@ export default function ReservationsPage() {
         const start = new Date(bookingForm.checkInDate);
         const end = new Date(bookingForm.checkOutDate);
         if (end > start) {
-          const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          // Utilisation de Math.round pour éviter les erreurs de fuseaux horaires (200$ -> 400$)
+          const nights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
           const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
           setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
         }
@@ -108,13 +110,30 @@ export default function ReservationsPage() {
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
+  // Calcul du montant pour l'édition
+  useEffect(() => {
+    if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
+      const selectedRoom = rooms.find(r => r.id === editForm.roomId);
+      if (selectedRoom) {
+        const start = new Date(editForm.checkInDate);
+        const end = new Date(editForm.checkOutDate);
+        if (end > start) {
+          const nights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
+          if (total.toString() !== editForm.totalAmount) {
+            setEditForm((prev: any) => ({ ...prev, totalAmount: total.toString() }));
+          }
+        }
+      }
+    }
+  }, [editForm?.roomId, editForm?.checkInDate, editForm?.checkOutDate, rooms]);
+
   const selectedRes = useMemo(() => 
     reservations?.find(r => r.id === activeResId) || null
   , [reservations, activeResId]);
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    // Délai pour laisser le menu contextuel se fermer proprement
     setTimeout(() => {
       setActiveDialog("manage");
     }, 150);
@@ -123,7 +142,6 @@ export default function ReservationsPage() {
   const handleOpenEdit = (res: any) => {
     setEditForm({ ...res });
     setActiveResId(res.id);
-    // Délai pour laisser le menu contextuel se fermer proprement
     setTimeout(() => {
       setActiveDialog("edit");
     }, 150);
@@ -175,13 +193,25 @@ export default function ReservationsPage() {
     toast({ title: "Mise à jour réussie" });
   };
 
-  const handleCheckIn = () => {
+  const handleCheckIn = async () => {
     if (!selectedRes) return;
+    
+    // Vérifier si une facture existe déjà pour éviter les doublons de prix
+    const invCol = collection(firestore, 'invoices');
+    const q = query(invCol, where("reservationId", "==", selectedRes.id));
+    const snapshot = await getDocs(q);
+    
+    if (!snapshot.empty) {
+      toast({ title: "Facture déjà existante", description: "Le client a déjà été enregistré pour ce séjour." });
+      updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
+      updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
+      setActiveDialog(null);
+      return;
+    }
+
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
 
-    // Création auto de la facture au check-in
-    const invCol = collection(firestore, 'invoices');
     addDocumentNonBlocking(invCol, {
       reservationId: selectedRes.id,
       guestName: selectedRes.guestName,
@@ -223,8 +253,7 @@ export default function ReservationsPage() {
   const handleDeleteIndividual = () => {
     if (!resToDelete) return;
     
-    // Libération de la chambre si nécessaire
-    if (resToDelete.roomId && resToDelete.status !== 'Checked Out') {
+    if (resToDelete.roomId && resToDelete.status !== 'Checked Out' && resToDelete.status !== 'Cancelled') {
       const roomRef = doc(firestore, 'rooms', resToDelete.roomId);
       updateDocumentNonBlocking(roomRef, { status: "Available" });
     }
@@ -337,7 +366,6 @@ export default function ReservationsPage() {
                           <DropdownMenuItem 
                             onSelect={() => { 
                               setResToDelete(res); 
-                              // Délai pour laisser le menu contextuel se fermer proprement
                               setTimeout(() => setIsDeleteDialogOpen(true), 150);
                             }} 
                             className="text-destructive font-bold text-xs uppercase py-2 cursor-pointer"
@@ -407,6 +435,54 @@ export default function ReservationsPage() {
             <DialogFooter className="gap-2">
               <Button variant="outline" className="rounded-xl" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
               <Button onClick={handleSaveBooking} className="rounded-xl font-bold uppercase tracking-widest px-8">Confirmer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={activeDialog === "edit"} onOpenChange={(open) => !open && setActiveDialog(null)}>
+          <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black font-headline">Modifier Réservation</DialogTitle>
+            </DialogHeader>
+            {editForm && (
+              <div className="grid gap-6 py-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground">Client</label>
+                  <Input className="rounded-xl h-11" value={editForm.guestName} onChange={(e) => setEditForm({...editForm, guestName: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground">Arrivée</label>
+                    <Input type="date" className="rounded-xl h-11" value={editForm.checkInDate} onChange={(e) => setEditForm({...editForm, checkInDate: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground">Départ</label>
+                    <Input type="date" className="rounded-xl h-11" value={editForm.checkOutDate} onChange={(e) => setEditForm({...editForm, checkOutDate: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground">Chambre</label>
+                    <select 
+                      className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                      value={editForm.roomId} 
+                      onChange={(e) => setEditForm({...editForm, roomId: e.target.value})}
+                    >
+                      {rooms?.map(r => (
+                        <option key={r.id} value={r.id}>Ch. {r.roomNumber} ({r.roomType})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground">Montant Total ($)</label>
+                    <Input type="number" className="rounded-xl h-11 font-black text-primary bg-primary/5" value={editForm.totalAmount} onChange={(e) => setEditForm({...editForm, totalAmount: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => setActiveDialog(null)}>Annuler</Button>
+              <Button onClick={handleUpdateBooking} className="rounded-xl font-bold uppercase tracking-widest px-8">Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
