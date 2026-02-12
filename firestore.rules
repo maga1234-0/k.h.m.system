@@ -39,18 +39,18 @@ service cloud.firestore {
 
     /**
      * @description Staff management: 
-     * - Public list/read allowed ONLY for the login invitation check.
-     * - A user can create/update their own profile during onboarding.
+     * - Public list/read allowed for login invitation check.
+     * - A user can delete their temporary invitation record during onboarding.
      */
     match /staff/{staffId} {
       allow read, list: if true; 
       allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
-      allow delete: if isAdmin();
+      // Allow a user to delete a record if it matches their email (for onboarding cleanup)
+      allow delete: if isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || request.auth.uid == staffId));
     }
 
     /**
      * @description Admin role assignment.
-     * Allow users to register their own admin record if they are being promoted (e.g. Managers).
      */
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();

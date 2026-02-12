@@ -82,18 +82,17 @@ export default function LoginPage() {
             accessCode: "" // Security: clear temporary code
           });
 
-          // 6. Cleanup invitation if ID changed
+          // 6. Cleanup invitation if ID changed (Dan's fix)
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Cleanup warning:", err);
+              console.warn("Cleanup warning (usually permissions):", err);
             }
           }
 
           toast({ title: "Bienvenue", description: "Votre compte est maintenant activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
-          // Forced creation for primary admin if not exists
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
           throw new Error("Identifiants incorrects ou invitation manquante.");
@@ -161,38 +160,38 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-8 pt-0">
-          <Alert variant="leafy" className="rounded-2xl border-primary/10 bg-primary/5">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Accès Sécurisé</AlertTitle>
-            <AlertDescription className="text-xs font-bold">Identifiez-vous pour accéder à la console.</AlertDescription>
+          <Alert variant="leafy" className="rounded-2xl border-primary/20 bg-primary/5">
+            <ShieldAlert className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Accès Sécurisé</AlertTitle>
+            <AlertDescription className="text-xs font-bold text-primary/80">Identifiez-vous pour accéder à la console.</AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">E-mail Professionnel</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 ml-1">E-mail Professionnel</Label>
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-300 bg-white dark:bg-slate-800 text-base"
+                className="h-14 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Mot de Passe</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 ml-1">Mot de Passe</Label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-300 bg-white dark:bg-slate-800 text-base"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-primary transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -206,7 +205,7 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="pb-10 pt-0 flex flex-col items-center gap-2">
-           <div className="h-px w-16 bg-slate-100 dark:bg-slate-800 mb-2" />
+           <div className="h-px w-16 bg-slate-200 dark:bg-slate-800 mb-2" />
            <p className="text-[8px] text-muted-foreground uppercase tracking-[0.5em] font-black opacity-60">ImaraPMS • Prestige & Excellence</p>
         </CardFooter>
       </Card>
