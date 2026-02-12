@@ -61,7 +61,6 @@ export default function ReservationsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [resToDelete, setResToDelete] = useState<any>(null);
   
@@ -93,7 +92,7 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Calcul du montant pour la création
+  // Recalcul du montant robuste pour la création
   useEffect(() => {
     if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
@@ -101,7 +100,6 @@ export default function ReservationsPage() {
         const start = new Date(bookingForm.checkInDate);
         const end = new Date(bookingForm.checkOutDate);
         if (end > start) {
-          // Normalisation des dates pour éviter les décalages de prix dus aux fuseaux horaires
           start.setHours(0,0,0,0);
           end.setHours(0,0,0,0);
           const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -113,7 +111,7 @@ export default function ReservationsPage() {
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
-  // Calcul du montant pour l'édition
+  // Recalcul du montant robuste pour l'édition
   useEffect(() => {
     if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
       const selectedRoom = rooms.find(r => r.id === editForm.roomId);
@@ -140,22 +138,18 @@ export default function ReservationsPage() {
 
   const handleOpenManage = (resId: string) => {
     setActiveResId(resId);
-    setTimeout(() => {
-      setActiveDialog("manage");
-    }, 150);
+    setTimeout(() => setActiveDialog("manage"), 150);
   };
 
   const handleOpenEdit = (res: any) => {
     setEditForm({ ...res });
     setActiveResId(res.id);
-    setTimeout(() => {
-      setActiveDialog("edit");
-    }, 150);
+    setTimeout(() => setActiveDialog("edit"), 150);
   };
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ variant: "destructive", title: "Données manquantes" });
+      toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir les champs obligatoires." });
       return;
     }
     
@@ -207,10 +201,10 @@ export default function ReservationsPage() {
     const snapshot = await getDocs(q);
     
     if (!snapshot.empty) {
-      toast({ title: "Facture déjà existante" });
       updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
       updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
       setActiveDialog(null);
+      toast({ title: "Arrivée validée" });
       return;
     }
 
@@ -236,7 +230,7 @@ export default function ReservationsPage() {
     });
 
     setActiveDialog(null);
-    toast({ title: "Arrivée validée (Check-in)" });
+    toast({ title: "Check-in & Facturation activés" });
   };
 
   const handleCheckOut = () => {
@@ -244,7 +238,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked Out" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
     setActiveDialog(null);
-    toast({ title: "Départ validé (Check-out)" });
+    toast({ title: "Départ validé" });
   };
 
   const handleCancelReservation = () => {
@@ -268,7 +262,7 @@ export default function ReservationsPage() {
     
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Supprimé" });
+    toast({ variant: "destructive", title: "Dossier supprimé" });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -288,7 +282,7 @@ export default function ReservationsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl text-primary">Réservations</h1>
+            <h1 className="font-headline font-semibold text-xl text-primary">Gestion des Séjours</h1>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
             <Plus className="h-4 w-4" /> Nouvelle résa
@@ -478,12 +472,12 @@ export default function ReservationsPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                   {selectedRes.status === 'Confirmée' && (
-                    <Button onClick={handleCheckIn} className="h-14 bg-emerald-600 hover:bg-emerald-700 font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-in</Button>
+                    <Button onClick={handleCheckIn} className="h-14 bg-primary font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-in</Button>
                   )}
                   {selectedRes.status === 'Checked In' && (
-                    <Button onClick={handleCheckOut} className="h-14 bg-primary hover:bg-primary/90 font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-out</Button>
+                    <Button onClick={handleCheckOut} className="h-14 bg-primary/80 font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-out</Button>
                   )}
-                  <Button variant="outline" onClick={handleCancelReservation} className="h-14 text-destructive border-destructive/20 font-black rounded-xl uppercase tracking-widest text-[10px]">Annuler la réservation</Button>
+                  <Button variant="outline" onClick={handleCancelReservation} className="h-14 text-primary border-primary/20 font-black rounded-xl uppercase tracking-widest text-[10px]">Annuler la réservation</Button>
                 </div>
               </div>
             )}
@@ -498,7 +492,7 @@ export default function ReservationsPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl" onClick={() => setResToDelete(null)}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive text-white hover:bg-destructive/90 rounded-xl">Supprimer</AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-primary text-white hover:bg-primary/90 rounded-xl">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
