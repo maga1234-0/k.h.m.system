@@ -236,8 +236,32 @@ export default function StaffPage() {
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredStaff?.map((member, idx) => (
-                <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 100}ms` }}>
-                  <div className="absolute top-4 right-4 z-20">
+                <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden animate-in fade-in slide-in-from-bottom-4 relative" style={{ animationDelay: `${idx * 100}ms` }}>
+                  
+                  {/* Actions Rapides */}
+                  <div className="absolute top-6 right-6 z-20 flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all active:scale-90"
+                      onClick={() => { 
+                        setEditStaffData({...member}); 
+                        setIsEditDialogOpen(true); 
+                      }}
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all active:scale-90"
+                      onClick={() => { 
+                        setMemberToDelete(member); 
+                        setIsDeleteDialogOpen(true); 
+                      }}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground hover:text-primary">
@@ -245,25 +269,12 @@ export default function StaffPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-none">
-                        <DropdownMenuItem onSelect={() => { 
-                          setEditStaffData({...member}); 
-                          setTimeout(() => setIsEditDialogOpen(true), 150); 
-                        }} className="rounded-xl font-bold text-xs uppercase py-3 cursor-pointer">
-                          <Edit2 className="h-4 w-4 mr-2" /> Modifier Profil
-                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => {
                           const newStatus = member.status === 'En Service' ? 'En Pause' : 'En Service';
                           updateDocumentNonBlocking(doc(firestore, 'staff', member.id), { status: newStatus });
                           toast({ title: "Statut actualisé" });
                         }} className="rounded-xl font-bold text-xs uppercase py-3 cursor-pointer">
                           <RefreshCw className="h-4 w-4 mr-2" /> Changer Statut
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-primary rounded-xl font-bold text-xs uppercase py-3 cursor-pointer" onSelect={() => { 
-                          setMemberToDelete(member); 
-                          setTimeout(() => setIsDeleteDialogOpen(true), 150); 
-                        }}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Supprimer Profil
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -309,6 +320,7 @@ export default function StaffPage() {
           )}
         </main>
 
+        {/* Dialogues */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
@@ -428,7 +440,7 @@ export default function StaffPage() {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-10 text-center">
             <div className="mx-auto h-20 w-20 bg-primary/5 rounded-full flex items-center justify-center text-primary mb-6">
-              <Logo size={50} />
+              <Trash2 className="h-10 w-10" />
             </div>
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer du personnel ?</AlertDialogTitle>
@@ -438,7 +450,7 @@ export default function StaffPage() {
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
               <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-14 px-8 border-none bg-slate-100">Garder</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-14 px-10 bg-primary shadow-lg shadow-primary/20">
+              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-14 px-10 bg-primary shadow-lg shadow-primary/20 text-white">
                 Confirmer
               </AlertDialogAction>
             </AlertDialogFooter>
