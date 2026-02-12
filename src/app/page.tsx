@@ -63,7 +63,6 @@ export default function DashboardPage() {
     const now = new Date();
     const startMonth = startOfMonth(now).toISOString();
     
-    // On ne compte que les factures payées pour le CA mensuel réel
     const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
     const monthlyPaidInvoices = paidInvoices.filter(inv => inv.paymentDate && inv.paymentDate >= startMonth);
     
@@ -144,7 +143,6 @@ export default function DashboardPage() {
         </header>
 
         <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: "CA Mensuel (Payé)", value: `${kpis.monthlyRev.toLocaleString()} $`, icon: DollarSign, trend: "+12%", color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -178,14 +176,6 @@ export default function DashboardPage() {
                   <div>
                     <CardTitle className="font-headline text-2xl font-black text-foreground">Analyse de Performance</CardTitle>
                     <CardDescription className="text-muted-foreground text-sm mt-1">Comparaison hebdomadaire Occupation vs Revenus.</CardDescription>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-primary">
-                      <div className="h-2 w-2 rounded-full bg-primary" /> Occupation
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-accent">
-                      <div className="h-2 w-2 rounded-full bg-accent" /> Revenus
-                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -288,7 +278,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="p-8 pt-0 space-y-6">
                 <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 shadow-inner">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Focus Revenus</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Focus Revenus (Réel)</p>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground font-bold">Services Extras</span>
@@ -310,7 +300,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Fidélité</p>
-                      <p className="text-sm font-black">24% Membres Gold</p>
+                      <p className="text-sm font-black">Répartition Membres</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -319,7 +309,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Qualité Ménage</p>
-                      <p className="text-sm font-black">98.5% de satisfaction</p>
+                      <p className="text-sm font-black">Opérationnel</p>
                     </div>
                   </div>
                 </div>

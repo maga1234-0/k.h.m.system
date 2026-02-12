@@ -101,8 +101,11 @@ export default function ReservationsPage() {
         const start = new Date(bookingForm.checkInDate);
         const end = new Date(bookingForm.checkOutDate);
         if (end > start) {
-          // Utilisation de Math.round pour éviter les erreurs de fuseaux horaires (200$ -> 400$)
-          const nights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          // Normalisation des dates pour éviter les décalages de prix dus aux fuseaux horaires
+          start.setHours(0,0,0,0);
+          end.setHours(0,0,0,0);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
           const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
           setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
         }
@@ -118,7 +121,10 @@ export default function ReservationsPage() {
         const start = new Date(editForm.checkInDate);
         const end = new Date(editForm.checkOutDate);
         if (end > start) {
-          const nights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          start.setHours(0,0,0,0);
+          end.setHours(0,0,0,0);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
           const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
           if (total.toString() !== editForm.totalAmount) {
             setEditForm((prev: any) => ({ ...prev, totalAmount: total.toString() }));
@@ -196,13 +202,12 @@ export default function ReservationsPage() {
   const handleCheckIn = async () => {
     if (!selectedRes) return;
     
-    // Vérifier si une facture existe déjà pour éviter les doublons de prix
     const invCol = collection(firestore, 'invoices');
     const q = query(invCol, where("reservationId", "==", selectedRes.id));
     const snapshot = await getDocs(q);
     
     if (!snapshot.empty) {
-      toast({ title: "Facture déjà existante", description: "Le client a déjà été enregistré pour ce séjour." });
+      toast({ title: "Facture déjà existante" });
       updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
       updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
       setActiveDialog(null);
@@ -263,19 +268,7 @@ export default function ReservationsPage() {
     
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Supprimé", description: "Le dossier a été retiré du registre." });
-  };
-
-  const handleClearAll = () => {
-    if (!reservations) return;
-    reservations.forEach((res) => {
-      if (res.roomId) {
-        updateDocumentNonBlocking(doc(firestore, 'rooms', res.roomId), { status: "Available" });
-      }
-      deleteDocumentNonBlocking(doc(firestore, 'reservations', res.id));
-    });
-    setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre Purgé" });
+    toast({ variant: "destructive", title: "Supprimé" });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -297,20 +290,9 @@ export default function ReservationsPage() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <h1 className="font-headline font-semibold text-xl text-primary">Réservations</h1>
           </div>
-          <div className="flex gap-2">
-            {reservations && reservations.length > 0 && (
-              <Button 
-                variant="outline" 
-                className="text-muted-foreground hover:text-destructive gap-2 h-9 text-xs font-bold uppercase tracking-widest"
-                onClick={() => setIsClearDialogOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" /> Purger tout
-              </Button>
-            )}
-            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
-              <Plus className="h-4 w-4" /> Nouvelle résa
-            </Button>
-          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
+            <Plus className="h-4 w-4" /> Nouvelle résa
+          </Button>
         </header>
 
         <main className="p-4 md:p-6">
@@ -391,16 +373,6 @@ export default function ReservationsPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-muted-foreground">Client</label>
                 <Input placeholder="Nom complet" className="rounded-xl h-11" value={bookingForm.guestName} onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground">Téléphone</label>
-                  <Input placeholder="+243..." className="rounded-xl h-11" value={bookingForm.guestPhone} onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground">E-mail</label>
-                  <Input placeholder="client@exemple.com" className="rounded-xl h-11" value={bookingForm.guestEmail} onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})} />
-                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -517,19 +489,6 @@ export default function ReservationsPage() {
             )}
           </DialogContent>
         </Dialog>
-
-        <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-          <AlertDialogContent className="rounded-3xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la purge complète ?</AlertDialogTitle>
-              <AlertDialogDescription>Cette action supprimera toutes les réservations. C'est irréversible.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90 rounded-xl">Tout supprimer</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-3xl">
