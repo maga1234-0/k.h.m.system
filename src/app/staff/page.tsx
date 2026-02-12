@@ -26,7 +26,8 @@ import {
   RefreshCw,
   Key,
   Copy,
-  Check
+  Check,
+  X
 } from "lucide-react";
 import { 
   Dialog, 
@@ -34,7 +35,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter,
-  DialogDescription
+  DialogDescription,
+  DialogClose
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -82,20 +84,12 @@ export default function StaffPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
-  const [isMessageOpen, setIsMessageOpen] = useState(false);
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<any>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
-  const [messageText, setMessageText] = useState("");
-  const [scheduleData, setScheduleData] = useState({
-    date: "",
-    shift: "Matin"
-  });
-
   const [newStaff, setNewStaff] = useState({
     firstName: "",
     lastName: "",
@@ -119,14 +113,24 @@ export default function StaffPage() {
 
   useEffect(() => {
     if (isAddDialogOpen) {
-      // Generate a 6-digit access code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setNewStaff(prev => ({ ...prev, accessCode: code }));
+      setNewStaff(prev => ({ 
+        ...prev, 
+        accessCode: code,
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: "",
+        role: "Réceptionniste"
+      }));
     }
   }, [isAddDialogOpen]);
 
   const handleAddStaff = () => {
-    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) return;
+    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) {
+      toast({ title: "Champs requis", description: "Veuillez remplir le nom et l'email." });
+      return;
+    }
 
     const staffId = doc(staffCollection).id;
     const staffRef = doc(firestore, 'staff', staffId);
@@ -142,7 +146,7 @@ export default function StaffPage() {
     setIsAddDialogOpen(false);
     toast({
       title: "Membre ajouté",
-      description: `Le profil de ${staffData.firstName} a été créé avec succès.`,
+      description: `Le profil de ${staffData.firstName} a été créé. Code: ${staffData.accessCode}`,
     });
   };
 
@@ -179,17 +183,8 @@ export default function StaffPage() {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
-    toast({ title: "Code copié", description: "Prêt à être envoyé au membre." });
+    toast({ title: "Code copié", description: "Le code d'accès est prêt à être partagé." });
   };
-
-  const translateStatus = (status: string) => {
-    switch (status) {
-      case "En Service": return "En Service";
-      case "En Pause": return "En Pause";
-      case "Hors ligne": return "Hors ligne";
-      default: return status;
-    }
-  }
 
   if (isAuthLoading || !user) {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -315,75 +310,124 @@ export default function StaffPage() {
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-10 border-none shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-              <DialogDescription className="font-bold text-slate-500">Un code d'accès sera automatiquement généré.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-6">
+          <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
+            <div className="bg-primary/5 p-8 border-b border-primary/10">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
+                  <DialogClose asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-muted-foreground hover:text-primary">
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </DialogClose>
+                </div>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">
+                  Un code d'accès sera automatiquement généré pour la première connexion.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Prénom</Label>
-                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Prénom</Label>
+                  <Input 
+                    value={newStaff.firstName} 
+                    onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} 
+                    className="h-12 rounded-2xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Nom</Label>
-                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Nom</Label>
+                  <Input 
+                    value={newStaff.lastName} 
+                    onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} 
+                    className="h-12 rounded-2xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" 
+                  />
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest ml-1">E-mail Professionnel</Label>
-                <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">E-mail Professionnel</Label>
+                <Input 
+                  type="email" 
+                  value={newStaff.email} 
+                  onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} 
+                  className="h-12 rounded-2xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" 
+                />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Rôle</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Rôle & Accès</Label>
                   <Select value={newStaff.role} onValueChange={(val) => setNewStaff({...newStaff, role: val})}>
-                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-2xl"><SelectItem value="Manager">Manager (Accès Total)</SelectItem><SelectItem value="Réceptionniste">Réceptionniste</SelectItem><SelectItem value="Gouvernance">Gouvernance</SelectItem><SelectItem value="Sécurité">Sécurité</SelectItem></SelectContent>
+                    <SelectTrigger className="h-12 rounded-2xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20">
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      <SelectItem value="Manager">Manager (Accès Total)</SelectItem>
+                      <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
+                      <SelectItem value="Gouvernance">Gouvernance</SelectItem>
+                      <SelectItem value="Sécurité">Sécurité</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Code d'Accès</Label>
-                  <div className="h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-primary tracking-widest text-lg">{newStaff.accessCode}</div>
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Code d'Accès</Label>
+                  <div className="h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-primary tracking-widest text-xl shadow-inner">
+                    {newStaff.accessCode}
+                  </div>
                 </div>
               </div>
             </div>
-            <DialogFooter className="gap-2">
-              <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12">Annuler</Button>
-              <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.email} className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-10 shadow-lg shadow-primary/20">Valider l'inscription</Button>
-            </DialogFooter>
+
+            <div className="p-8 bg-muted/10 border-t flex flex-col sm:flex-row gap-3">
+              <DialogClose asChild>
+                <Button variant="ghost" className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest h-14">
+                  Annuler
+                </Button>
+              </DialogClose>
+              <Button 
+                onClick={handleAddStaff} 
+                disabled={!newStaff.firstName || !newStaff.email} 
+                className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest h-14 shadow-lg shadow-primary/20"
+              >
+                Valider l'inscription
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditStaffData(null); }}>
-          <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-10 border-none shadow-2xl">
-            <DialogHeader><DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Modifier Profil</DialogTitle></DialogHeader>
+          <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
+            <div className="bg-primary/5 p-8 border-b border-primary/10">
+              <DialogHeader><DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Modifier Profil</DialogTitle></DialogHeader>
+            </div>
             {editStaffData && (
-              <div className="grid gap-6 py-6">
+              <div className="p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest">Prénom</Label>
-                    <Input value={editStaffData.firstName} onChange={(e) => setEditStaffData({...editStaffData, firstName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prénom</Label>
+                    <Input value={editStaffData.firstName} onChange={(e) => setEditStaffData({...editStaffData, firstName: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest">Nom</Label>
-                    <Input value={editStaffData.lastName} onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom</Label>
+                    <Input value={editStaffData.lastName} onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest">Rôle</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
                   <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
-                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-12 rounded-2xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-2xl"><SelectItem value="Manager">Manager</SelectItem><SelectItem value="Réceptionniste">Réceptionniste</SelectItem><SelectItem value="Gouvernance">Gouvernance</SelectItem><SelectItem value="Sécurité">Sécurité</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>
             )}
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="rounded-2xl font-black uppercase text-[10px] tracking-widest">Annuler</Button>
-              <Button onClick={handleUpdateStaff} className="rounded-2xl font-black uppercase text-[10px] tracking-widest px-10">Enregistrer</Button>
-            </DialogFooter>
+            <div className="p-8 bg-muted/10 border-t flex gap-3">
+              <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest h-14">Annuler</Button>
+              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest h-14">Enregistrer</Button>
+            </div>
           </DialogContent>
         </Dialog>
 
