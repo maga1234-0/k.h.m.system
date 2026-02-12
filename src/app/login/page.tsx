@@ -43,11 +43,10 @@ export default function LoginPage() {
       let userCredential;
 
       try {
-        // 1. Tentative de connexion standard
+        // 1. Attempt standard login
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // 2. Si échec, vérifier si c'est une invitation staff
-        // On effectue une recherche sécurisée sur la collection staff
+        // 2. If failed, check if it's a staff invitation
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -56,16 +55,16 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
-          // Vérification du code d'accès (qui sert de mot de passe initial)
-          if (staffData.accessCode !== rawPassword) {
+          // Verify access code (acts as initial password)
+          if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès ou mot de passe incorrect.");
           }
 
-          // 3. Création du compte Auth pour le collaborateur
+          // 3. Create Auth account
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
-          // 4. Octroi automatique des droits admin si rôle Manager
+          // 4. Automatic Admin rights if Manager role
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -75,15 +74,15 @@ export default function LoginPage() {
             });
           }
 
-          // 5. Enregistrement du profil staff définitif
+          // 5. Finalize staff profile
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" // Sécurité : on vide le code d'accès temporaire
+            accessCode: "" // Security: clear temporary code
           });
 
-          // 6. Nettoyage de l'invitation temporaire si nécessaire
+          // 6. Cleanup invitation if ID changed
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
@@ -94,14 +93,14 @@ export default function LoginPage() {
 
           toast({ title: "Bienvenue", description: "Votre compte est maintenant activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
-          // Création forcée pour l'admin principal si inexistant
+          // Forced creation for primary admin if not exists
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
-          throw new Error("Compte inexistant ou identifiants invalides.");
+          throw new Error("Identifiants incorrects ou invitation manquante.");
         }
       }
 
-      // 7. Initialisation des droits pour l'admin principal
+      // 7. Initialize primary admin rights
       const uid = userCredential.user.uid;
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
@@ -149,7 +148,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
+    <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-slate-950 px-4">
       <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900">
         <div className="h-2 w-full bg-primary" />
         <CardHeader className="space-y-6 text-center pt-10">
@@ -170,38 +169,38 @@ export default function LoginPage() {
 
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail Professionnel</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">E-mail Professionnel</Label>
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50 bg-white dark:bg-slate-800"
+                className="h-14 rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-300 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Mot de Passe</Label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50 bg-white dark:bg-slate-800"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-300 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-black uppercase tracking-widest h-14 rounded-2xl text-[10px] shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 mt-2" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+            <Button type="submit" className="w-full font-black uppercase tracking-widest h-14 rounded-2xl text-[11px] shadow-xl shadow-primary/20 bg-primary text-white hover:bg-primary/90 mt-2 transform active:scale-[0.98] transition-all" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5 mr-2" />}
               Accéder au système
             </Button>
           </form>

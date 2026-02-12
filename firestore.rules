@@ -39,13 +39,12 @@ service cloud.firestore {
 
     /**
      * @description Staff management: 
-     * - Anyone can check for an invitation by email (read/list) to allow login.
+     * - Public list/read allowed ONLY for the login invitation check.
      * - A user can create/update their own profile during onboarding.
      */
     match /staff/{staffId} {
       allow read, list: if true; 
-      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
+      allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
       allow delete: if isAdmin();
     }
 
@@ -63,23 +62,19 @@ service cloud.firestore {
      * @description Core hotel data: Accessible to all signed-in staff.
      */
     match /rooms/{roomId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     match /reservations/{resId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     match /clients/{clientId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     match /invoices/{invId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     /**
