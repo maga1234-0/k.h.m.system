@@ -135,8 +135,8 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // Si le rôle est Manager, s'assurer qu'il a les droits admin
-    if (dataToUpdate.role === 'Manager') {
+    // Si le rôle est Manager, s'assurer qu'il a les droits admin s'il a déjà un UID (déjà connecté)
+    if (dataToUpdate.role === 'Manager' && editStaffData.id.length > 20) {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
         id: editStaffData.id,
@@ -369,6 +369,7 @@ export default function StaffPage() {
                         value={editStaffData.accessCode || ""} 
                         onChange={(e) => setEditStaffData({...editStaffData, accessCode: e.target.value})} 
                         className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
+                        placeholder="Laisser vide pour ne pas changer"
                       />
                       <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowEditPassword(!showEditPassword)}>
                         {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

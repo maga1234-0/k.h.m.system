@@ -69,7 +69,7 @@ export default function LoginPage() {
             });
           }
 
-          // Liaison du document staff avec l'UID réel et nettoyage de l'invitation
+          // Liaison du document staff avec l'UID réel
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
@@ -77,9 +77,14 @@ export default function LoginPage() {
             accessCode: "" // On vide le code d'accès une fois utilisé
           });
 
-          // Supprimer l'ancienne invitation si l'ID était différent de l'UID
+          // Supprimer l'ancienne invitation (si ID différent de l'UID)
+          // On le fait avec un bloc try/catch séparé pour ne pas bloquer le login si les règles Firestore mettent du temps à se propager
           if (staffDoc.id !== uid) {
-            await deleteDoc(doc(firestore, 'staff', staffDoc.id));
+            try {
+              await deleteDoc(doc(firestore, 'staff', staffDoc.id));
+            } catch (delError) {
+              console.warn("Invitation cleanup delayed", delError);
+            }
           }
 
           toast({ title: "Bienvenue", description: "Votre compte collaborateur est activé." });
@@ -91,7 +96,7 @@ export default function LoginPage() {
         }
       }
 
-      // Initialisation Admin Principal si nécessaire
+      // Initialisation Admin Principal si nécessaire (si déjà dans Auth mais pas dans Firestore)
       const uid = userCredential.user.uid;
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
@@ -162,7 +167,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-12 rounded-xl border-2 border-slate-400 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground"
+                className="h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -174,7 +179,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-12 rounded-xl border-2 border-slate-400 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground"
+                  className="pr-12 h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
