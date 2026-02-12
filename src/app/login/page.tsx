@@ -43,14 +43,11 @@ export default function LoginPage() {
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
-        // Logique de bootstrap pour Admin Principal ou Inscription Personnel par Code d'Accès
         if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
           
-          // Cas 1: Admin Principal
           if (email === PRIMARY_ADMIN) {
              userCredential = await createUserWithEmailAndPassword(auth, email, password);
           } 
-          // Cas 2: Personnel avec Code d'Accès
           else {
             const staffCol = collection(firestore, 'staff');
             const q = query(staffCol, where("email", "==", email), where("accessCode", "==", password));
@@ -58,12 +55,10 @@ export default function LoginPage() {
 
             if (!staffSnap.empty) {
               const staffData = staffSnap.docs[0].data();
-              // Création du compte Firebase Auth avec le code d'accès comme mot de passe initial
               userCredential = await createUserWithEmailAndPassword(auth, email, password);
               
               const uid = userCredential.user.uid;
               
-              // Si Manager, ajout direct aux rôles admin
               if (staffData.role === 'Manager') {
                 await setDoc(doc(firestore, 'roles_admin', uid), {
                   id: uid,
@@ -73,7 +68,6 @@ export default function LoginPage() {
                 });
               }
 
-              // On synchronise le document staff avec le bon UID
               await setDoc(doc(firestore, 'staff', uid), {
                 ...staffData,
                 id: uid,
@@ -94,7 +88,6 @@ export default function LoginPage() {
       const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
-      // Bootstrap automatique pour l'admin principal
       if (!adminSnap.exists() && email === PRIMARY_ADMIN) {
         await setDoc(adminRoleRef, {
           id: uid,
@@ -151,7 +144,7 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Sécurité Active</AlertTitle>
             <AlertDescription className="text-[11px] font-bold">
-              Utilisez votre email et votre code assigné.
+              Utilisez votre email et votre mot de passe assigné.
             </AlertDescription>
           </Alert>
 
@@ -168,7 +161,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe / Code</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe</Label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}

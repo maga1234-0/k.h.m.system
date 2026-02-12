@@ -24,7 +24,7 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
-  Key,
+  Lock,
   Copy,
   Check,
   X,
@@ -145,7 +145,7 @@ export default function StaffPage() {
     setIsAddDialogOpen(false);
     toast({
       title: "Membre ajouté",
-      description: `Le profil de ${staffData.firstName} a été créé. Code: ${staffData.accessCode}`,
+      description: `Le profil de ${staffData.firstName} a été créé. Mot de passe assigné.`,
     });
   };
 
@@ -170,7 +170,6 @@ export default function StaffPage() {
     const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
     
-    // Si c'était un admin, on le retire aussi de roles_admin
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
@@ -187,7 +186,7 @@ export default function StaffPage() {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
-    toast({ title: "Code copié", description: "Le code d'accès est prêt à être partagé." });
+    toast({ title: "Copié", description: "Le mot de passe a été copié." });
   };
 
   if (isAuthLoading || !user) {
@@ -296,7 +295,7 @@ export default function StaffPage() {
                   <CardContent className="px-8 pb-8 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800 group-hover:border-primary/20 transition-colors">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">Code d'accès</span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">Mot de passe</span>
                         <div className="flex items-center justify-between">
                           <span className="font-black text-primary font-mono text-lg tracking-widest">••••••</span>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => copyToClipboard(member.accessCode)}>
@@ -330,7 +329,7 @@ export default function StaffPage() {
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">Assignez un rôle et générez le code d'accès.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">Assignez un rôle et générez le mot de passe.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
@@ -364,7 +363,7 @@ export default function StaffPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Code</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mot de passe</Label>
                   <div className="h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-primary text-xl shadow-inner">{newStaff.accessCode}</div>
                 </div>
               </div>
