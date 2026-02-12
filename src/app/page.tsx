@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect, useState } from "react";
@@ -136,14 +137,14 @@ export default function DashboardPage() {
             <SidebarTrigger className="h-10 w-10" />
             <Separator orientation="vertical" className="h-8" />
             <div className="flex flex-col">
-              <h1 className="font-headline font-black text-2xl text-primary tracking-tight leading-none">ImaraPMS</h1>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Console de Gestion • {staffProfile?.firstName || 'Admin'}</span>
+              <h1 className="font-headline font-black text-2xl text-primary tracking-tight leading-none">ImaraPMS - Console de Gestion</h1>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Hôtellerie de Prestige • {staffProfile?.firstName || 'Directeur'}</span>
             </div>
           </div>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex flex-col items-end">
               <div className="flex items-center gap-2 text-primary">
-                <zap className="h-3 w-3 fill-current" />
+                <Zap className="h-3 w-3 fill-current" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Système Live</span>
               </div>
               <span className="text-xs text-muted-foreground font-bold">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
@@ -175,7 +176,7 @@ export default function DashboardPage() {
           {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "Chiffre d'Affaires", value: `${kpis.monthlyRev.toLocaleString()} $`, icon: DollarSign, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
+              { label: "Chiffre d'Affaires", value: `${kpis.monthlyRev.toLocaleString()} $`, customIcon: Logo, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
               { label: "Prix Moyen (ADR)", value: `${kpis.adr.toFixed(2)} $`, icon: TrendingUp, trend: "Stable", color: "text-indigo-500", bg: "bg-indigo-500/5" },
               { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, customIcon: Logo, trend: "+5%", color: "text-emerald-500", bg: "bg-emerald-500/5" },
               { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-amber-500", bg: "bg-amber-500/5" }
