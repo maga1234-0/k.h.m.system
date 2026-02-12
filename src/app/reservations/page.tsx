@@ -92,7 +92,6 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Recalcul du montant robuste
   const calculateTotal = (roomId: string, checkIn: string, checkOut: string) => {
     if (!roomId || !checkIn || !checkOut || !rooms) return "0";
     const selectedRoom = rooms.find(r => r.id === roomId);
@@ -102,7 +101,6 @@ export default function ReservationsPage() {
     const end = new Date(checkOut);
     
     if (end > start) {
-      // Normaliser à minuit pour éviter les décalages de fuseau horaire
       const d1 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       const d2 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
       const diffTime = Math.abs(d2.getTime() - d1.getTime());

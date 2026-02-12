@@ -16,13 +16,12 @@ import {
   Clock, 
   Wrench,
   Loader2,
-  Activity,
   TrendingUp,
   DollarSign,
   Users,
-  Hotel,
   ArrowUpRight
 } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
@@ -141,7 +140,7 @@ export default function DashboardPage() {
               <span className="text-[9px] text-muted-foreground font-bold">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
             </div>
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
-              <Activity className="h-5 w-5 text-primary animate-pulse" />
+              <Logo size={24} className="text-primary animate-pulse" />
             </div>
           </div>
         </header>
@@ -151,14 +150,14 @@ export default function DashboardPage() {
             {[
               { label: "CA Mensuel (Payé)", value: `${kpis.monthlyRev.toLocaleString()} $`, icon: DollarSign, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
               { label: "ADR (Prix Moyen)", value: `${kpis.adr.toFixed(2)} $`, icon: TrendingUp, trend: "Stable", color: "text-primary", bg: "bg-primary/5" },
-              { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, icon: Hotel, trend: "+5%", color: "text-primary", bg: "bg-primary/5" },
+              { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, customIcon: Logo, trend: "+5%", color: "text-primary", bg: "bg-primary/5" },
               { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-primary", bg: "bg-primary/5" }
             ].map((kpi, i) => (
               <Card key={i} className="border-none rounded-3xl overflow-hidden group hover:shadow-md transition-all duration-300 shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className={`p-3 rounded-2xl ${kpi.bg} group-hover:scale-110 transition-transform ${kpi.color}`}>
-                      <kpi.icon className="h-5 w-5" />
+                      {kpi.customIcon ? <kpi.customIcon size={20} /> : kpi.icon && <kpi.icon className="h-5 w-5" />}
                     </div>
                     <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[10px] font-bold">
                       {kpi.trend}
@@ -191,7 +190,7 @@ export default function DashboardPage() {
             <section className="space-y-6">
               <div className="px-2">
                 <h2 className="font-headline text-xl font-black flex items-center gap-2 text-primary">
-                  <Hotel className="h-5 w-5" /> Statut Inventaire
+                  <Logo size={20} className="text-primary" /> Statut Inventaire
                 </h2>
                 <p className="text-muted-foreground text-xs mt-1">Direct de vos {inventoryStats.total} unités.</p>
               </div>
@@ -266,7 +265,7 @@ export default function DashboardPage() {
                     </div>
                   )) : (
                     <div className="p-16 text-center text-muted-foreground italic flex flex-col items-center">
-                      <Activity className="h-12 w-12 mb-4 opacity-10" />
+                      <Logo size={48} className="mb-4 opacity-10" />
                       Aucune activité enregistrée aujourd'hui.
                     </div>
                   )}
@@ -277,7 +276,7 @@ export default function DashboardPage() {
             <Card className="border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-card">
               <CardHeader className="p-8">
                 <CardTitle className="font-headline text-lg font-black text-primary flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" /> Recap Opérationnel
+                  <Logo size={20} className="text-primary" /> Recap Opérationnel
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 pt-0 space-y-6">
