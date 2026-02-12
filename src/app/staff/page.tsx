@@ -23,7 +23,8 @@ import {
   RefreshCw,
   MoreHorizontal,
   Eye,
-  EyeOff
+  EyeOff,
+  Lock
 } from "lucide-react";
 import { 
   Dialog, 
@@ -80,6 +81,7 @@ export default function StaffPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
   
   const [newStaff, setNewStaff] = useState({
     firstName: "",
@@ -120,9 +122,18 @@ export default function StaffPage() {
     setDocumentNonBlocking(staffRef, staffData, { merge: true });
     
     setIsAddDialogOpen(false);
+    setNewStaff({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      role: "Réceptionniste",
+      status: "En Service",
+      accessCode: "" 
+    });
     toast({
       title: "Compte Créé",
-      description: `Le profil de ${staffData.firstName} a été ajouté.`,
+      description: `Le profil de ${staffData.firstName} a été ajouté au système.`,
     });
   };
 
@@ -134,7 +145,6 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // Si le rôle devient Manager, on assure qu'il a les accès admin
     if (dataToUpdate.role === 'Manager') {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
@@ -147,21 +157,19 @@ export default function StaffPage() {
     
     setIsEditDialogOpen(false);
     setEditStaffData(null);
-    toast({ title: "Profil actualisé" });
+    toast({ title: "Profil Actualisé", description: "Les modifications ont été enregistrées." });
   };
 
   const handleDeleteConfirm = () => {
     if (!memberToDelete) return;
     
-    // Suppression de la collection staff
     const staffRef = doc(firestore, 'staff', memberToDelete.id);
     deleteDocumentNonBlocking(staffRef);
     
-    // Suppression de la collection admin si nécessaire
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
-    toast({ title: "Collaborateur retiré" });
+    toast({ title: "Collaborateur Retiré", description: "Le compte a été supprimé de la base de données." });
     setMemberToDelete(null);
     setIsDeleteDialogOpen(false);
   };
@@ -207,12 +215,11 @@ export default function StaffPage() {
             ) : filteredStaff?.map((member, idx) => (
               <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden relative">
                 
-                {/* Actions Directes */}
                 <div className="absolute top-6 right-6 z-20 flex gap-2">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary"
+                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all"
                     onClick={() => { setEditStaffData({...member}); setIsEditDialogOpen(true); }}
                   >
                     <Edit2 className="h-4 w-4" />
@@ -220,7 +227,7 @@ export default function StaffPage() {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary"
+                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all"
                     onClick={() => { setMemberToDelete(member); setIsDeleteDialogOpen(true); }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -255,34 +262,33 @@ export default function StaffPage() {
           </div>
         </main>
 
-        {/* Dialogue Ajout */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black font-headline tracking-tighter text-primary">Nouveau Profil</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground">Définissez les accès et le rôle.</DialogDescription>
+                <DialogTitle className="text-2xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
+                <DialogDescription className="font-bold text-muted-foreground italic">Définissez les accès et les coordonnées.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prénom</Label>
-                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
+                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom</Label>
-                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
+                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail</Label>
-                  <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail Professionnel</Label>
+                  <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Téléphone</Label>
-                  <Input value={newStaff.phoneNumber} onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">N° Téléphone</Label>
+                  <Input value={newStaff.phoneNumber} onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -290,7 +296,7 @@ export default function StaffPage() {
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
                   <Select value={newStaff.role} onValueChange={(val) => setNewStaff({...newStaff, role: val})}>
                     <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
                       <SelectItem value="Manager">Manager (Accès Total)</SelectItem>
                       <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
                       <SelectItem value="Gouvernance">Gouvernance</SelectItem>
@@ -305,7 +311,7 @@ export default function StaffPage() {
                       type={showPassword ? "text" : "password"} 
                       value={newStaff.accessCode} 
                       onChange={(e) => setNewStaff({...newStaff, accessCode: e.target.value})} 
-                      className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
+                      className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10 focus:ring-2 focus:ring-primary/20" 
                     />
                     <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -316,38 +322,37 @@ export default function StaffPage() {
             </div>
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12">Annuler</Button>
-              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white">Confirmer</Button>
+              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white shadow-lg shadow-primary/20">Créer le compte</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Alerte Deletion */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-10 text-center">
             <div className="mx-auto h-20 w-20 bg-primary/5 rounded-full flex items-center justify-center text-primary mb-6">
               <Trash2 className="h-10 w-10" />
             </div>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer ce profil ?</AlertDialogTitle>
+              <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer ce collaborateur ?</AlertDialogTitle>
               <AlertDialogDescription className="font-bold text-slate-500 mt-2">
-                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera désactivé.
+                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera désactivé et ses accès révoqués.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
-              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-12 px-8 border-none bg-slate-100">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-12 px-10 bg-primary text-white shadow-lg shadow-primary/20">
-                Supprimer
+              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-12 px-8 border-none bg-slate-100 hover:bg-slate-200 transition-colors">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-12 px-10 bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                Confirmer la suppression
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Dialogue Edition */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black font-headline tracking-tighter text-primary">Modifier Profil</DialogTitle>
+                <DialogDescription className="font-bold text-muted-foreground italic">Mise à jour des informations et accès.</DialogDescription>
               </DialogHeader>
             </div>
             {editStaffData && (
@@ -368,27 +373,43 @@ export default function StaffPage() {
                     <Input value={editStaffData.email} onChange={(e) => setEditStaffData({...editStaffData, email: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Téléphone</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">N° Téléphone</Label>
                     <Input value={editStaffData.phoneNumber} onChange={(e) => setEditStaffData({...editStaffData, phoneNumber: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
-                  <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
-                    <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
-                      <SelectItem value="Gouvernance">Gouvernance</SelectItem>
-                      <SelectItem value="Sécurité">Sécurité</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
+                    <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
+                      <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
+                      <SelectContent className="rounded-xl border-none shadow-xl">
+                        <SelectItem value="Manager">Manager</SelectItem>
+                        <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
+                        <SelectItem value="Gouvernance">Gouvernance</SelectItem>
+                        <SelectItem value="Sécurité">Sécurité</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Modifier Mot de passe</Label>
+                    <div className="relative">
+                      <Input 
+                        type={showEditPassword ? "text" : "password"} 
+                        value={editStaffData.accessCode || ""} 
+                        onChange={(e) => setEditStaffData({...editStaffData, accessCode: e.target.value})} 
+                        className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10 focus:ring-2 focus:ring-primary/20" 
+                      />
+                      <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowEditPassword(!showEditPassword)}>
+                        {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12">Annuler</Button>
-              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white">Enregistrer</Button>
+              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white shadow-lg shadow-primary/20">Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
