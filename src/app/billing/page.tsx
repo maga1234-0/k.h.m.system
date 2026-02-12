@@ -298,7 +298,7 @@ export default function BillingPage() {
                   </div>
                   <div className="text-right">
                     <h1 className="text-4xl font-black font-headline tracking-tighter uppercase mb-1">Facture</h1>
-                    <p className="text-sm font-black text-primary">#INV-{selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
+                    <p className="text-sm font-black text-primary">#INV-${selectedInvoice.id.slice(0, 8).toUpperCase()}</p>
                     <p className="text-[10px] font-bold text-slate-400 mt-1">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>

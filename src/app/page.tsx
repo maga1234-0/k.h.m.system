@@ -64,10 +64,10 @@ export default function DashboardPage() {
     if (!rooms || !reservations || !invoices) return { monthlyRev: 0, adr: 0, revpar: 0, occupancy: 0, stayRev: 0, extraRev: 0 };
     
     const now = new Date();
-    const startMonth = startOfMonth(now).toISOString();
+    const startOfCurrentMonth = startOfMonth(now).toISOString();
     
     const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
-    const monthlyPaidInvoices = paidInvoices.filter(inv => inv.paymentDate && inv.paymentDate >= startMonth);
+    const monthlyPaidInvoices = paidInvoices.filter(inv => inv.paymentDate && inv.paymentDate >= startOfCurrentMonth);
     
     const monthlyRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
     const stayRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.stayAmount) || 0), 0);
@@ -132,7 +132,7 @@ export default function DashboardPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-bold text-lg text-primary tracking-tight">Console de Gestion Prestige</h1>
+            <h1 className="font-headline font-bold text-lg text-primary tracking-tight">ImaraPMS - Console de Gestion</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden md:flex flex-col items-end mr-2">
