@@ -53,17 +53,6 @@ export default function DashboardPage() {
     if (!isUserLoading && !user) router.push('/login');
   }, [user, isUserLoading, router]);
 
-  const formatSafeTime = (dateStr: any) => {
-    if (!dateStr) return '--:--';
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return '--:--';
-      return format(date, 'HH:mm', { locale: fr });
-    } catch {
-      return '--:--';
-    }
-  };
-
   const kpis = useMemo(() => {
     if (!rooms || !reservations || !invoices) return { monthlyRev: 0, adr: 0, revpar: 0, occupancy: 0, stayRev: 0, extraRev: 0 };
     
@@ -125,9 +114,6 @@ export default function DashboardPage() {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const stayPercent = kpis.monthlyRev > 0 ? (kpis.stayRev / kpis.monthlyRev) * 100 : 0;
-  const extraPercent = kpis.monthlyRev > 0 ? (kpis.extraRev / kpis.monthlyRev) * 100 : 0;
-
   return (
     <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-background animate-in fade-in duration-500">
       <AppSidebar />
@@ -156,7 +142,6 @@ export default function DashboardPage() {
         </header>
 
         <main className="p-6 md:p-10 space-y-10 max-w-[1600px] mx-auto w-full">
-          {/* Hero Greeting */}
           <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 md:p-12 text-white shadow-2xl animate-in slide-in-from-top-4 duration-1000">
             <div className="relative z-10 max-w-2xl">
               <Badge className="mb-4 bg-primary/20 text-primary border-none font-black text-[10px] uppercase tracking-[0.2em] py-1 px-3">Performance Hôtelière</Badge>
@@ -173,7 +158,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { label: "Chiffre d'Affaires", value: `${kpis.monthlyRev.toLocaleString()} $`, customIcon: Logo, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
@@ -201,7 +185,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Main Chart */}
             <Card className="lg:col-span-2 border-none rounded-[3rem] overflow-hidden shadow-sm bg-white dark:bg-card">
               <CardHeader className="p-10 pb-0">
                 <div className="flex justify-between items-center">
@@ -220,7 +203,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Inventory Sidebar */}
             <section className="space-y-8">
               <div className="px-4">
                 <h2 className="font-headline text-2xl font-black flex items-center gap-3 text-primary tracking-tight">

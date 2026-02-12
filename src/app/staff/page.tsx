@@ -135,7 +135,7 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // Si le rôle change vers Manager, on pré-autorise si nécessaire (sera validé à la connexion)
+    // Si le rôle est Manager, s'assurer qu'il a les droits admin
     if (dataToUpdate.role === 'Manager') {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {

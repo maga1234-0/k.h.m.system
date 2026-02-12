@@ -46,7 +46,7 @@ export default function LoginPage() {
         // Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Si l'auth échoue, on vérifie si c'est une première connexion d'invité
+        // Si l'auth échoue, on vérifie si c'est une invitation ou un Manager
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail), where("accessCode", "==", rawPassword));
         const staffSnap = await getDocs(q);
@@ -162,7 +162,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-12 rounded-xl border-2 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold"
+                className="h-12 rounded-xl border-2 border-slate-400 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -174,7 +174,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-12 rounded-xl border-2 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold"
+                  className="pr-12 h-12 rounded-xl border-2 border-slate-400 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
