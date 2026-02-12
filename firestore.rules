@@ -3,40 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * Core Philosophy:
-     * Restricted access for ImaraPMS.
-     * Support for invitation-based staff onboarding.
-     */
-
-    // --- Helper Functions ---
-
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Check if the user is an admin or manager based on the roles_admin collection
     function isAdmin() {
       return isSignedIn() && 
              (request.auth.token.email == 'aubinmaga@gmail.com' ||
               exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
-    // --- Rules ---
-
-    /**
-     * @description Allow public read of settings to display hotel name/branding on login.
-     */
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    /**
-     * @description Staff management: 
-     * - Public list/read allowed for login invitation check.
-     * - A user can create/update their own profile during onboarding.
-     */
     match /staff/{staffId} {
       allow read, list: if true; 
       allow create: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
@@ -44,18 +25,12 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || resource.data.email == request.auth.token.email));
     }
 
-    /**
-     * @description Admin role assignment.
-     */
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin() || request.auth.uid == staffId);
       allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Core hotel data: Accessible to all signed-in staff.
-     */
     match /rooms/{roomId} {
       allow read, write: if isSignedIn();
     }
@@ -72,9 +47,6 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    /**
-     * @description Default deny for everything else.
-     */
     match /{document=**} {
       allow read, write: if isAdmin();
     }

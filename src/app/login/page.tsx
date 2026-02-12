@@ -9,10 +9,10 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
@@ -45,6 +45,7 @@ export default function LoginPage() {
       try {
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
+        // Tentative de recherche d'invitation
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -54,7 +55,7 @@ export default function LoginPage() {
           const staffData = staffDoc.data();
           
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
-            throw new Error("Code d'accès ou mot de passe incorrect.");
+            throw new Error("Code d'accès incorrect.");
           }
 
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
@@ -80,15 +81,15 @@ export default function LoginPage() {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Cleanup invitation skipped (already processed or no permission):", err);
+              console.warn("Nettoyage invitation ignoré:", err);
             }
           }
 
-          toast({ title: "Bienvenue", description: "Votre compte est maintenant activé." });
+          toast({ title: "Bienvenue", description: "Votre compte est activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
-          throw new Error("Identifiants incorrects ou invitation manquante.");
+          throw new Error("Identifiants incorrects.");
         }
       }
 
@@ -164,7 +165,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-xl border-2 border-slate-300 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                className="h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -176,7 +177,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-xl border-2 border-slate-300 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
