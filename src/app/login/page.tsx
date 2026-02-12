@@ -127,8 +127,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-muted/30 px-4">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-card">
+    <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-[#020617] px-4">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-[#0f172a]">
         <div className="h-2 w-full bg-primary" />
         <CardHeader className="space-y-6 text-center pt-10">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 text-primary">
@@ -154,7 +154,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
+                className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
+                  className="pr-12 h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary transition-all font-bold text-foreground text-base placeholder:text-muted-foreground/50"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -180,14 +180,14 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-black uppercase tracking-widest h-16 rounded-[1.5rem] text-xs shadow-xl shadow-primary/20 gap-3 mt-4 bg-primary" disabled={isLoading}>
+            <Button type="submit" className="w-full font-black uppercase tracking-widest h-16 rounded-[1.5rem] text-xs shadow-xl shadow-primary/20 gap-3 mt-4 bg-primary text-primary-foreground" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
               S'authentifier
             </Button>
           </form>
         </CardContent>
         <CardFooter className="pb-10 pt-0 flex flex-col items-center gap-2">
-           <div className="h-px w-20 bg-slate-100" />
+           <div className="h-px w-20 bg-slate-100 dark:bg-slate-800" />
            <p className="text-[8px] text-muted-foreground uppercase tracking-[0.4em] font-black">
             ImaraPMS • Powered by Google Gemini
           </p>
