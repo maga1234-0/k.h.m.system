@@ -19,6 +19,7 @@ service cloud.firestore {
     }
 
     match /staff/{staffId} {
+      // Lecture publique nécessaire pour vérifier les invitations à la connexion
       allow read, list: if true; 
       allow create: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
       allow update: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
@@ -27,6 +28,7 @@ service cloud.firestore {
 
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();
+      // Permet à un utilisateur de s'auto-promouvoir admin s'il est le créateur du document (utilisé lors du premier login d'un manager)
       allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin() || request.auth.uid == staffId);
       allow update, delete: if isAdmin();
     }

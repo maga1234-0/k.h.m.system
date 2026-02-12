@@ -43,9 +43,10 @@ export default function LoginPage() {
       let userCredential;
 
       try {
+        // Tentative de connexion normale
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Tentative de recherche d'invitation
+        // Si l'utilisateur n'existe pas, on cherche s'il a une invitation
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -54,13 +55,16 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
+          // Vérification du code d'accès temporaire (utilisé comme mot de passe initial)
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès incorrect.");
           }
 
+          // Création du compte Firebase Auth
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
+          // Si c'est un manager, on lui donne les droits admin
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -70,30 +74,35 @@ export default function LoginPage() {
             });
           }
 
+          // On met à jour son profil staff avec son UID réel
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" 
+            accessCode: "" // On vide le code temporaire
           });
 
+          // Nettoyage de l'invitation temporaire si l'ID était différent
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Nettoyage invitation ignoré:", err);
+              console.warn("Nettoyage invitation ignoré ou impossible:", err);
             }
           }
 
-          toast({ title: "Bienvenue", description: "Votre compte est activé." });
+          toast({ title: "Bienvenue", description: "Votre compte collaborateur est activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
+          // Création du compte admin principal s'il n'existe pas
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
-          throw new Error("Identifiants incorrects.");
+          throw new Error("Identifiants incorrects ou accès non autorisé.");
         }
       }
 
       const uid = userCredential.user.uid;
+      
+      // Initialisation forcée des droits si admin principal
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
         const adminSnap = await getDoc(adminRoleRef);
@@ -124,7 +133,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: 'Accès Refusé',
-        description: error.message || 'Vérifiez vos identifiants.',
+        description: error.message || 'Vérifiez vos identifiants ou contactez votre administrateur.',
       });
     } finally {
       setIsLoading(false);
@@ -156,7 +165,7 @@ export default function LoginPage() {
           <Alert variant="leafy" className="rounded-2xl border-primary/20 bg-primary/5">
             <ShieldAlert className="h-4 w-4 text-primary" />
             <AlertTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Accès Sécurisé</AlertTitle>
-            <AlertDescription className="text-xs font-bold text-primary/80">Identifiez-vous pour accéder à la console.</AlertDescription>
+            <AlertDescription className="text-xs font-bold text-primary/80">Identifiez-vous pour accéder à la console de gestion.</AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-5">
