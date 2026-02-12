@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,6 +62,7 @@ export default function LoginPage() {
               userCredential = await createUserWithEmailAndPassword(auth, email, password);
               
               const uid = userCredential.user.uid;
+              
               // Si Manager, ajout direct aux rôles admin
               if (staffData.role === 'Manager') {
                 await setDoc(doc(firestore, 'roles_admin', uid), {
@@ -72,7 +73,7 @@ export default function LoginPage() {
                 });
               }
 
-              // Mise à jour du doc staff avec le UID pour lien futur
+              // On synchronise le document staff avec le bon UID
               await setDoc(doc(firestore, 'staff', uid), {
                 ...staffData,
                 id: uid,
@@ -81,7 +82,7 @@ export default function LoginPage() {
               
               toast({ title: "Bienvenue", description: "Votre compte a été initialisé." });
             } else {
-              throw new Error("Identifiants incorrects ou compte non pré-autorisé.");
+              throw new Error("Identifiants incorrects ou compte non autorisé.");
             }
           }
         } else {
@@ -93,7 +94,7 @@ export default function LoginPage() {
       const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
-      // Si l'utilisateur n'est pas admin, on vérifie s'il doit le devenir (cas du bootstrap admin principal)
+      // Bootstrap automatique pour l'admin principal
       if (!adminSnap.exists() && email === PRIMARY_ADMIN) {
         await setDoc(adminRoleRef, {
           id: uid,
@@ -117,7 +118,7 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: 'Accès refusé',
-        description: error.message || 'Une erreur est survenue lors de la connexion.',
+        description: error.message || 'Une erreur est survenue.',
       });
     } finally {
       setIsLoading(false);
@@ -137,12 +138,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-card">
         <div className="h-2 w-full bg-primary" />
         <CardHeader className="space-y-6 text-center pt-10">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 shadow-xl shadow-primary/5 text-primary">
-            <Logo size={80} />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 text-primary">
+            <Logo size={60} />
           </div>
           <div className="space-y-2">
-            <CardTitle className="font-headline text-4xl font-black tracking-tighter">ImaraPMS</CardTitle>
-            <CardDescription className="text-[10px] uppercase tracking-[0.3em] font-black text-primary/70">Console de Gestion Hôtelière</CardDescription>
+            <CardTitle className="font-headline text-3xl font-black tracking-tighter">ImaraPMS</CardTitle>
+            <CardDescription className="text-[10px] uppercase tracking-[0.3em] font-black text-primary/70">Console de Gestion</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-8 p-10 pt-0">
@@ -150,33 +151,29 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Sécurité Active</AlertTitle>
             <AlertDescription className="text-[11px] font-bold">
-              Utilisez votre email et votre code d'accès assigné.
+              Utilisez votre email et votre code assigné.
             </AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail Professionnel</Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="email"
-                  placeholder="nom@hotel.com"
-                  className="pl-11 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                type="email"
+                placeholder="nom@hotel.com"
+                className="h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe / Code</Label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pl-11 pr-12 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
+                  className="pr-12 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
