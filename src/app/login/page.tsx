@@ -42,12 +42,19 @@ export default function LoginPage() {
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
-        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-email')) {
-          userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          toast({
-            title: "Système Initialisé",
-            description: "Le compte administrateur principal a été créé et vérifié.",
-          });
+        if (email === PRIMARY_ADMIN && (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found')) {
+          try {
+            userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            toast({
+              title: "Système Initialisé",
+              description: "Le compte administrateur principal a été créé.",
+            });
+          } catch (createError: any) {
+            if (createError.code === 'auth/email-already-in-use') {
+              throw new Error("Échec d'Authentification : Mot de passe incorrect pour ce compte existant.");
+            }
+            throw createError;
+          }
         } else {
           throw authError;
         }
@@ -79,16 +86,14 @@ export default function LoginPage() {
           });
         } else {
           await signOut(auth);
-          throw new Error("Violation de Sécurité : Ce compte n'est pas enregistré dans le répertoire de gestion.");
+          throw new Error("Violation de Sécurité : Accès restreint au répertoire autorisé.");
         }
       }
       
       router.push('/');
     } catch (error: any) {
       console.error(error);
-      const message = error.code === 'auth/invalid-credential' 
-        ? "Échec d'Authentification : Mot de passe incorrect."
-        : error.message || 'Une erreur de sécurité est survenue.';
+      const message = error.message || 'Une erreur de sécurité est survenue.';
         
       toast({
         variant: 'destructive',
@@ -125,7 +130,7 @@ export default function LoginPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle className="text-xs font-bold uppercase tracking-wider">Accès Restreint</AlertTitle>
             <AlertDescription className="text-xs">
-              Personnel de gestion autorisé uniquement. Toutes les connexions sont auditées.
+              Personnel autorisé uniquement. Connexions auditées par le système.
             </AlertDescription>
           </Alert>
 
@@ -173,7 +178,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="text-center pt-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest w-full text-center">
-            ImaraPMS Group • Console de Sécurité
+            ImaraPMS • Console de Sécurité Hôtelière
           </p>
         </CardFooter>
       </Card>

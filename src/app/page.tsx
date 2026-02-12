@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect, useState } from "react";
@@ -276,12 +275,12 @@ export default function DashboardPage() {
             <Card className="border-none rounded-[2.5rem] overflow-hidden shadow-sm bg-card">
               <CardHeader className="p-8">
                 <CardTitle className="font-headline text-lg font-black text-primary flex items-center gap-2">
-                  <Logo size={20} className="text-primary" /> Recap Opérationnel
+                  <Logo size={20} className="text-primary" /> Récap Opérationnel
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 pt-0 space-y-6">
                 <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 shadow-inner">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Focus Revenus (Réel)</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Focus Revenus (Mois en cours)</p>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground font-bold">Services Extras</span>
@@ -299,11 +298,11 @@ export default function DashboardPage() {
                 <div className="p-6 rounded-3xl bg-background border space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                      <Users className="h-5 w-5" />
+                      <Logo size={20} />
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Fidélité</p>
-                      <p className="text-sm font-black">Répartition Membres</p>
+                      <p className="text-sm font-black">Répartition Clients</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -311,8 +310,8 @@ export default function DashboardPage() {
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Qualité Ménage</p>
-                      <p className="text-sm font-black">Opérationnel</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Qualité Service</p>
+                      <p className="text-sm font-black">Excellence Imara</p>
                     </div>
                   </div>
                 </div>

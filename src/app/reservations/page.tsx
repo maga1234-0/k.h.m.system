@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -43,6 +42,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import { Logo } from "@/components/ui/logo";
 import { 
   useFirestore, 
   useCollection, 
@@ -101,6 +101,7 @@ export default function ReservationsPage() {
     const end = new Date(checkOut);
     
     if (end > start) {
+      // Nettoyage des heures pour un calcul précis des nuitées
       const d1 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       const d2 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
       const diffTime = Math.abs(d2.getTime() - d1.getTime());
@@ -144,7 +145,7 @@ export default function ReservationsPage() {
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ title: "Champ requis", description: "Veuillez remplir les informations du client." });
+      toast({ title: "Champ requis", description: "Veuillez remplir les informations client." });
       return;
     }
     
@@ -165,7 +166,7 @@ export default function ReservationsPage() {
 
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Réservation créée" });
+    toast({ title: "Réservation créée", description: "Dossier ajouté avec succès." });
   };
 
   const handleUpdateBooking = () => {
@@ -185,7 +186,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(resRef, updatedData);
     setActiveDialog(null);
     setEditForm(null);
-    toast({ title: "Mise à jour réussie" });
+    toast({ title: "Mise à jour réussie", description: "Dossier client actualisé." });
   };
 
   const handleCheckIn = async () => {
@@ -199,7 +200,7 @@ export default function ReservationsPage() {
       updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
       updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
       setActiveDialog(null);
-      toast({ title: "Client déjà facturé", description: "Arrivée validée simplement." });
+      toast({ title: "Déjà facturé", description: "Arrivée validée." });
       return;
     }
 
@@ -233,7 +234,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked Out" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Cleaning" });
     setActiveDialog(null);
-    toast({ title: "Départ validé" });
+    toast({ title: "Départ validé", description: "Chambre libérée pour nettoyage." });
   };
 
   const handleCancelReservation = () => {
@@ -241,7 +242,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
     setActiveDialog(null);
-    toast({ title: "Réservation Annulée" });
+    toast({ title: "Réservation Annulée", description: "Chambre remise en disponibilité." });
   };
 
   const handleDeleteIndividual = () => {
@@ -257,7 +258,7 @@ export default function ReservationsPage() {
     
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ title: "Dossier supprimé" });
+    toast({ title: "Dossier supprimé", description: "Données purgées du registre." });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -277,7 +278,9 @@ export default function ReservationsPage() {
           <div className="flex items-center">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl text-primary">Gestion des Séjours</h1>
+            <h1 className="font-headline font-semibold text-xl text-primary flex items-center gap-2">
+              <Logo size={24} /> Gestion des Séjours
+            </h1>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 gap-2 h-9 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
             <Plus className="h-4 w-4" /> Nouvelle résa
@@ -290,7 +293,7 @@ export default function ReservationsPage() {
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher par nom ou chambre..." 
+                  placeholder="Rechercher client ou chambre..." 
                   className="pl-9 bg-background rounded-xl" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
@@ -466,7 +469,7 @@ export default function ReservationsPage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {selectedRes.status === 'Confirmée' && (
+                  {(selectedRes.status === 'Confirmée' || selectedRes.status === 'Confirmé') && (
                     <Button onClick={handleCheckIn} className="h-14 bg-primary font-black text-white rounded-xl shadow-lg uppercase tracking-widest text-xs">Valider le Check-in</Button>
                   )}
                   {selectedRes.status === 'Checked In' && (
