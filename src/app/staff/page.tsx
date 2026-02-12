@@ -98,7 +98,7 @@ export default function StaffPage() {
     phoneNumber: "",
     role: "Réceptionniste",
     status: "En Service",
-    accessCode: "" // On continue d'utiliser accessCode dans Firestore pour la compatibilité, mais on l'appelle "Mot de passe"
+    accessCode: "" 
   });
 
   const [editStaffData, setEditStaffData] = useState<any>(null);
@@ -244,7 +244,7 @@ export default function StaffPage() {
                           <MoreHorizontal className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-none animate-in zoom-in-95 duration-200">
+                      <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-none">
                         <DropdownMenuItem onSelect={() => { 
                           setEditStaffData({...member}); 
                           setTimeout(() => setIsEditDialogOpen(true), 150); 
@@ -258,7 +258,7 @@ export default function StaffPage() {
                         }} className="rounded-xl font-bold text-xs uppercase py-3 cursor-pointer">
                           <RefreshCw className="h-4 w-4 mr-2" /> Changer Statut
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-slate-100" />
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-primary rounded-xl font-bold text-xs uppercase py-3 cursor-pointer" onSelect={() => { 
                           setMemberToDelete(member); 
                           setTimeout(() => setIsDeleteDialogOpen(true), 150); 
@@ -433,7 +433,7 @@ export default function StaffPage() {
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer du personnel ?</AlertDialogTitle>
               <AlertDialogDescription className="font-bold text-slate-500 mt-2">
-                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera désactivé.
+                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera définitivement supprimé.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
