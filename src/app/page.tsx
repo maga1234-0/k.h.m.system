@@ -52,9 +52,13 @@ export default function DashboardPage() {
 
   const formatSafeTime = (dateStr: any) => {
     if (!dateStr) return '--:--';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '--:--';
-    return format(date, 'HH:mm', { locale: fr });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '--:--';
+      return format(date, 'HH:mm', { locale: fr });
+    } catch {
+      return '--:--';
+    }
   };
 
   const kpis = useMemo(() => {
@@ -68,7 +72,7 @@ export default function DashboardPage() {
     
     const monthlyRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
     const stayRev = monthlyPaidInvoices.reduce((acc, inv) => acc + (Number(inv.stayAmount) || 0), 0);
-    const extraRev = monthlyRev - stayRev;
+    const extraRev = Math.max(0, monthlyRev - stayRev);
 
     const occupiedCount = rooms.filter(r => r.status === 'Occupied' || r.status === 'Cleaning').length;
     const occupancyRate = rooms.length > 0 ? (occupiedCount / rooms.length) * 100 : 0;
@@ -145,10 +149,10 @@ export default function DashboardPage() {
         <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "CA Mensuel (Payé)", value: `${kpis.monthlyRev.toLocaleString()} $`, icon: DollarSign, trend: "+12%", color: "text-emerald-600", bg: "bg-emerald-50" },
-              { label: "ADR (Prix Moyen)", value: `${kpis.adr.toFixed(2)} $`, icon: TrendingUp, trend: "Stable", color: "text-blue-600", bg: "bg-blue-50" },
+              { label: "CA Mensuel (Payé)", value: `${kpis.monthlyRev.toLocaleString()} $`, icon: DollarSign, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
+              { label: "ADR (Prix Moyen)", value: `${kpis.adr.toFixed(2)} $`, icon: TrendingUp, trend: "Stable", color: "text-primary", bg: "bg-primary/5" },
               { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, icon: Hotel, trend: "+5%", color: "text-primary", bg: "bg-primary/5" },
-              { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-amber-600", bg: "bg-amber-50" }
+              { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-primary", bg: "bg-primary/5" }
             ].map((kpi, i) => (
               <Card key={i} className="border-none rounded-3xl overflow-hidden group hover:shadow-md transition-all duration-300 shadow-sm">
                 <CardContent className="p-6">
@@ -156,7 +160,7 @@ export default function DashboardPage() {
                     <div className={`p-3 rounded-2xl ${kpi.bg} group-hover:scale-110 transition-transform ${kpi.color}`}>
                       <kpi.icon className="h-5 w-5" />
                     </div>
-                    <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/5 text-emerald-600 text-[10px] font-bold">
+                    <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[10px] font-bold">
                       {kpi.trend}
                     </Badge>
                   </div>
@@ -193,10 +197,10 @@ export default function DashboardPage() {
               </div>
               <div className="grid gap-4 grid-cols-1">
                 {[
-                  { label: "DISPONIBLE", count: inventoryStats.available, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-500/10", percent: rooms?.length ? (inventoryStats.available / rooms.length) * 100 : 0 },
-                  { label: "OCCUPÉE", count: inventoryStats.occupied, icon: Bed, color: "text-amber-600", bg: "bg-amber-500/10", percent: rooms?.length ? (inventoryStats.occupied / rooms.length) * 100 : 0 },
-                  { label: "NETTOYAGE", count: inventoryStats.cleaning, icon: Clock, color: "text-blue-600", bg: "bg-blue-500/10", percent: rooms?.length ? (inventoryStats.cleaning / rooms.length) * 100 : 0 },
-                  { label: "MAINTENANCE", count: inventoryStats.maintenance, icon: Wrench, color: "text-rose-600", bg: "bg-rose-500/10", percent: rooms?.length ? (inventoryStats.maintenance / rooms.length) * 100 : 0 }
+                  { label: "DISPONIBLE", count: inventoryStats.available, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/10", percent: rooms?.length ? (inventoryStats.available / rooms.length) * 100 : 0 },
+                  { label: "OCCUPÉE", count: inventoryStats.occupied, icon: Bed, color: "text-primary", bg: "bg-primary/10", percent: rooms?.length ? (inventoryStats.occupied / rooms.length) * 100 : 0 },
+                  { label: "NETTOYAGE", count: inventoryStats.cleaning, icon: Clock, color: "text-primary", bg: "bg-primary/10", percent: rooms?.length ? (inventoryStats.cleaning / rooms.length) * 100 : 0 },
+                  { label: "MAINTENANCE", count: inventoryStats.maintenance, icon: Wrench, color: "text-primary", bg: "bg-primary/10", percent: rooms?.length ? (inventoryStats.maintenance / rooms.length) * 100 : 0 }
                 ].map((stat, i) => (
                   <Card key={i} className="border-none rounded-3xl overflow-hidden hover:translate-x-2 transition-transform duration-300 shadow-sm bg-card">
                     <CardContent className="p-5 flex items-center justify-between">
@@ -253,9 +257,9 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <Badge variant="outline" className={`rounded-xl px-4 py-1.5 font-black text-[10px] uppercase tracking-widest border-none ${
-                        res.status === 'Checked In' ? 'bg-emerald-100 text-emerald-700' : 
-                        res.status === 'Checked Out' ? 'bg-blue-100 text-blue-700' : 
-                        'bg-primary/10 text-primary'
+                        res.status === 'Checked In' ? 'bg-primary/10 text-primary' : 
+                        res.status === 'Checked Out' ? 'bg-muted text-muted-foreground' : 
+                        'bg-primary/5 text-primary'
                       }`}>
                         {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Checked Out' ? 'Départ' : res.status}
                       </Badge>
@@ -295,7 +299,7 @@ export default function DashboardPage() {
 
                 <div className="p-6 rounded-3xl bg-background border space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                    <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                       <Users className="h-5 w-5" />
                     </div>
                     <div>
@@ -304,7 +308,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                     <div>

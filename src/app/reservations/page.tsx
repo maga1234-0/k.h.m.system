@@ -92,42 +92,39 @@ export default function ReservationsPage() {
     if (!isAuthLoading && !user) router.push('/login');
   }, [user, isAuthLoading, router]);
 
-  // Recalcul du montant robuste pour la création
+  // Recalcul du montant robuste
+  const calculateTotal = (roomId: string, checkIn: string, checkOut: string) => {
+    if (!roomId || !checkIn || !checkOut || !rooms) return "0";
+    const selectedRoom = rooms.find(r => r.id === roomId);
+    if (!selectedRoom) return "0";
+    
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    
+    if (end > start) {
+      // Normaliser à minuit pour éviter les décalages de fuseau horaire
+      const d1 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const d2 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      const diffTime = Math.abs(d2.getTime() - d1.getTime());
+      const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+      const price = Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0;
+      return (nights * price).toString();
+    }
+    return "0";
+  };
+
   useEffect(() => {
-    if (bookingForm.roomId && bookingForm.checkInDate && bookingForm.checkOutDate && rooms) {
-      const selectedRoom = rooms.find(r => r.id === bookingForm.roomId);
-      if (selectedRoom) {
-        const start = new Date(bookingForm.checkInDate);
-        const end = new Date(bookingForm.checkOutDate);
-        if (end > start) {
-          start.setHours(0,0,0,0);
-          end.setHours(0,0,0,0);
-          const diffTime = Math.abs(end.getTime() - start.getTime());
-          const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
-          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
-          setBookingForm(prev => ({ ...prev, totalAmount: total.toString() }));
-        }
-      }
+    const total = calculateTotal(bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate);
+    if (total !== "0" && total !== bookingForm.totalAmount) {
+      setBookingForm(prev => ({ ...prev, totalAmount: total }));
     }
   }, [bookingForm.roomId, bookingForm.checkInDate, bookingForm.checkOutDate, rooms]);
 
-  // Recalcul du montant robuste pour l'édition
   useEffect(() => {
-    if (editForm && editForm.roomId && editForm.checkInDate && editForm.checkOutDate && rooms) {
-      const selectedRoom = rooms.find(r => r.id === editForm.roomId);
-      if (selectedRoom) {
-        const start = new Date(editForm.checkInDate);
-        const end = new Date(editForm.checkOutDate);
-        if (end > start) {
-          start.setHours(0,0,0,0);
-          end.setHours(0,0,0,0);
-          const diffTime = Math.abs(end.getTime() - start.getTime());
-          const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
-          const total = nights * (Number(selectedRoom.pricePerNight) || Number(selectedRoom.price) || 0);
-          if (total.toString() !== editForm.totalAmount) {
-            setEditForm((prev: any) => ({ ...prev, totalAmount: total.toString() }));
-          }
-        }
+    if (editForm) {
+      const total = calculateTotal(editForm.roomId, editForm.checkInDate, editForm.checkOutDate);
+      if (total !== "0" && total !== editForm.totalAmount) {
+        setEditForm((prev: any) => ({ ...prev, totalAmount: total }));
       }
     }
   }, [editForm?.roomId, editForm?.checkInDate, editForm?.checkOutDate, rooms]);
@@ -149,7 +146,7 @@ export default function ReservationsPage() {
 
   const handleSaveBooking = () => {
     if (!bookingForm.guestName || !bookingForm.roomId || !resCollection) {
-      toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir les champs obligatoires." });
+      toast({ title: "Champ requis", description: "Veuillez remplir les informations du client." });
       return;
     }
     
@@ -170,7 +167,7 @@ export default function ReservationsPage() {
 
     setIsAddDialogOpen(false);
     setBookingForm({ guestName: "", guestEmail: "", guestPhone: "", roomId: "", checkInDate: "", checkOutDate: "", numberOfGuests: 1, totalAmount: "" });
-    toast({ title: "Succès", description: "La réservation a été créée." });
+    toast({ title: "Réservation créée" });
   };
 
   const handleUpdateBooking = () => {
@@ -204,7 +201,7 @@ export default function ReservationsPage() {
       updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Checked In" });
       updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Occupied" });
       setActiveDialog(null);
-      toast({ title: "Arrivée validée" });
+      toast({ title: "Client déjà facturé", description: "Arrivée validée simplement." });
       return;
     }
 
@@ -230,7 +227,7 @@ export default function ReservationsPage() {
     });
 
     setActiveDialog(null);
-    toast({ title: "Check-in & Facturation activés" });
+    toast({ title: "Check-in effectué", description: "Facture générée automatiquement." });
   };
 
   const handleCheckOut = () => {
@@ -246,7 +243,7 @@ export default function ReservationsPage() {
     updateDocumentNonBlocking(doc(firestore, 'reservations', selectedRes.id), { status: "Cancelled" });
     updateDocumentNonBlocking(doc(firestore, 'rooms', selectedRes.roomId), { status: "Available" });
     setActiveDialog(null);
-    toast({ variant: "destructive", title: "Réservation Annulée" });
+    toast({ title: "Réservation Annulée" });
   };
 
   const handleDeleteIndividual = () => {
@@ -262,7 +259,7 @@ export default function ReservationsPage() {
     
     setIsDeleteDialogOpen(false);
     setResToDelete(null);
-    toast({ variant: "destructive", title: "Dossier supprimé" });
+    toast({ title: "Dossier supprimé" });
   };
 
   const filteredReservations = reservations?.filter(res => 
@@ -326,7 +323,7 @@ export default function ReservationsPage() {
                     <TableCell className="text-xs text-muted-foreground">{res.checkInDate} au {res.checkOutDate}</TableCell>
                     <TableCell className="font-black text-primary">{Number(res.totalAmount).toFixed(2)} $</TableCell>
                     <TableCell>
-                      <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'destructive' : 'outline'} className="text-[10px] font-black uppercase tracking-widest">
+                      <Badge variant={res.status === 'Checked In' ? 'default' : res.status === 'Checked Out' ? 'secondary' : res.status === 'Cancelled' ? 'default' : 'outline'} className="text-[10px] font-black uppercase tracking-widest">
                         {res.status === 'Checked In' ? 'Arrivé' : res.status === 'Checked Out' ? 'Départ' : res.status === 'Cancelled' ? 'Annulé' : res.status}
                       </Badge>
                     </TableCell>
@@ -344,7 +341,7 @@ export default function ReservationsPage() {
                               setResToDelete(res); 
                               setTimeout(() => setIsDeleteDialogOpen(true), 150);
                             }} 
-                            className="text-destructive font-bold text-xs uppercase py-2 cursor-pointer"
+                            className="text-primary font-bold text-xs uppercase py-2 cursor-pointer"
                           >
                             <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                           </DropdownMenuItem>

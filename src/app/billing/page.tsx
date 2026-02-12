@@ -59,7 +59,7 @@ export default function BillingPage() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const firestore = useFirestore();
-  const settingsRef = useMemoFirebase(() => doc(firestore, 'settings', 'general'), [firestore]);
+  const settingsRef = useMemoFirebase(() => user ? doc(firestore, 'settings', 'general') : null, [firestore, user]);
   const { data: settings } = useDoc(settingsRef);
 
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'invoices') : null, [firestore, user]);
@@ -83,7 +83,7 @@ export default function BillingPage() {
     if (!invoices) return;
     invoices.forEach((inv) => deleteDocumentNonBlocking(doc(firestore, 'invoices', inv.id)));
     setIsClearDialogOpen(false);
-    toast({ variant: "destructive", title: "Registre purgé" });
+    toast({ title: "Registre purgé" });
   };
 
   const handleDeleteIndividual = () => {
@@ -91,7 +91,7 @@ export default function BillingPage() {
     deleteDocumentNonBlocking(doc(firestore, 'invoices', invoiceToDelete.id));
     setIsDeleteIndividualDialogOpen(false);
     setInvoiceToDelete(null);
-    toast({ variant: "destructive", title: "Facture Supprimée" });
+    toast({ title: "Facture Supprimée" });
   };
 
   const handleCollectPayment = () => {
@@ -109,9 +109,7 @@ export default function BillingPage() {
 
   const generatePDFBlob = async (invoice: any) => {
     const input = document.getElementById('invoice-single-page');
-    if (!input) {
-      return null;
-    }
+    if (!input) return null;
 
     setIsGeneratingPDF(true);
     try {
@@ -145,9 +143,8 @@ export default function BillingPage() {
     setSelectedInvoice(invoice);
     setIsInvoiceDialogOpen(true);
 
-    toast({ title: "Préparation de l'envoi", description: "Génération du PDF et ouverture de WhatsApp..." });
+    toast({ title: "Action lancée", description: "Génération de la facture en cours..." });
 
-    // Petit délai pour laisser le dialogue s'afficher et html2canvas capturer le DOM
     setTimeout(async () => {
       const blob = await generatePDFBlob(invoice);
       if (blob) {
@@ -175,7 +172,7 @@ export default function BillingPage() {
       
       toast({ 
         title: "WhatsApp ouvert", 
-        description: "Veuillez joindre la facture PDF qui vient d'être téléchargée." 
+        description: "Veuillez joindre le fichier PDF téléchargé." 
       });
     }, 1000);
   };
@@ -227,7 +224,7 @@ export default function BillingPage() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="text-muted-foreground hover:text-destructive gap-2 h-8 text-xs font-bold uppercase tracking-widest"
+                  className="text-muted-foreground hover:text-primary gap-2 h-8 text-xs font-bold uppercase tracking-widest"
                   onClick={() => setIsClearDialogOpen(true)}
                 >
                   <Trash2 className="h-4 w-4" /> Purger tout
@@ -242,7 +239,7 @@ export default function BillingPage() {
                   {invoices.map((inv) => (
                     <div key={inv.id} className="flex items-center justify-between p-4 rounded-2xl border bg-background hover:border-primary/30 transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
+                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
                           {inv.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Receipt className="h-6 w-6" />}
                         </div>
                         <div className="flex flex-col">
@@ -266,7 +263,7 @@ export default function BillingPage() {
                             {isGeneratingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
                           </Button>
                           <Button variant="secondary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => { setSelectedInvoice(inv); setIsInvoiceDialogOpen(true); }}>Aperçu</Button>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/5" onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}><Trash2 className="h-5 w-5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" onClick={() => { setInvoiceToDelete(inv); setIsDeleteIndividualDialogOpen(true); }}><Trash2 className="h-5 w-5" /></Button>
                         </div>
                       </div>
                     </div>
@@ -427,7 +424,7 @@ export default function BillingPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleClearRegistry} className="bg-destructive hover:bg-destructive/90 rounded-xl">Purger</AlertDialogAction>
+              <AlertDialogAction onClick={handleClearRegistry} className="bg-primary text-white hover:bg-primary/90 rounded-xl">Purger</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -440,7 +437,7 @@ export default function BillingPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive hover:bg-destructive/90 rounded-xl">Supprimer</AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteIndividual} className="bg-primary text-white hover:bg-primary/90 rounded-xl">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
