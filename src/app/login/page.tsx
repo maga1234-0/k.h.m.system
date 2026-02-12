@@ -74,7 +74,7 @@ export default function LoginPage() {
             });
           }
 
-          // 5. Finalize staff profile
+          // 5. Finalize staff profile (UID as document ID)
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
@@ -82,7 +82,7 @@ export default function LoginPage() {
             accessCode: "" // Security: clear temporary code
           });
 
-          // 6. Cleanup invitation if ID changed (Dan's fix)
+          // 6. Cleanup invitation if ID changed
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
@@ -147,7 +147,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-slate-950 px-4">
+    <div className="flex h-screen w-full items-center justify-center bg-slate-100 dark:bg-slate-950 px-4">
       <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900">
         <div className="h-2 w-full bg-primary" />
         <CardHeader className="space-y-6 text-center pt-10">
@@ -168,23 +168,23 @@ export default function LoginPage() {
 
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 ml-1">E-mail Professionnel</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-100 ml-1">E-mail Professionnel</Label>
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                className="h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 ml-1">Mot de Passe</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-100 ml-1">Mot de Passe</Label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

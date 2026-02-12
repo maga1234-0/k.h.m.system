@@ -15,12 +15,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if the user is a staff member
-    function isStaff() {
-      return isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
-    }
-
-    // Check if the user is an admin or manager
+    // Check if the user is an admin or manager based on the roles_admin collection
     function isAdmin() {
       return isSignedIn() && 
              (request.auth.token.email == 'aubinmaga@gmail.com' ||
@@ -30,7 +25,7 @@ service cloud.firestore {
     // --- Rules ---
 
     /**
-     * @description Allow public read of settings to display hotel name/branding.
+     * @description Allow public read of settings to display hotel name/branding on login.
      */
     match /settings/{settingId} {
       allow read: if true;
@@ -40,13 +35,13 @@ service cloud.firestore {
     /**
      * @description Staff management: 
      * - Public list/read allowed for login invitation check.
-     * - A user can delete their temporary invitation record during onboarding.
+     * - A user can create/update their own profile during onboarding.
      */
     match /staff/{staffId} {
       allow read, list: if true; 
       allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
-      // Allow a user to delete a record if it matches their email (for onboarding cleanup)
-      allow delete: if isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || request.auth.uid == staffId));
+      // Allow a user to delete a record if they are the owner OR if it matches their email (for cleanup)
+      allow delete: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || resource.data.email == request.auth.token.email));
     }
 
     /**
