@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,26 +43,49 @@ export default function LoginPage() {
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
-        // Fix: If email is primary admin and account doesn't exist, create it.
-        // If it does exist but password is wrong, signInWithEmailAndPassword throws 'auth/invalid-credential'
-        if (email === PRIMARY_ADMIN && (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential')) {
-          // If it's a password error for an existing account, don't try to create it
-          const checkSnap = await getDoc(doc(firestore, 'roles_admin', email.replace(/[@.]/g, '_'))); // Dummy check
+        // Logique de bootstrap pour Admin Principal ou Inscription Personnel par Code d'Accès
+        if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
           
-          try {
-            userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            toast({
-              title: "Système Initialisé",
-              description: "Le compte administrateur principal a été configuré.",
-            });
-          } catch (createError: any) {
-            if (createError.code === 'auth/email-already-in-use') {
-              throw new Error("Échec d'authentification : Mot de passe incorrect.");
+          // Cas 1: Admin Principal
+          if (email === PRIMARY_ADMIN) {
+             userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          } 
+          // Cas 2: Personnel avec Code d'Accès
+          else {
+            const staffCol = collection(firestore, 'staff');
+            const q = query(staffCol, where("email", "==", email), where("accessCode", "==", password));
+            const staffSnap = await getDocs(q);
+
+            if (!staffSnap.empty) {
+              const staffData = staffSnap.docs[0].data();
+              // Création du compte Firebase Auth avec le code d'accès comme mot de passe initial
+              userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              
+              const uid = userCredential.user.uid;
+              // Si Manager, ajout direct aux rôles admin
+              if (staffData.role === 'Manager') {
+                await setDoc(doc(firestore, 'roles_admin', uid), {
+                  id: uid,
+                  email: email,
+                  role: 'Administrateur',
+                  createdAt: new Date().toISOString()
+                });
+              }
+
+              // Mise à jour du doc staff avec le UID pour lien futur
+              await setDoc(doc(firestore, 'staff', uid), {
+                ...staffData,
+                id: uid,
+                status: "En Service"
+              });
+              
+              toast({ title: "Bienvenue", description: "Votre compte a été initialisé." });
+            } else {
+              throw new Error("Identifiants incorrects ou compte non pré-autorisé.");
             }
-            throw createError;
           }
         } else {
-          throw new Error("Identifiants invalides ou accès non autorisé.");
+          throw authError;
         }
       }
 
@@ -69,37 +93,31 @@ export default function LoginPage() {
       const adminRoleRef = doc(firestore, 'roles_admin', uid);
       const adminSnap = await getDoc(adminRoleRef);
       
-      if (!adminSnap.exists()) {
-        if (email === PRIMARY_ADMIN) {
-          await setDoc(adminRoleRef, {
-            id: uid,
-            email: email,
-            role: 'Administrateur',
-            createdAt: new Date().toISOString()
-          });
+      // Si l'utilisateur n'est pas admin, on vérifie s'il doit le devenir (cas du bootstrap admin principal)
+      if (!adminSnap.exists() && email === PRIMARY_ADMIN) {
+        await setDoc(adminRoleRef, {
+          id: uid,
+          email: email,
+          role: 'Administrateur',
+          createdAt: new Date().toISOString()
+        });
 
-          const staffRef = doc(firestore, 'staff', uid);
-          await setDoc(staffRef, {
-            id: uid,
-            firstName: "Principal",
-            lastName: "Administrateur",
-            email: email,
-            role: "Manager",
-            status: "En Service",
-            createdAt: new Date().toISOString()
-          });
-        } else {
-          await signOut(auth);
-          throw new Error("Violation de Sécurité : Accès restreint.");
-        }
+        await setDoc(doc(firestore, 'staff', uid), {
+          id: uid,
+          firstName: "Principal",
+          lastName: "Administrateur",
+          email: email,
+          role: "Manager",
+          status: "En Service",
+          createdAt: new Date().toISOString()
+        });
       }
       
       router.push('/');
     } catch (error: any) {
       toast({
-        variant: 'destructive',
-        title: 'Alerte de Sécurité',
-        description: error.message || 'Une erreur est survenue.',
+        title: 'Accès refusé',
+        description: error.message || 'Une erreur est survenue lors de la connexion.',
       });
     } finally {
       setIsLoading(false);
@@ -116,10 +134,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc] dark:bg-muted/30 px-4">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-card">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-card">
         <div className="h-2 w-full bg-primary" />
         <CardHeader className="space-y-6 text-center pt-10">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 shadow-xl shadow-primary/5 text-primary animate-in zoom-in duration-700">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-primary/5 border border-primary/10 shadow-xl shadow-primary/5 text-primary">
             <Logo size={80} />
           </div>
           <div className="space-y-2">
@@ -128,11 +146,11 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-8 p-10 pt-0">
-          <Alert variant="leafy" className="border-leafy/20 bg-primary/5 rounded-2xl">
+          <Alert variant="leafy" className="border-primary/20 bg-primary/5 rounded-[1.5rem] border-none">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Accès Restreint</AlertTitle>
-            <AlertDescription className="text-xs font-medium">
-              Personnel autorisé uniquement. Connexions auditées.
+            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Sécurité Active</AlertTitle>
+            <AlertDescription className="text-[11px] font-bold">
+              Utilisez votre email et votre code d'accès assigné.
             </AlertDescription>
           </Alert>
 
@@ -143,7 +161,8 @@ export default function LoginPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="email"
-                  className="pl-11 h-14 rounded-2xl border-muted bg-slate-50 focus:bg-white transition-all font-bold"
+                  placeholder="nom@hotel.com"
+                  className="pl-11 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -151,12 +170,13 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mot de Passe / Code</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? 'text' : 'password'}
-                  className="pl-11 pr-12 h-14 rounded-2xl border-muted bg-slate-50 focus:bg-white transition-all font-bold"
+                  placeholder="••••••••"
+                  className="pl-11 pr-12 h-14 rounded-2xl border-none bg-slate-50 focus:bg-white transition-all font-bold"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -170,15 +190,16 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full font-black uppercase tracking-widest h-16 rounded-2xl text-xs shadow-xl shadow-primary/20 gap-3 mt-4" disabled={isLoading}>
+            <Button type="submit" className="w-full font-black uppercase tracking-widest h-16 rounded-[1.5rem] text-xs shadow-xl shadow-primary/20 gap-3 mt-4 bg-primary" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
               S'authentifier
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="pb-10 pt-0">
-          <p className="text-[8px] text-muted-foreground uppercase tracking-[0.4em] w-full text-center font-black">
-            ImaraPMS • Powered by Google Gemini 2.5
+        <CardFooter className="pb-10 pt-0 flex flex-col items-center gap-2">
+           <div className="h-px w-20 bg-slate-100" />
+           <p className="text-[8px] text-muted-foreground uppercase tracking-[0.4em] font-black">
+            ImaraPMS • Powered by Google Gemini
           </p>
         </CardFooter>
       </Card>

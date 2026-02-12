@@ -24,7 +24,9 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
-  AlertCircle
+  Key,
+  Copy,
+  Check
 } from "lucide-react";
 import { 
   Dialog, 
@@ -71,6 +73,7 @@ import {
 } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
+import { Logo } from "@/components/ui/logo";
 
 export default function StaffPage() {
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -85,6 +88,7 @@ export default function StaffPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
   const [messageText, setMessageText] = useState("");
   const [scheduleData, setScheduleData] = useState({
@@ -98,7 +102,8 @@ export default function StaffPage() {
     email: "",
     phoneNumber: "",
     role: "Réceptionniste",
-    status: "En Service"
+    status: "En Service",
+    accessCode: ""
   });
 
   const [editStaffData, setEditStaffData] = useState<any>(null);
@@ -113,9 +118,12 @@ export default function StaffPage() {
   }, [user, isAuthLoading, router]);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setScheduleData(prev => ({ ...prev, date: today }));
-  }, []);
+    if (isAddDialogOpen) {
+      // Generate a 6-digit access code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setNewStaff(prev => ({ ...prev, accessCode: code }));
+    }
+  }, [isAddDialogOpen]);
 
   const handleAddStaff = () => {
     if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) return;
@@ -132,18 +140,9 @@ export default function StaffPage() {
     setDocumentNonBlocking(staffRef, staffData, { merge: true });
     
     setIsAddDialogOpen(false);
-    setNewStaff({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phoneNumber: "",
-      role: "Réceptionniste",
-      status: "En Service"
-    });
-
     toast({
       title: "Membre ajouté",
-      description: `${staffData.firstName} ${staffData.lastName} a rejoint l'équipe.`,
+      description: `Le profil de ${staffData.firstName} a été créé avec succès.`,
     });
   };
 
@@ -158,7 +157,7 @@ export default function StaffPage() {
     setEditStaffData(null);
     toast({
       title: "Profil mis à jour",
-      description: `Les détails de ${editStaffData.firstName} ont été sauvegardés.`,
+      description: `Modifications enregistrées.`,
     });
   };
 
@@ -168,67 +167,32 @@ export default function StaffPage() {
     deleteDocumentNonBlocking(staffRef);
     
     toast({
-      variant: "destructive",
       title: "Membre retiré",
-      description: `${memberToDelete.firstName} ${memberToDelete.lastName} a été supprimé du répertoire.`,
+      description: "Le profil a été supprimé du registre.",
     });
     
     setMemberToDelete(null);
     setIsDeleteDialogOpen(false);
   };
 
-  const handleSendMessage = () => {
-    if (!messageText || !selectedStaff) return;
-    
-    const phone = selectedStaff.phoneNumber?.replace(/\D/g, '');
-
-    if (phone) {
-      const encodedMessage = encodeURIComponent(messageText);
-      const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-
-      toast({
-        title: "Redirection WhatsApp",
-        description: `Ouverture du chat avec ${selectedStaff.firstName}...`,
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Pas de téléphone",
-        description: `Numéro non trouvé pour ${selectedStaff.firstName}.`,
-      });
-    }
-    
-    setIsMessageOpen(false);
-    setMessageText("");
-  };
-
-  const handleUpdateSchedule = () => {
-    if (!selectedStaff) return;
-    
-    toast({
-      title: "Planning mis à jour",
-      description: `${selectedStaff.firstName} a été assigné au shift de ${scheduleData.shift} le ${scheduleData.date}.`,
-    });
-    
-    setIsScheduleOpen(false);
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+    toast({ title: "Code copié", description: "Prêt à être envoyé au membre." });
   };
 
   const translateStatus = (status: string) => {
     switch (status) {
-      case "On Duty": return "En Service";
-      case "On Break": return "En Pause";
-      case "Offline": return "Hors ligne";
+      case "En Service": return "En Service";
+      case "En Pause": return "En Pause";
+      case "Hors ligne": return "Hors ligne";
       default: return status;
     }
   }
 
   if (isAuthLoading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   const filteredStaff = staff?.filter(member => 
@@ -238,142 +202,110 @@ export default function StaffPage() {
   );
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-background">
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-auto bg-background">
-        <header className="flex h-16 items-center border-b px-6 justify-between bg-background sticky top-0 z-10">
-          <div className="flex items-center">
+      <SidebarInset className="flex flex-col overflow-auto bg-transparent">
+        <header className="flex h-20 items-center border-b px-8 bg-white/80 dark:bg-background/80 backdrop-blur-xl sticky top-0 z-50 justify-between">
+          <div className="flex items-center gap-4">
             <SidebarTrigger />
-            <Separator orientation="vertical" className="mx-4 h-6" />
-            <h1 className="font-headline font-semibold text-xl">Gestion du Personnel</h1>
+            <Separator orientation="vertical" className="h-8" />
+            <div className="flex flex-col">
+              <h1 className="font-headline font-black text-xl text-primary tracking-tight">Ressources Humaines</h1>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gestion des accès et rôles</span>
+            </div>
           </div>
-          
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-            <UserPlus className="h-4 w-4" /> Ajouter un membre
+          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20">
+            <UserPlus className="h-4 w-4" /> Nouveau Membre
           </Button>
         </header>
 
-        <main className="p-6 space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <main className="p-6 md:p-10 space-y-8 max-w-[1400px] mx-auto w-full">
+          <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+            <div className="relative w-full md:w-[400px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher..." 
-                className="pl-9 bg-background" 
+                placeholder="Rechercher un collaborateur..." 
+                className="pl-12 h-14 bg-white dark:bg-card border-none shadow-sm rounded-2xl font-bold" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="px-3 py-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                {staff?.filter(s => s.status === 'On Duty' || s.status === 'En Service').length || 0} En Service
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
-                {staff?.filter(s => s.status === 'On Break' || s.status === 'En Pause').length || 0} En Pause
-              </Badge>
+            <div className="flex gap-4">
+              <div className="flex flex-col items-center px-6 py-3 bg-white dark:bg-card rounded-2xl shadow-sm border border-emerald-500/10">
+                <span className="text-2xl font-black text-emerald-600">{staff?.filter(s => s.status === 'En Service').length || 0}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">En Service</span>
+              </div>
+              <div className="flex flex-col items-center px-6 py-3 bg-white dark:bg-card rounded-2xl shadow-sm border border-amber-500/10">
+                <span className="text-2xl font-black text-amber-600">{staff?.filter(s => s.status === 'En Pause').length || 0}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">En Pause</span>
+              </div>
             </div>
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredStaff?.map((member) => (
-                <Card key={member.id} className="border-none shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-                  <div className="absolute top-2 right-2 z-20">
+                <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden">
+                  <div className="absolute top-4 right-4 z-20">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Edit2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground hover:text-primary">
+                          <Edit2 className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-none">
+                        <DropdownMenuItem onSelect={() => { setEditStaffData({...member}); setIsEditDialogOpen(true); }} className="rounded-xl font-bold text-xs uppercase py-3"><Edit2 className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => {
-                          setEditStaffData({...member});
-                          setTimeout(() => setIsEditDialogOpen(true), 150);
-                        }}>
-                          <Edit2 className="h-4 w-4 mr-2" /> Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => {
-                          const newStatus = member.status === 'On Duty' || member.status === 'En Service' ? 'En Pause' : 'En Service';
-                          const staffRef = doc(firestore, 'staff', member.id);
-                          updateDocumentNonBlocking(staffRef, { status: newStatus });
-                          toast({
-                            title: "Statut changé",
-                            description: `${member.firstName} est maintenant ${newStatus}.`,
-                          });
-                        }}>
-                          <RefreshCw className="h-4 w-4 mr-2" /> Basculer statut
-                        </DropdownMenuItem>
+                          const newStatus = member.status === 'En Service' ? 'En Pause' : 'En Service';
+                          updateDocumentNonBlocking(doc(firestore, 'staff', member.id), { status: newStatus });
+                          toast({ title: "Statut actualisé" });
+                        }} className="rounded-xl font-bold text-xs uppercase py-3"><RefreshCw className="h-4 w-4 mr-2" /> Changer Statut</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-destructive" 
-                          onSelect={() => {
-                            setMemberToDelete(member);
-                            setTimeout(() => setIsDeleteDialogOpen(true), 150);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Supprimer
-                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-primary rounded-xl font-bold text-xs uppercase py-3" onSelect={() => { setMemberToDelete(member); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
 
-                  <CardHeader className="flex flex-row items-center gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary/10">
-                      <AvatarFallback>{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col pr-8">
-                      <CardTitle className="text-lg font-headline truncate">{member.firstName} {member.lastName}</CardTitle>
-                      <CardDescription className="flex items-center gap-1 font-medium text-primary">
-                        <Shield className="h-3 w-3" /> {member.role || 'Personnel'}
-                      </CardDescription>
+                  <CardHeader className="flex flex-row items-center gap-6 p-8">
+                    <div className="relative">
+                      <Avatar className="h-20 w-20 rounded-3xl shadow-xl border-4 border-white dark:border-slate-800">
+                        <AvatarFallback className="bg-primary/10 text-primary text-2xl font-black">{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-white dark:border-slate-800 shadow-md ${member.status === 'En Service' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <CardTitle className="text-2xl font-black font-headline tracking-tighter">{member.firstName} {member.lastName}</CardTitle>
+                      <Badge variant="outline" className="w-fit text-[9px] font-black uppercase tracking-widest border-primary/20 bg-primary/5 text-primary py-1 px-3">
+                        {member.role || 'Personnel'}
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Badge variant={member.status === 'On Duty' || member.status === 'En Service' ? 'default' : 'secondary'} className="text-[10px]">
-                        {translateStatus(member.status)}
-                      </Badge>
-                      <div className="flex items-center text-xs text-muted-foreground gap-1">
-                        <Clock className="h-3 w-3" /> Shift: 08:00 - 16:00
+                  <CardContent className="px-8 pb-8 space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800">
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">Code d'accès</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-primary font-mono text-lg tracking-widest">••••••</span>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => copyToClipboard(member.accessCode)}>
+                            {copiedCode === member.accessCode ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center">
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Permissions</span>
+                        <Logo size={24} className={member.role === 'Manager' ? 'text-primary' : 'text-muted-foreground opacity-20'} />
                       </div>
                     </div>
                     
-                    <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground overflow-hidden">
-                        <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{member.email}</span>
+                    <div className="space-y-3 pt-4 border-t">
+                      <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
+                        <Mail className="h-4 w-4 text-primary" /> {member.email}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3 shrink-0" /> {member.phoneNumber || ''}
+                      <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
+                        <Phone className="h-4 w-4 text-primary" /> {member.phoneNumber || 'Non renseigné'}
                       </div>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1 gap-2"
-                        onClick={() => {
-                          setSelectedStaff(member);
-                          setIsMessageOpen(true);
-                        }}
-                      >
-                        <MessageSquare className="h-3 w-3" /> WhatsApp
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => {
-                          setSelectedStaff(member);
-                          setIsScheduleOpen(true);
-                        }}
-                      >
-                        Planning
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -383,226 +315,88 @@ export default function StaffPage() {
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-10 border-none shadow-2xl">
             <DialogHeader>
-              <DialogTitle>Ajouter un membre</DialogTitle>
-              <DialogDescription>Créez un profil pour un nouveau membre de l'équipe.</DialogDescription>
+              <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
+              <DialogDescription className="font-bold text-slate-500">Un code d'accès sera automatiquement généré.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom</Label>
-                  <Input 
-                    id="firstName" 
-                    value={newStaff.firstName}
-                    onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})}
-                  />
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Prénom</Label>
+                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom</Label>
-                  <Input 
-                    id="lastName" 
-                    value={newStaff.lastName}
-                    onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})}
-                  />
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Nom</Label>
+                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Adresse E-mail</Label>
-                <Input 
-                  id="email" 
-                  type="email"
-                  value={newStaff.email}
-                  onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
-                />
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-1">E-mail Professionnel</Label>
+                <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">N° Téléphone</Label>
-                <Input 
-                  id="phone" 
-                  value={newStaff.phoneNumber}
-                  onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Select 
-                  value={newStaff.role} 
-                  onValueChange={(val) => setNewStaff({...newStaff, role: val})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Manager">Manager</SelectItem>
-                    <SelectItem value="Receptionist">Réceptionniste</SelectItem>
-                    <SelectItem value="Housekeeping">Gouvernance</SelectItem>
-                    <SelectItem value="Concierge">Concierge</SelectItem>
-                    <SelectItem value="Security">Sécurité</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Rôle</Label>
+                  <Select value={newStaff.role} onValueChange={(val) => setNewStaff({...newStaff, role: val})}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-2xl"><SelectItem value="Manager">Manager (Accès Total)</SelectItem><SelectItem value="Réceptionniste">Réceptionniste</SelectItem><SelectItem value="Gouvernance">Gouvernance</SelectItem><SelectItem value="Sécurité">Sécurité</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Code d'Accès</Label>
+                  <div className="h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-primary tracking-widest text-lg">{newStaff.accessCode}</div>
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.lastName || !newStaff.email}>Ajouter</Button>
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12">Annuler</Button>
+              <Button onClick={handleAddStaff} disabled={!newStaff.firstName || !newStaff.email} className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-10 shadow-lg shadow-primary/20">Valider l'inscription</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) setEditStaffData(null);
-        }}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Modifier Membre</DialogTitle>
-            </DialogHeader>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditStaffData(null); }}>
+          <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-10 border-none shadow-2xl">
+            <DialogHeader><DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Modifier Profil</DialogTitle></DialogHeader>
             {editStaffData && (
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-6 py-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="editFirstName">Prénom</Label>
-                    <Input 
-                      id="editFirstName" 
-                      value={editStaffData.firstName}
-                      onChange={(e) => setEditStaffData({...editStaffData, firstName: e.target.value})}
-                    />
+                    <Label className="text-[10px] font-black uppercase tracking-widest">Prénom</Label>
+                    <Input value={editStaffData.firstName} onChange={(e) => setEditStaffData({...editStaffData, firstName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="editLastName">Nom</Label>
-                    <Input 
-                      id="editLastName" 
-                      value={editStaffData.lastName}
-                      onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})}
-                    />
+                    <Label className="text-[10px] font-black uppercase tracking-widest">Nom</Label>
+                    <Input value={editStaffData.lastName} onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="editEmail">Adresse E-mail</Label>
-                  <Input 
-                    id="editEmail" 
-                    type="email"
-                    value={editStaffData.email}
-                    onChange={(e) => setEditStaffData({...editStaffData, email: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editPhone">Téléphone</Label>
-                  <Input 
-                    id="editPhone" 
-                    value={editStaffData.phoneNumber}
-                    onChange={(e) => setEditStaffData({...editStaffData, phoneNumber: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editRole">Rôle</Label>
-                  <Select 
-                    value={editStaffData.role} 
-                    onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Receptionist">Réceptionniste</SelectItem>
-                      <SelectItem value="Housekeeping">Gouvernance</SelectItem>
-                      <SelectItem value="Concierge">Concierge</SelectItem>
-                      <SelectItem value="Security">Sécurité</SelectItem>
-                    </SelectContent>
+                  <Label className="text-[10px] font-black uppercase tracking-widest">Rôle</Label>
+                  <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-2xl"><SelectItem value="Manager">Manager</SelectItem><SelectItem value="Réceptionniste">Réceptionniste</SelectItem><SelectItem value="Gouvernance">Gouvernance</SelectItem><SelectItem value="Sécurité">Sécurité</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleUpdateStaff}>Enregistrer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-primary" /> 
-                WhatsApp {selectedStaff?.firstName}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <Textarea 
-                className="min-h-[120px]"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsMessageOpen(false)}>Annuler</Button>
-              <Button onClick={handleSendMessage} disabled={!messageText} className="gap-2">
-                <Send className="h-4 w-4" /> Envoyer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" /> 
-                Planning: {selectedStaff?.firstName}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="shiftDate">Date</Label>
-                <Input 
-                  id="shiftDate" 
-                  type="date" 
-                  value={scheduleData.date}
-                  onChange={(e) => setScheduleData({...scheduleData, date: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shiftType">Shift</Label>
-                <Select 
-                  value={scheduleData.shift} 
-                  onValueChange={(val) => setScheduleData({...scheduleData, shift: val})}
-                >
-                  <SelectTrigger id="shiftType">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Morning">Matin</SelectItem>
-                    <SelectItem value="Afternoon">Après-midi</SelectItem>
-                    <SelectItem value="Night">Nuit</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsScheduleOpen(false)}>Annuler</Button>
-              <Button onClick={handleUpdateSchedule}>Confirmer</Button>
+              <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="rounded-2xl font-black uppercase text-[10px] tracking-widest">Annuler</Button>
+              <Button onClick={handleUpdateStaff} className="rounded-2xl font-black uppercase text-[10px] tracking-widest px-10">Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-10 text-center">
+            <div className="mx-auto h-20 w-20 bg-primary/5 rounded-full flex items-center justify-center text-primary mb-6"><Logo size={50} /></div>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                Supprimer {memberToDelete?.firstName} {memberToDelete?.lastName} ?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Cette action est irréversible.
-              </AlertDialogDescription>
+              <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer du personnel ?</AlertDialogTitle>
+              <AlertDialogDescription className="font-bold text-slate-500">Le compte de {memberToDelete?.firstName} sera désactivé et ses accès révoqués.</AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setMemberToDelete(null)}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer
-              </AlertDialogAction>
+            <AlertDialogFooter className="sm:justify-center mt-6 gap-2">
+              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 border-none bg-slate-50">Garder</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-10 bg-primary shadow-lg shadow-primary/20">Confirmer le retrait</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
