@@ -46,15 +46,20 @@ export default function LoginPage() {
         // Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Si l'auth échoue, on vérifie si c'est une invitation ou un Manager
+        // Si l'auth échoue, on vérifie si c'est une invitation.
+        // On simplifie la requête pour éviter les erreurs d'index composite sur email + accessCode
         const staffCol = collection(firestore, 'staff');
-        const q = query(staffCol, where("email", "==", normalizedEmail), where("accessCode", "==", rawPassword));
+        const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
 
         if (!staffSnap.empty) {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
+          if (staffData.accessCode !== rawPassword) {
+            throw new Error("Code d'accès incorrect.");
+          }
+
           // Création effective du compte Auth
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
@@ -78,7 +83,6 @@ export default function LoginPage() {
           });
 
           // Supprimer l'ancienne invitation (si ID différent de l'UID)
-          // On le fait avec un bloc try/catch séparé pour ne pas bloquer le login si les règles Firestore mettent du temps à se propager
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
@@ -89,14 +93,13 @@ export default function LoginPage() {
 
           toast({ title: "Bienvenue", description: "Votre compte collaborateur est activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
-          // Secours pour l'admin principal si non créé
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
-          throw new Error("Identifiants incorrects ou accès non autorisé. Veuillez contacter l'administration.");
+          throw new Error("Identifiants incorrects ou accès non autorisé.");
         }
       }
 
-      // Initialisation Admin Principal si nécessaire (si déjà dans Auth mais pas dans Firestore)
+      // Initialisation Admin Principal si nécessaire
       const uid = userCredential.user.uid;
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);

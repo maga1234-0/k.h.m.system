@@ -99,7 +99,7 @@ export default function StaffPage() {
 
   const handleAddStaff = () => {
     if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.phoneNumber || !newStaff.accessCode || !staffCollection) {
-      toast({ title: "Champ obligatoire", description: "Veuillez remplir toutes les informations incluant le mot de passe." });
+      toast({ title: "Champ obligatoire", description: "Veuillez remplir toutes les informations incluant le numéro de téléphone et le mot de passe." });
       return;
     }
 
@@ -135,7 +135,7 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // Si le rôle est Manager, s'assurer qu'il a les droits admin s'il a déjà un UID (déjà connecté)
+    // Si le rôle est Manager, s'assurer qu'il a les droits admin s'il a déjà un UID
     if (dataToUpdate.role === 'Manager' && editStaffData.id.length > 20) {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
