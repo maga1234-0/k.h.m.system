@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, LogIn, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
@@ -46,7 +46,7 @@ export default function LoginPage() {
         // Tentative de connexion normale
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Si l'utilisateur n'existe pas, on cherche s'il a une invitation
+        // Si l'utilisateur n'existe pas encore dans Auth, on vérifie s'il a une invitation dans Firestore
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -55,7 +55,7 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
-          // Vérification du code d'accès temporaire (utilisé comme mot de passe initial)
+          // Vérification du code d'accès temporaire
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès incorrect.");
           }
@@ -64,7 +64,7 @@ export default function LoginPage() {
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
-          // Si c'est un manager, on lui donne les droits admin
+          // Si c'est un manager, on lui donne les droits admin immédiatement
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -74,26 +74,26 @@ export default function LoginPage() {
             });
           }
 
-          // On met à jour son profil staff avec son UID réel
+          // On crée son profil staff réel avec son UID final
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" // On vide le code temporaire
+            accessCode: "" // On vide le code temporaire pour la sécurité
           });
 
-          // Nettoyage de l'invitation temporaire si l'ID était différent
+          // Suppression de l'invitation temporaire (si l'ID était différent)
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Nettoyage invitation ignoré ou impossible:", err);
+              console.warn("Nettoyage invitation ignoré:", err);
             }
           }
 
-          toast({ title: "Bienvenue", description: "Votre compte collaborateur est activé." });
+          toast({ title: "Bienvenue", description: "Votre compte collaborateur a été activé avec succès." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
-          // Création du compte admin principal s'il n'existe pas
+          // Création initiale de l'admin principal
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
           throw new Error("Identifiants incorrects ou accès non autorisé.");
@@ -102,7 +102,7 @@ export default function LoginPage() {
 
       const uid = userCredential.user.uid;
       
-      // Initialisation forcée des droits si admin principal
+      // Sécurité : Initialisation forcée des droits si admin principal
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
         const adminSnap = await getDoc(adminRoleRef);
@@ -165,7 +165,7 @@ export default function LoginPage() {
           <Alert variant="leafy" className="rounded-2xl border-primary/20 bg-primary/5">
             <ShieldAlert className="h-4 w-4 text-primary" />
             <AlertTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Accès Sécurisé</AlertTitle>
-            <AlertDescription className="text-xs font-bold text-primary/80">Identifiez-vous pour accéder à la console de gestion.</AlertDescription>
+            <AlertDescription className="text-xs font-bold text-primary/80">Identifiez-vous pour accéder à la console de gestion hôtelière.</AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-5">
@@ -174,7 +174,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                className="h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-500 bg-white dark:bg-slate-800 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -186,7 +186,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-slate-800 text-base"
+                  className="pr-12 h-14 rounded-xl border-2 border-slate-400 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-900 dark:text-white placeholder:text-slate-500 bg-white dark:bg-slate-800 text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
