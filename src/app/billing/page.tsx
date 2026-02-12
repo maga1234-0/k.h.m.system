@@ -147,6 +147,7 @@ export default function BillingPage() {
 
     toast({ title: "Préparation de l'envoi", description: "Génération du PDF et ouverture de WhatsApp..." });
 
+    // Petit délai pour laisser le dialogue s'afficher et html2canvas capturer le DOM
     setTimeout(async () => {
       const blob = await generatePDFBlob(invoice);
       if (blob) {
