@@ -28,7 +28,9 @@ import {
   Copy,
   Check,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { 
   Dialog, 
@@ -87,7 +89,7 @@ export default function StaffPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<any>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [newStaff, setNewStaff] = useState({
     firstName: "",
@@ -96,7 +98,7 @@ export default function StaffPage() {
     phoneNumber: "",
     role: "Réceptionniste",
     status: "En Service",
-    accessCode: ""
+    accessCode: "" // On continue d'utiliser accessCode dans Firestore pour la compatibilité, mais on l'appelle "Mot de passe"
   });
 
   const [editStaffData, setEditStaffData] = useState<any>(null);
@@ -110,24 +112,9 @@ export default function StaffPage() {
     }
   }, [user, isAuthLoading, router]);
 
-  useEffect(() => {
-    if (isAddDialogOpen) {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setNewStaff({ 
-        firstName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: "",
-        role: "Réceptionniste",
-        status: "En Service",
-        accessCode: code
-      });
-    }
-  }, [isAddDialogOpen]);
-
   const handleAddStaff = () => {
-    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !staffCollection) {
-      toast({ title: "Champs requis", description: "Veuillez remplir le nom et l'email." });
+    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !staffCollection) {
+      toast({ title: "Champs requis", description: "Veuillez remplir tous les champs, y compris le mot de passe." });
       return;
     }
 
@@ -145,7 +132,7 @@ export default function StaffPage() {
     setIsAddDialogOpen(false);
     toast({
       title: "Membre ajouté",
-      description: `Le profil de ${staffData.firstName} a été créé. Mot de passe assigné.`,
+      description: `Le profil de ${staffData.firstName} a été créé avec succès.`,
     });
   };
 
@@ -182,13 +169,6 @@ export default function StaffPage() {
     setIsDeleteDialogOpen(false);
   };
 
-  const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
-    toast({ title: "Copié", description: "Le mot de passe a été copié." });
-  };
-
   if (isAuthLoading || !user) {
     return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -212,7 +192,18 @@ export default function StaffPage() {
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Gestion des accès et rôles</span>
             </div>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-transform active:scale-95">
+          <Button onClick={() => {
+            setNewStaff({
+              firstName: "",
+              lastName: "",
+              email: "",
+              phoneNumber: "",
+              role: "Réceptionniste",
+              status: "En Service",
+              accessCode: ""
+            });
+            setIsAddDialogOpen(true);
+          }} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-transform active:scale-95">
             <UserPlus className="h-4 w-4" /> Nouveau Membre
           </Button>
         </header>
@@ -293,19 +284,13 @@ export default function StaffPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="px-8 pb-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800 group-hover:border-primary/20 transition-colors">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">Mot de passe</span>
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-primary font-mono text-lg tracking-widest">••••••</span>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => copyToClipboard(member.accessCode)}>
-                            {copiedCode === member.accessCode ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                          </Button>
+                    <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800 group-hover:border-primary/20 transition-colors">
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground block mb-2">Mot de passe assigné</span>
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-primary font-mono text-sm tracking-wider">••••••••</span>
+                        <div className="flex gap-2">
+                           <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-black">MANAGER-ONLY</Badge>
                         </div>
-                      </div>
-                      <div className="p-4 bg-slate-50 dark:bg-background rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center group-hover:border-primary/20 transition-colors">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Permissions</span>
-                        <Logo size={24} className={member.role === 'Manager' ? 'text-primary' : 'text-muted-foreground opacity-20'} />
                       </div>
                     </div>
                     
@@ -329,7 +314,7 @@ export default function StaffPage() {
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">Assignez un rôle et générez le mot de passe.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">L'administrateur définit le mot de passe initial.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
@@ -364,13 +349,24 @@ export default function StaffPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mot de passe</Label>
-                  <div className="h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-primary text-xl shadow-inner">{newStaff.accessCode}</div>
+                  <div className="relative">
+                    <Input 
+                      type={showPassword ? "text" : "password"} 
+                      value={newStaff.accessCode} 
+                      onChange={(e) => setNewStaff({...newStaff, accessCode: e.target.value})} 
+                      className="h-12 rounded-2xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
+                      placeholder="Assigner MDP"
+                    />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14">Annuler</Button>
-              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20">Valider</Button>
+              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20">Créer le compte</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -380,7 +376,7 @@ export default function StaffPage() {
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black font-headline tracking-tighter text-primary">Modifier Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground mt-2">Mise à jour des informations du profil.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground mt-2">Mise à jour des informations et du mot de passe.</DialogDescription>
               </DialogHeader>
             </div>
             {editStaffData && (
@@ -395,19 +391,30 @@ export default function StaffPage() {
                     <Input value={editStaffData.lastName} onChange={(e) => setEditStaffData({...editStaffData, lastName: e.target.value})} className="h-12 rounded-2xl bg-muted/30 border-none font-bold" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle & Permissions</Label>
-                  <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
-                    <SelectTrigger className="h-12 rounded-2xl bg-muted/30 border-none font-bold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl">
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
-                      <SelectItem value="Gouvernance">Gouvernance</SelectItem>
-                      <SelectItem value="Sécurité">Sécurité</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
+                    <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
+                      <SelectTrigger className="h-12 rounded-2xl bg-muted/30 border-none font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        <SelectItem value="Manager">Manager</SelectItem>
+                        <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
+                        <SelectItem value="Gouvernance">Gouvernance</SelectItem>
+                        <SelectItem value="Sécurité">Sécurité</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nouveau Mot de passe</Label>
+                    <Input 
+                      type="text" 
+                      value={editStaffData.accessCode} 
+                      onChange={(e) => setEditStaffData({...editStaffData, accessCode: e.target.value})} 
+                      className="h-12 rounded-2xl bg-primary/5 border border-primary/10 font-bold text-primary" 
+                    />
+                  </div>
                 </div>
               </div>
             )}
