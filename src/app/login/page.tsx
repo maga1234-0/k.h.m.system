@@ -38,16 +38,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      let userCredential;
       const normalizedEmail = email.trim().toLowerCase();
       const rawPassword = password.trim();
+      let userCredential;
 
       try {
-        // Tentative de connexion standard
+        // 1. Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Si l'auth échoue, on vérifie si c'est une invitation.
-        // On simplifie la requête pour éviter les erreurs d'index composite sur email + accessCode
+        // 2. Si échec, vérifier si c'est une invitation staff
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -56,15 +55,16 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
+          // Vérification du code d'accès (qui sert de mot de passe initial)
           if (staffData.accessCode !== rawPassword) {
-            throw new Error("Code d'accès incorrect.");
+            throw new Error("Code d'accès ou mot de passe incorrect.");
           }
 
-          // Création effective du compte Auth
+          // 3. Création du compte Auth pour le collaborateur
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
-          // Octroi des privilèges admin si Manager
+          // 4. Octroi automatique des droits admin si rôle Manager
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -74,32 +74,33 @@ export default function LoginPage() {
             });
           }
 
-          // Liaison du document staff avec l'UID réel
+          // 5. Enregistrement du profil staff définitif
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" // On vide le code d'accès une fois utilisé
+            accessCode: "" // Sécurité : on vide le code d'accès temporaire
           });
 
-          // Supprimer l'ancienne invitation (si ID différent de l'UID)
+          // 6. Nettoyage de l'invitation temporaire
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
-            } catch (delError) {
-              console.warn("Invitation cleanup delayed", delError);
+            } catch (err) {
+              console.warn("Cleanup warning:", err);
             }
           }
 
-          toast({ title: "Bienvenue", description: "Votre compte collaborateur est activé." });
+          toast({ title: "Bienvenue", description: "Votre compte est maintenant activé." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
+          // Création forcée pour l'admin principal si inexistant
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
-          throw new Error("Identifiants incorrects ou accès non autorisé.");
+          throw new Error("Compte inexistant ou identifiants invalides.");
         }
       }
 
-      // Initialisation Admin Principal si nécessaire
+      // 7. Initialisation des droits pour l'admin principal
       const uid = userCredential.user.uid;
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
@@ -127,9 +128,11 @@ export default function LoginPage() {
       
       router.push('/');
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
-        title: 'Accès refusé',
-        description: error.message || 'Identifiants invalides.',
+        variant: "destructive",
+        title: 'Accès Refusé',
+        description: error.message || 'Vérifiez vos identifiants.',
       });
     } finally {
       setIsLoading(false);
@@ -154,14 +157,14 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="font-headline text-3xl font-black tracking-tighter">ImaraPMS</CardTitle>
-            <CardDescription className="text-[10px] uppercase tracking-[0.4em] font-black text-primary">Console Collaborateurs</CardDescription>
+            <CardDescription className="text-[10px] uppercase tracking-[0.4em] font-black text-primary">Portail Authentifié</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-8 pt-0">
           <Alert variant="leafy" className="rounded-2xl border-primary/10 bg-primary/5">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Sécurité Active</AlertTitle>
-            <AlertDescription className="text-xs font-bold">Connectez-vous pour gérer l'établissement.</AlertDescription>
+            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Accès Sécurisé</AlertTitle>
+            <AlertDescription className="text-xs font-bold">Identifiez-vous pour accéder à la console.</AlertDescription>
           </Alert>
 
           <form onSubmit={handleAuth} className="space-y-5">
@@ -170,7 +173,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50"
+                className="h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50 bg-white dark:bg-slate-800"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -182,7 +185,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-12 h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50"
+                  className="pr-12 h-12 rounded-xl border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-foreground placeholder:text-muted-foreground/50 bg-white dark:bg-slate-800"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -198,13 +201,13 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full font-black uppercase tracking-widest h-14 rounded-2xl text-[10px] shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 mt-2" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-              Se Connecter
+              Accéder au système
             </Button>
           </form>
         </CardContent>
         <CardFooter className="pb-10 pt-0 flex flex-col items-center gap-2">
            <div className="h-px w-16 bg-slate-100 dark:bg-slate-800 mb-2" />
-           <p className="text-[8px] text-muted-foreground uppercase tracking-[0.5em] font-black opacity-60">Prestige & Excellence</p>
+           <p className="text-[8px] text-muted-foreground uppercase tracking-[0.5em] font-black opacity-60">ImaraPMS • Prestige & Excellence</p>
         </CardFooter>
       </Card>
     </div>

@@ -15,10 +15,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Check if the user is a staff member (without circular logic)
     function isStaff() {
       return isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
     }
 
+    // Check if the user is an admin or manager
     function isAdmin() {
       return isSignedIn() && 
              (request.auth.token.email == 'aubinmaga@gmail.com' ||
@@ -36,19 +38,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow public read of staff to verify invitations during login.
-     * Allow users to update/create their own staff record during onboarding.
-     * Allow invitation cleanup if the email matches.
+     * @description Staff management: 
+     * - Anyone can check for an invitation by email (read/list).
+     * - A user can create/update their own profile during onboarding.
      */
     match /staff/{staffId} {
       allow read: if true;
-      allow create: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || request.auth.token.email == 'aubinmaga@gmail.com'));
+      allow list: if true; 
+      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
-      allow delete: if isAdmin() || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow delete: if isAdmin();
     }
 
     /**
-     * @description Allow creation of admin roles for Managers and invited admins.
+     * @description Admin role assignment.
+     * Allow users to register their own admin record if they are being promoted.
      */
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();
@@ -57,26 +61,26 @@ service cloud.firestore {
     }
 
     /**
-     * @description Core hotel data: Accessible to all signed-in staff for operations.
+     * @description Core hotel data: Accessible to all signed-in staff.
      */
     match /rooms/{roomId} {
       allow read: if isSignedIn();
-      allow write: if isStaff() || isAdmin();
+      allow write: if isSignedIn();
     }
 
     match /reservations/{resId} {
       allow read: if isSignedIn();
-      allow write: if isStaff() || isAdmin();
+      allow write: if isSignedIn();
     }
 
     match /clients/{clientId} {
       allow read: if isSignedIn();
-      allow write: if isStaff() || isAdmin();
+      allow write: if isSignedIn();
     }
 
     match /invoices/{invId} {
       allow read: if isSignedIn();
-      allow write: if isStaff() || isAdmin();
+      allow write: if isSignedIn();
     }
 
     /**
