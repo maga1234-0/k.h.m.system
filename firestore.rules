@@ -15,7 +15,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if the user is a staff member (without circular logic)
+    // Check if the user is a staff member
     function isStaff() {
       return isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
     }
@@ -39,12 +39,11 @@ service cloud.firestore {
 
     /**
      * @description Staff management: 
-     * - Anyone can check for an invitation by email (read/list).
+     * - Anyone can check for an invitation by email (read/list) to allow login.
      * - A user can create/update their own profile during onboarding.
      */
     match /staff/{staffId} {
-      allow read: if true;
-      allow list: if true; 
+      allow read, list: if true; 
       allow create: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
       allow delete: if isAdmin();
@@ -52,7 +51,7 @@ service cloud.firestore {
 
     /**
      * @description Admin role assignment.
-     * Allow users to register their own admin record if they are being promoted.
+     * Allow users to register their own admin record if they are being promoted (e.g. Managers).
      */
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();

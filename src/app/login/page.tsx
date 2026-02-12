@@ -47,6 +47,7 @@ export default function LoginPage() {
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
         // 2. Si échec, vérifier si c'est une invitation staff
+        // On effectue une recherche sécurisée sur la collection staff
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -82,7 +83,7 @@ export default function LoginPage() {
             accessCode: "" // Sécurité : on vide le code d'accès temporaire
           });
 
-          // 6. Nettoyage de l'invitation temporaire
+          // 6. Nettoyage de l'invitation temporaire si nécessaire
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
