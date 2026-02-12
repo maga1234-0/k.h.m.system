@@ -6,7 +6,7 @@ service cloud.firestore {
     /**
      * Core Philosophy:
      * Restricted access for ImaraPMS.
-     * Only authenticated admin accounts are permitted to view or manage data.
+     * Support for invitation-based staff onboarding.
      */
 
     // --- Helper Functions ---
@@ -16,9 +16,6 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Reordered to check the primary admin email FIRST.
-      // This prevents recursive rule evaluation during the initial setup
-      // when the roles_admin document doesn't exist yet or is being evaluated.
       return isSignedIn() && 
              (request.auth.token.email == 'aubinmaga@gmail.com' ||
               exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
@@ -27,24 +24,35 @@ service cloud.firestore {
     // --- Rules ---
 
     /**
-     * @description Everything is restricted to the Administrator for maximum security.
+     * @description Allow public read of settings to display hotel name/branding.
      */
-    match /{document=**} {
-      allow read, write: if isAdmin();
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
-     * @description Specific allows to bootstrap the primary admin account roles.
+     * @description Allow public read of staff to verify invitations during login.
+     * Write access is restricted to admins.
      */
-    match /roles_admin/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
+    match /staff/{staffId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || (isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com');
     }
 
-    match /staff/{staffId} {
-      allow create: if isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com';
+    /**
+     * @description Allow creation of admin roles for bootstrapping and invited managers.
+     */
+    match /roles_admin/{staffId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin() || request.auth.uid == staffId);
+      allow update, delete: if isAdmin();
     }
-    
-    match /settings/{settingId} {
+
+    /**
+     * @description All other documents require admin privileges.
+     */
+    match /{document=**} {
       allow read, write: if isAdmin();
     }
   }

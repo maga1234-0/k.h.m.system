@@ -41,26 +41,31 @@ export default function LoginPage() {
       let userCredential;
       
       try {
+        // Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (authError: any) {
+        // Si l'utilisateur n'existe pas, on vérifie s'il est invité
         if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
           
           if (email === PRIMARY_ADMIN) {
+             // Bootstrap de l'admin principal
              userCredential = await createUserWithEmailAndPassword(auth, email, password);
           } 
           else {
-            // Check staff registry for invitation
+            // Vérification dans le registre du personnel (Invitation)
             const staffCol = collection(firestore, 'staff');
-            const q = query(staffCol, where("email", "==", email), where("accessCode", "==", password));
+            const q = query(staffCol, where("email", "==", email.trim()), where("accessCode", "==", password.trim()));
             const staffSnap = await getDocs(q);
 
             if (!staffSnap.empty) {
               const staffData = staffSnap.docs[0].data();
-              userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              const invitationDocId = staffSnap.docs[0].id;
               
+              // Création du compte Auth
+              userCredential = await createUserWithEmailAndPassword(auth, email, password);
               const uid = userCredential.user.uid;
               
-              // If role is Manager, grant admin access automatically
+              // Si c'est un Manager, on lui donne les droits admin
               if (staffData.role === 'Manager') {
                 await setDoc(doc(firestore, 'roles_admin', uid), {
                   id: uid,
@@ -70,16 +75,21 @@ export default function LoginPage() {
                 });
               }
 
-              // Save finalized staff profile
+              // On finalise son profil avec son UID réel
               await setDoc(doc(firestore, 'staff', uid), {
                 ...staffData,
                 id: uid,
                 status: "En Service"
               });
+
+              // On supprime l'invitation temporaire si elle est différente de l'UID
+              if (invitationDocId !== uid) {
+                // Optionnel: on peut garder ou supprimer. Ici on laisse pour l'instant.
+              }
               
               toast({ title: "Bienvenue", description: "Votre compte a été initialisé." });
             } else {
-              throw new Error("Identifiants incorrects ou compte non autorisé.");
+              throw new Error("Identifiants incorrects ou vous n'avez pas encore été invité par l'administrateur.");
             }
           }
         } else {
@@ -87,34 +97,37 @@ export default function LoginPage() {
         }
       }
 
+      // Vérification finale des droits pour l'admin principal
       const uid = userCredential.user.uid;
-      const adminRoleRef = doc(firestore, 'roles_admin', uid);
-      const adminSnap = await getDoc(adminRoleRef);
-      
-      if (!adminSnap.exists() && email === PRIMARY_ADMIN) {
-        await setDoc(adminRoleRef, {
-          id: uid,
-          email: email,
-          role: 'Administrateur',
-          createdAt: new Date().toISOString()
-        });
+      if (email === PRIMARY_ADMIN) {
+        const adminRoleRef = doc(firestore, 'roles_admin', uid);
+        const adminSnap = await getDoc(adminRoleRef);
+        
+        if (!adminSnap.exists()) {
+          await setDoc(adminRoleRef, {
+            id: uid,
+            email: email,
+            role: 'Administrateur',
+            createdAt: new Date().toISOString()
+          });
 
-        await setDoc(doc(firestore, 'staff', uid), {
-          id: uid,
-          firstName: "Principal",
-          lastName: "Administrateur",
-          email: email,
-          role: "Manager",
-          status: "En Service",
-          createdAt: new Date().toISOString()
-        });
+          await setDoc(doc(firestore, 'staff', uid), {
+            id: uid,
+            firstName: "Principal",
+            lastName: "Administrateur",
+            email: email,
+            role: "Manager",
+            status: "En Service",
+            createdAt: new Date().toISOString()
+          });
+        }
       }
       
       router.push('/');
     } catch (error: any) {
       toast({
         title: 'Accès refusé',
-        description: error.message || 'Vérifiez vos identifiants.',
+        description: error.message || 'Vérifiez vos identifiants ou contactez la direction.',
       });
     } finally {
       setIsLoading(false);

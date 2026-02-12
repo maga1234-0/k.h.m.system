@@ -124,7 +124,7 @@ export default function StaffPage() {
     setIsAddDialogOpen(false);
     toast({
       title: "Collaborateur Ajouté",
-      description: `Le profil de ${staffData.firstName} a été créé.`,
+      description: `Le profil de ${staffData.firstName} a été créé. Communiquez-lui son mot de passe.`,
     });
   };
 
@@ -136,9 +136,8 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
-    // If role changed to Manager and we have a UID (account already initialized)
-    // In many cases ID becomes UID after login page runs its init logic.
-    if (dataToUpdate.role === 'Manager' && editStaffData.id.length > 20) {
+    // Synchronisation admin si rôle Manager
+    if (dataToUpdate.role === 'Manager') {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
         id: editStaffData.id,
@@ -193,7 +192,7 @@ export default function StaffPage() {
             <Separator orientation="vertical" className="h-8" />
             <div className="flex flex-col">
               <h1 className="font-headline font-black text-xl text-primary tracking-tight leading-none">Ressources Humaines</h1>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Gestion des accès • Full Manager Access</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Gestion des accès • Console Direction</span>
             </div>
           </div>
           <Button onClick={() => {
@@ -386,7 +385,7 @@ export default function StaffPage() {
             </div>
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14">Annuler</Button>
-              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20">Créer le compte</Button>
+              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20 bg-primary text-white">Créer le compte</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -450,7 +449,7 @@ export default function StaffPage() {
             )}
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14">Annuler</Button>
-              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20">Sauvegarder</Button>
+              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-14 shadow-lg shadow-primary/20 bg-primary text-white">Sauvegarder</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
