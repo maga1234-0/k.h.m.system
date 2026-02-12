@@ -15,6 +15,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isStaff() {
+      return isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
     function isAdmin() {
       return isSignedIn() && 
              (request.auth.token.email == 'aubinmaga@gmail.com' ||
@@ -32,16 +36,18 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow public read of staff to verify invitations during login.
-     * Write access is restricted to admins.
+     * @description Allow public read of staff to verify invitations.
+     * Allow users to update their own staff record during onboarding.
      */
     match /staff/{staffId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() || (isSignedIn() && request.auth.token.email == 'aubinmaga@gmail.com');
+      allow create: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || request.auth.token.email == 'aubinmaga@gmail.com'));
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == staffId);
+      allow delete: if isAdmin();
     }
 
     /**
-     * @description Allow creation of admin roles for bootstrapping and invited managers.
+     * @description Allow creation of admin roles for Managers and invited admins.
      */
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();
@@ -50,7 +56,30 @@ service cloud.firestore {
     }
 
     /**
-     * @description All other documents require admin privileges.
+     * @description Core hotel data: Accessible to all signed-in staff for operations.
+     */
+    match /rooms/{roomId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    match /reservations/{resId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    match /clients/{clientId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    match /invoices/{invId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff() || isAdmin();
+    }
+
+    /**
+     * @description Default deny for everything else.
      */
     match /{document=**} {
       allow read, write: if isAdmin();

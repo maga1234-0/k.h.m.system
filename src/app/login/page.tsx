@@ -41,31 +41,29 @@ export default function LoginPage() {
       let userCredential;
       
       try {
-        // Tentative de connexion standard avec Firebase Auth
+        // Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
       } catch (authError: any) {
-        // Si l'utilisateur n'existe pas encore dans Auth, on vérifie s'il est dans notre collection staff (invité)
-        if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
+        // Si l'utilisateur n'existe pas dans Firebase Auth, on vérifie l'invitation dans Firestore
+        if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential' || authError.code === 'auth/invalid-email') {
           
-          // Cas spécial : Admin principal bootstrap
           if (email.trim() === PRIMARY_ADMIN) {
              userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
           } 
           else {
-            // Vérification dans le registre du personnel (Invitation/Enregistrement manuel par admin)
+            // Recherche de l'invitation (basée sur le mot de passe défini par l'admin)
             const staffCol = collection(firestore, 'staff');
             const q = query(staffCol, where("email", "==", email.trim()), where("accessCode", "==", password.trim()));
             const staffSnap = await getDocs(q);
 
             if (!staffSnap.empty) {
               const staffData = staffSnap.docs[0].data();
-              const staffDocId = staffSnap.docs[0].id;
               
-              // Création du compte Firebase Auth réel pour cet utilisateur
+              // Création effective du compte Auth
               userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
               const uid = userCredential.user.uid;
               
-              // Si le rôle est Manager, octroyer l'accès total automatique
+              // Octroi des privilèges admin si Manager
               if (staffData.role === 'Manager') {
                 await setDoc(doc(firestore, 'roles_admin', uid), {
                   id: uid,
@@ -75,17 +73,16 @@ export default function LoginPage() {
                 });
               }
 
-              // Mettre à jour le document staff avec l'UID réel de Firebase Auth
+              // Liaison du document staff avec l'UID réel
               await setDoc(doc(firestore, 'staff', uid), {
                 ...staffData,
                 id: uid,
                 status: "En Service"
               });
 
-              // On pourrait supprimer l'ancien document si l'ID était différent, mais ici on synchronise
-              toast({ title: "Bienvenue", description: "Votre accès collaborateur a été configuré." });
+              toast({ title: "Bienvenue", description: "Votre compte collaborateur est prêt." });
             } else {
-              throw new Error("Identifiants incorrects ou accès non encore autorisé par la direction.");
+              throw new Error("Identifiants incorrects ou vous n'avez pas encore été invité par l'administration.");
             }
           }
         } else {
@@ -93,7 +90,7 @@ export default function LoginPage() {
         }
       }
 
-      // Vérification et enregistrement final pour l'administrateur principal
+      // Cas spécial Admin Principal
       const uid = userCredential.user.uid;
       if (email.trim() === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
@@ -166,7 +163,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 placeholder="nom@hotel.com"
-                className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-base px-6"
+                className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-base px-6 text-foreground"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -178,7 +175,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pr-14 h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-base px-6"
+                  className="pr-14 h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold text-base px-6 text-foreground"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
