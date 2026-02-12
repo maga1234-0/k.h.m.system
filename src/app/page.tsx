@@ -138,7 +138,7 @@ export default function DashboardPage() {
             <Separator orientation="vertical" className="h-8" />
             <div className="flex flex-col">
               <h1 className="font-headline font-black text-2xl text-primary tracking-tight leading-none">ImaraPMS - Console de Gestion</h1>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Hôtellerie de Prestige • {staffProfile?.firstName || 'Directeur'}</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">Hôtellerie de Prestige • {staffProfile?.firstName || 'Collaborateur'}</span>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -257,114 +257,6 @@ export default function DashboardPage() {
                 ))}
               </div>
             </section>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Recent Activity */}
-            <Card className="lg:col-span-2 border-none rounded-[3rem] overflow-hidden shadow-sm bg-white dark:bg-card">
-              <CardHeader className="p-10">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="font-headline text-3xl font-black text-foreground tracking-tighter">Flux Réception</CardTitle>
-                    <CardDescription className="text-muted-foreground text-sm mt-2 font-medium">Dernières interactions à la réception.</CardDescription>
-                  </div>
-                  <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-2xl px-6" onClick={() => router.push('/reservations')}>
-                    Voir tout <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y border-t">
-                  {recentReservations && recentReservations.length > 0 ? recentReservations.map((res, idx) => (
-                    <div key={res.id} className="p-8 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-primary/5 transition-all group animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                      <div className="flex items-center gap-6">
-                        <div className="h-16 w-16 rounded-[1.5rem] bg-muted flex flex-col items-center justify-center font-black group-hover:bg-primary/10 group-hover:text-primary transition-all shadow-inner">
-                          <span className="text-[9px] uppercase tracking-tighter text-muted-foreground group-hover:text-primary/70">CH.</span>
-                          <span className="text-2xl leading-none tracking-tighter">{res.roomNumber}</span>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="font-black text-xl text-foreground tracking-tight">{res.guestName}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-3 font-medium">
-                            <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatSafeTime(res.createdAt)}</div>
-                            <Separator orientation="vertical" className="h-3" />
-                            <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {res.numberOfGuests || 1} client(s)</div>
-                          </div>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className={`rounded-2xl px-6 py-2 font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-sm ${
-                        res.status === 'Checked In' ? 'bg-emerald-500/10 text-emerald-600' : 
-                        res.status === 'Checked Out' ? 'bg-slate-100 text-slate-500' : 
-                        'bg-primary/10 text-primary'
-                      }`}>
-                        {res.status === 'Checked In' ? 'En Séjour' : res.status === 'Checked Out' ? 'Départ' : res.status}
-                      </Badge>
-                    </div>
-                  )) : (
-                    <div className="p-20 text-center text-muted-foreground italic flex flex-col items-center gap-4">
-                      <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center opacity-20">
-                        <Logo size={60} />
-                      </div>
-                      <p className="font-black uppercase tracking-[0.2em] text-sm">Aucune activité enregistrée</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Operational Recap */}
-            <Card className="border-none rounded-[3rem] overflow-hidden shadow-sm bg-white dark:bg-card">
-              <CardHeader className="p-10">
-                <CardTitle className="font-headline text-2xl font-black text-primary flex items-center gap-3 tracking-tighter">
-                  <Logo size={24} className="text-primary" /> Récap Opérationnel
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-10 pt-0 space-y-10">
-                <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 shadow-inner relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10"><Zap className="h-12 w-12" /></div>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-6">Focus Revenus (Mensuel)</p>
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-end">
-                        <span className="text-xs text-muted-foreground font-black uppercase tracking-widest">Hébergement</span>
-                        <span className="text-xl font-black tracking-tighter">{kpis.stayRev.toLocaleString()} $</span>
-                      </div>
-                      <Progress value={stayPercent} className="h-2 rounded-full bg-primary/10" />
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-end">
-                        <span className="text-xs text-muted-foreground font-black uppercase tracking-widest">Services Extras</span>
-                        <span className="text-xl font-black tracking-tighter">{kpis.extraRev.toLocaleString()} $</span>
-                      </div>
-                      <Progress value={extraPercent} className="h-2 rounded-full bg-indigo-500/10" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-2 mb-4">Indicateurs de Qualité</p>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-background border border-slate-100 flex items-center gap-5 group hover:border-primary/30 transition-all">
-                      <div className="h-12 w-12 rounded-2xl bg-white border shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <Calendar className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-black tracking-tight leading-none">Excellence</p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Imara Experience</p>
-                      </div>
-                    </div>
-                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-background border border-slate-100 flex items-center gap-5 group hover:border-primary/30 transition-all">
-                      <div className="h-12 w-12 rounded-2xl bg-white border shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <CheckCircle2 className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-black tracking-tight leading-none">98.5%</p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Satisfaction Client</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </main>
       </SidebarInset>

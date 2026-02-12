@@ -36,7 +36,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow public read of staff to verify invitations.
+     * @description Allow public read of staff to verify invitations during login.
      * Allow users to update their own staff record during onboarding.
      */
     match /staff/{staffId} {

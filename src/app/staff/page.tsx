@@ -20,11 +20,10 @@ import {
   Loader2,
   Edit2,
   Trash2,
-  RefreshCw,
-  MoreHorizontal,
   Eye,
   EyeOff,
-  Lock
+  ShieldCheck,
+  MoreHorizontal
 } from "lucide-react";
 import { 
   Dialog, 
@@ -52,12 +51,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { 
   useFirestore, 
   useCollection, 
@@ -105,8 +98,8 @@ export default function StaffPage() {
   }, [user, isAuthLoading, router]);
 
   const handleAddStaff = () => {
-    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.accessCode || !newStaff.phoneNumber || !staffCollection) {
-      toast({ title: "Informations manquantes", description: "Veuillez remplir tous les champs obligatoires." });
+    if (!newStaff.firstName || !newStaff.lastName || !newStaff.email || !newStaff.phoneNumber || !newStaff.accessCode || !staffCollection) {
+      toast({ title: "Champ obligatoire", description: "Veuillez remplir toutes les informations incluant le mot de passe." });
       return;
     }
 
@@ -131,10 +124,7 @@ export default function StaffPage() {
       status: "En Service",
       accessCode: "" 
     });
-    toast({
-      title: "Compte Créé",
-      description: `Le profil de ${staffData.firstName} a été ajouté au système.`,
-    });
+    toast({ title: "Compte Créé", description: `Profil de ${staffData.firstName} enregistré.` });
   };
 
   const handleUpdateStaff = () => {
@@ -145,6 +135,7 @@ export default function StaffPage() {
     
     updateDocumentNonBlocking(staffRef, dataToUpdate);
 
+    // Si le rôle change vers Manager, on pré-autorise si nécessaire (sera validé à la connexion)
     if (dataToUpdate.role === 'Manager') {
       const adminRef = doc(firestore, 'roles_admin', editStaffData.id);
       setDocumentNonBlocking(adminRef, {
@@ -157,7 +148,7 @@ export default function StaffPage() {
     
     setIsEditDialogOpen(false);
     setEditStaffData(null);
-    toast({ title: "Profil Actualisé", description: "Les modifications ont été enregistrées." });
+    toast({ title: "Profil Mis à Jour", description: "Modifications enregistrées." });
   };
 
   const handleDeleteConfirm = () => {
@@ -169,7 +160,7 @@ export default function StaffPage() {
     const adminRef = doc(firestore, 'roles_admin', memberToDelete.id);
     deleteDocumentNonBlocking(adminRef);
 
-    toast({ title: "Collaborateur Retiré", description: "Le compte a été supprimé de la base de données." });
+    toast({ title: "Accès Révoqué", description: "Le collaborateur a été retiré du système." });
     setMemberToDelete(null);
     setIsDeleteDialogOpen(false);
   };
@@ -184,7 +175,7 @@ export default function StaffPage() {
   );
 
   return (
-    <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-background">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-background">
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-auto bg-transparent">
         <header className="flex h-20 items-center border-b px-8 bg-white/80 dark:bg-background/80 backdrop-blur-xl sticky top-0 z-50 justify-between">
@@ -194,7 +185,7 @@ export default function StaffPage() {
             <h1 className="font-headline font-black text-xl text-primary tracking-tight">Ressources Humaines</h1>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-2xl h-11 px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20">
-            <UserPlus className="h-4 w-4" /> Ajouter Personnel
+            <UserPlus className="h-4 w-4" /> Inviter Collaborateur
           </Button>
         </header>
 
@@ -212,14 +203,14 @@ export default function StaffPage() {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {isLoading ? (
               <div className="col-span-full flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
-            ) : filteredStaff?.map((member, idx) => (
-              <Card key={member.id} className="border-none shadow-sm hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden relative">
+            ) : filteredStaff?.map((member) => (
+              <Card key={member.id} className="border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2.5rem] bg-white dark:bg-card group overflow-hidden relative">
                 
                 <div className="absolute top-6 right-6 z-20 flex gap-2">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all"
+                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary"
                     onClick={() => { setEditStaffData({...member}); setIsEditDialogOpen(true); }}
                   >
                     <Edit2 className="h-4 w-4" />
@@ -227,7 +218,7 @@ export default function StaffPage() {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all"
+                    className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary"
                     onClick={() => { setMemberToDelete(member); setIsDeleteDialogOpen(true); }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -236,7 +227,7 @@ export default function StaffPage() {
 
                 <CardHeader className="flex flex-row items-center gap-6 p-8">
                   <Avatar className="h-16 w-16 rounded-2xl shadow-xl border-2 border-white dark:border-slate-800">
-                    <AvatarFallback className="bg-primary/10 text-primary font-black">{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary font-black uppercase">{member.firstName?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
                     <CardTitle className="text-xl font-black font-headline tracking-tighter leading-none">{member.firstName} {member.lastName}</CardTitle>
@@ -263,32 +254,32 @@ export default function StaffPage() {
         </main>
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
+          <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black font-headline tracking-tighter text-primary">Nouveau Collaborateur</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground italic">Définissez les accès et les coordonnées.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground">Identifiants de connexion et coordonnées.</DialogDescription>
               </DialogHeader>
             </div>
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prénom</Label>
-                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
+                  <Input value={newStaff.firstName} onChange={(e) => setNewStaff({...newStaff, firstName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nom</Label>
-                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
+                  <Input value={newStaff.lastName} onChange={(e) => setNewStaff({...newStaff, lastName: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail Professionnel</Label>
-                  <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">E-mail</Label>
+                  <Input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">N° Téléphone</Label>
-                  <Input value={newStaff.phoneNumber} onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold focus:ring-2 focus:ring-primary/20" />
+                  <Input value={newStaff.phoneNumber} onChange={(e) => setNewStaff({...newStaff, phoneNumber: e.target.value})} className="h-12 rounded-xl bg-muted/30 border-none font-bold" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -296,7 +287,7 @@ export default function StaffPage() {
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
                   <Select value={newStaff.role} onValueChange={(val) => setNewStaff({...newStaff, role: val})}>
                     <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-xl">
+                    <SelectContent className="rounded-xl">
                       <SelectItem value="Manager">Manager (Accès Total)</SelectItem>
                       <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
                       <SelectItem value="Gouvernance">Gouvernance</SelectItem>
@@ -311,7 +302,7 @@ export default function StaffPage() {
                       type={showPassword ? "text" : "password"} 
                       value={newStaff.accessCode} 
                       onChange={(e) => setNewStaff({...newStaff, accessCode: e.target.value})} 
-                      className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10 focus:ring-2 focus:ring-primary/20" 
+                      className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
                     />
                     <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -322,37 +313,17 @@ export default function StaffPage() {
             </div>
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12">Annuler</Button>
-              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white shadow-lg shadow-primary/20">Créer le compte</Button>
+              <Button onClick={handleAddStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white">Créer Accès</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl p-10 text-center">
-            <div className="mx-auto h-20 w-20 bg-primary/5 rounded-full flex items-center justify-center text-primary mb-6">
-              <Trash2 className="h-10 w-10" />
-            </div>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Retirer ce collaborateur ?</AlertDialogTitle>
-              <AlertDialogDescription className="font-bold text-slate-500 mt-2">
-                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera désactivé et ses accès révoqués.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
-              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-12 px-8 border-none bg-slate-100 hover:bg-slate-200 transition-colors">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-12 px-10 bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-                Confirmer la suppression
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden bg-background">
+          <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden">
             <div className="bg-primary/5 p-8 border-b border-primary/10">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black font-headline tracking-tighter text-primary">Modifier Profil</DialogTitle>
-                <DialogDescription className="font-bold text-muted-foreground italic">Mise à jour des informations et accès.</DialogDescription>
+                <DialogDescription className="font-bold text-muted-foreground">Mise à jour des accès et informations.</DialogDescription>
               </DialogHeader>
             </div>
             {editStaffData && (
@@ -382,7 +353,7 @@ export default function StaffPage() {
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rôle</Label>
                     <Select value={editStaffData.role} onValueChange={(val) => setEditStaffData({...editStaffData, role: val})}>
                       <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none font-bold"><SelectValue /></SelectTrigger>
-                      <SelectContent className="rounded-xl border-none shadow-xl">
+                      <SelectContent className="rounded-xl">
                         <SelectItem value="Manager">Manager</SelectItem>
                         <SelectItem value="Réceptionniste">Réceptionniste</SelectItem>
                         <SelectItem value="Gouvernance">Gouvernance</SelectItem>
@@ -391,13 +362,13 @@ export default function StaffPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Modifier Mot de passe</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Changer Mot de passe</Label>
                     <div className="relative">
                       <Input 
                         type={showEditPassword ? "text" : "password"} 
                         value={editStaffData.accessCode || ""} 
                         onChange={(e) => setEditStaffData({...editStaffData, accessCode: e.target.value})} 
-                        className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10 focus:ring-2 focus:ring-primary/20" 
+                        className="h-12 rounded-xl bg-primary/5 border border-primary/10 font-black text-primary pr-10" 
                       />
                       <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary" onClick={() => setShowEditPassword(!showEditPassword)}>
                         {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -409,10 +380,28 @@ export default function StaffPage() {
             )}
             <DialogFooter className="p-8 bg-muted/5 border-t gap-3">
               <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12">Annuler</Button>
-              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white shadow-lg shadow-primary/20">Enregistrer</Button>
+              <Button onClick={handleUpdateStaff} className="flex-1 rounded-2xl font-black uppercase text-[10px] h-12 bg-primary text-white">Sauvegarder</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent className="rounded-[2.5rem] p-10 text-center border-none shadow-2xl">
+            <div className="mx-auto h-20 w-20 bg-primary/5 rounded-full flex items-center justify-center text-primary mb-6">
+              <Trash2 className="h-10 w-10" />
+            </div>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-2xl font-black font-headline tracking-tighter">Révoquer cet accès ?</AlertDialogTitle>
+              <AlertDialogDescription className="font-bold text-slate-500 mt-2">
+                Le compte de <strong>{memberToDelete?.firstName} {memberToDelete?.lastName}</strong> sera définitivement supprimé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:justify-center mt-8 gap-3">
+              <AlertDialogCancel className="rounded-2xl font-black uppercase text-[10px] h-12 px-8 border-none bg-slate-100">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="rounded-2xl font-black uppercase text-[10px] h-12 px-10 bg-primary text-white">Confirmer la suppression</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
     </div>
   );
