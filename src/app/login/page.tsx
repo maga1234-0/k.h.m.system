@@ -43,8 +43,10 @@ export default function LoginPage() {
       let userCredential;
 
       try {
+        // Tentative de connexion standard
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
+        // Si l'utilisateur n'existe pas, on vérifie s'il y a une invitation dans 'staff'
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -53,13 +55,16 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
+          // Vérification du code d'accès temporaire
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès incorrect.");
           }
 
+          // Création du compte Firebase Auth réel
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
+          // Promotion automatique si c'est un Manager
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -69,23 +74,26 @@ export default function LoginPage() {
             });
           }
 
+          // Création du profil staff définitif lié à l'UID
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" 
+            accessCode: "" // On nettoie le code temporaire
           });
 
+          // Suppression de l'invitation temporaire
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
             } catch (err) {
-              console.warn("Nettoyage invitation ignoré:", err);
+              console.warn("Nettoyage invitation ignoré ou déjà effectué:", err);
             }
           }
 
           toast({ title: "Bienvenue", description: "Votre compte collaborateur a été activé avec succès." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
+          // Création du compte admin principal s'il n'existe pas
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
           throw new Error("Identifiants incorrects ou accès non autorisé.");
@@ -94,6 +102,7 @@ export default function LoginPage() {
 
       const uid = userCredential.user.uid;
       
+      // Configuration de l'admin principal si nécessaire
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
         const adminSnap = await getDoc(adminRoleRef);

@@ -19,18 +19,18 @@ service cloud.firestore {
     }
 
     match /staff/{staffId} {
-      // Lecture et recherche nécessaires pour vérifier les invitations avant/pendant la connexion
+      // Lecture et recherche nécessaires pour vérifier les invitations lors de l'onboarding
       allow read, list: if true; 
-      // Un utilisateur peut créer/modifier son propre profil lors de l'onboarding
-      allow create, update: if isSignedIn() && (isAdmin() || request.auth.uid == staffId);
-      // Un utilisateur peut supprimer son invitation temporaire si elle contient son email
-      allow delete: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || resource.data.email == request.auth.token.email));
+      // Un utilisateur peut créer/modifier son propre profil
+      allow create, update: if isSignedIn() && (request.auth.uid == staffId || isAdmin());
+      // Un utilisateur peut supprimer son invitation temporaire lors de l'activation
+      allow delete: if isAdmin() || (isSignedIn() && (request.auth.uid == staffId || (resource != null && resource.data.email == request.auth.token.email)));
     }
 
     match /roles_admin/{staffId} {
       allow read: if isSignedIn();
-      // Permet l'auto-promotion lors du premier login (Manager) ou via l'admin principal
-      allow create: if isSignedIn() && (request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin() || request.auth.uid == staffId);
+      // Permet l'auto-promotion (Manager) ou via l'admin principal
+      allow create: if isSignedIn() && (request.auth.uid == staffId || request.auth.token.email == 'aubinmaga@gmail.com' || isAdmin());
       allow update, delete: if isAdmin();
     }
 
