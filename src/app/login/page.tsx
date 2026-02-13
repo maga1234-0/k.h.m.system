@@ -43,10 +43,8 @@ export default function LoginPage() {
       let userCredential;
 
       try {
-        // Tentative de connexion normale
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, rawPassword);
       } catch (authError: any) {
-        // Si l'utilisateur n'existe pas encore dans Auth, on vérifie s'il a une invitation dans Firestore
         const staffCol = collection(firestore, 'staff');
         const q = query(staffCol, where("email", "==", normalizedEmail));
         const staffSnap = await getDocs(q);
@@ -55,16 +53,13 @@ export default function LoginPage() {
           const staffDoc = staffSnap.docs[0];
           const staffData = staffDoc.data();
           
-          // Vérification du code d'accès temporaire
           if (staffData.accessCode && staffData.accessCode !== rawPassword) {
             throw new Error("Code d'accès incorrect.");
           }
 
-          // Création du compte Firebase Auth
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
           const uid = userCredential.user.uid;
           
-          // Si c'est un manager, on lui donne les droits admin immédiatement
           if (staffData.role === 'Manager') {
             await setDoc(doc(firestore, 'roles_admin', uid), {
               id: uid,
@@ -74,15 +69,13 @@ export default function LoginPage() {
             });
           }
 
-          // On crée son profil staff réel avec son UID final
           await setDoc(doc(firestore, 'staff', uid), {
             ...staffData,
             id: uid,
             status: "En Service",
-            accessCode: "" // On vide le code temporaire pour la sécurité
+            accessCode: "" 
           });
 
-          // Suppression de l'invitation temporaire (si l'ID était différent)
           if (staffDoc.id !== uid) {
             try {
               await deleteDoc(doc(firestore, 'staff', staffDoc.id));
@@ -93,7 +86,6 @@ export default function LoginPage() {
 
           toast({ title: "Bienvenue", description: "Votre compte collaborateur a été activé avec succès." });
         } else if (normalizedEmail === PRIMARY_ADMIN) {
-          // Création initiale de l'admin principal
           userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, rawPassword);
         } else {
           throw new Error("Identifiants incorrects ou accès non autorisé.");
@@ -102,7 +94,6 @@ export default function LoginPage() {
 
       const uid = userCredential.user.uid;
       
-      // Sécurité : Initialisation forcée des droits si admin principal
       if (normalizedEmail === PRIMARY_ADMIN) {
         const adminRoleRef = doc(firestore, 'roles_admin', uid);
         const adminSnap = await getDoc(adminRoleRef);
