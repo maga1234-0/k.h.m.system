@@ -17,7 +17,8 @@ import {
   Loader2,
   TrendingUp,
   Users,
-  Zap
+  Zap,
+  Coffee
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
@@ -146,7 +147,7 @@ export default function DashboardPage() {
               </h2>
               <p className="text-slate-400 text-sm md:text-lg font-medium leading-relaxed">
                 Votre établissement affiche un taux d'occupation de <span className="text-primary font-black">{kpis.occupancy}%</span> ce matin. 
-                Les revenus du mois s'élèvent à <span className="text-white font-black">{kpis.monthlyRev.toLocaleString()} $</span>.
+                Les revenus du mois s'élèvent à <span className="text-white font-black">{kpis.monthlyRev.toLocaleString()} $</span>, dont <span className="text-emerald-400 font-black">{kpis.extraRev.toLocaleString()} $</span> issus des services extras.
               </p>
             </div>
             <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none translate-x-1/4 translate-y-1/4 scale-150">
@@ -156,9 +157,9 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "Chiffre d'Affaires", value: `${kpis.monthlyRev.toLocaleString()} $`, customIcon: Logo, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
+              { label: "CA Mensuel", value: `${kpis.monthlyRev.toLocaleString()} $`, customIcon: Logo, trend: "+12%", color: "text-primary", bg: "bg-primary/5" },
+              { label: "Revenus Services", value: `${kpis.extraRev.toLocaleString()} $`, icon: Coffee, trend: "En hausse", color: "text-emerald-500", bg: "bg-emerald-500/5" },
               { label: "Prix Moyen (ADR)", value: `${kpis.adr.toFixed(2)} $`, icon: TrendingUp, trend: "Stable", color: "text-indigo-500", bg: "bg-indigo-500/5" },
-              { label: "RevPAR", value: `${kpis.revpar.toFixed(2)} $`, customIcon: Logo, trend: "+5%", color: "text-emerald-500", bg: "bg-emerald-500/5" },
               { label: "Taux d'Occupation", value: `${kpis.occupancy}%`, icon: Users, trend: "-2%", color: "text-amber-500", bg: "bg-amber-500/5" }
             ].map((kpi, i) => (
               <Card key={i} className="border-none rounded-[2rem] overflow-hidden hover:shadow-2xl transition-all duration-500 shadow-sm bg-white dark:bg-card group">

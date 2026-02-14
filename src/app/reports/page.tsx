@@ -16,7 +16,9 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  Cell
+  Cell,
+  PieChart,
+  Pie
 } from "recharts";
 import { 
   TrendingUp, 
@@ -25,7 +27,8 @@ import {
   Hotel,
   ArrowUpRight,
   Loader2,
-  CalendarDays
+  CalendarDays,
+  PieChart as PieChartIcon
 } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
@@ -50,18 +53,27 @@ export default function ReportsPage() {
   }, []);
 
   const stats = useMemo(() => {
-    if (!rooms || !reservations || !invoices) return { revPar: 0, adr: 0, occupancy: 0, totalRev: 0 };
+    if (!rooms || !reservations || !invoices) return { revPar: 0, adr: 0, occupancy: 0, totalRev: 0, stayRev: 0, extraRev: 0 };
     
-    const totalRevenue = invoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
+    const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
+    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (Number(inv.amountPaid) || 0), 0);
+    const stayRevenue = paidInvoices.reduce((acc, inv) => acc + (Number(inv.stayAmount) || 0), 0);
+    const extraRevenue = Math.max(0, totalRevenue - stayRevenue);
+
     const occupiedCount = rooms.filter(r => r.status === 'Occupied' || r.status === 'Cleaning').length;
     const occupancyRate = rooms.length > 0 ? (occupiedCount / rooms.length) * 100 : 0;
     
-    // RevPAR = Total Room Revenue / Total Available Rooms
     const revPar = rooms.length > 0 ? totalRevenue / rooms.length : 0;
-    // ADR = Total Room Revenue / Number of Rooms Sold
     const adr = occupiedCount > 0 ? totalRevenue / occupiedCount : 0;
 
-    return { revPar, adr, occupancy: occupancyRate, totalRev: totalRevenue };
+    return { 
+      revPar, 
+      adr, 
+      occupancy: occupancyRate, 
+      totalRev: totalRevenue,
+      stayRev: stayRevenue,
+      extraRev: extraRevenue
+    };
   }, [rooms, reservations, invoices]);
 
   const revenueData = useMemo(() => {
@@ -93,6 +105,13 @@ export default function ReportsPage() {
       rev: Math.round(monthlyData[month])
     }));
   }, [invoices, mounted]);
+
+  const sourceData = useMemo(() => {
+    return [
+      { name: 'Hébergement', value: stats.stayRev, color: 'hsl(var(--primary))' },
+      { name: 'Services Extras', value: stats.extraRev, color: 'hsl(var(--accent))' }
+    ];
+  }, [stats]);
 
   const segmentData = useMemo(() => {
     if (!rooms) return [];
@@ -149,12 +168,12 @@ export default function ReportsPage() {
             </Card>
             <Card className="border-none shadow-sm hover:scale-105 transition-transform duration-300">
               <CardHeader className="pb-2">
-                <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary">ADR (Prix Moyen)</CardDescription>
-                <CardTitle className="text-2xl font-black font-headline tracking-tighter">{stats.adr.toFixed(2)} $</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary">Revenus Services</CardDescription>
+                <CardTitle className="text-2xl font-black font-headline tracking-tighter">{stats.extraRev.toLocaleString()} $</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-xs text-amber-500 font-bold">
-                  Moyenne par nuitée
+                <div className="flex items-center text-xs text-emerald-500 font-bold">
+                  <ArrowUpRight className="h-3 w-3 mr-1" /> + Extras Consommés
                 </div>
               </CardContent>
             </Card>
@@ -195,31 +214,40 @@ export default function ReportsPage() {
             <Card className="border-none shadow-sm animate-in slide-in-from-right-4 duration-700">
               <CardHeader>
                 <CardTitle className="text-lg font-headline font-bold flex items-center gap-2">
-                  <Hotel className="h-5 w-5 text-primary" /> Capacité par Segment
+                  <PieChartIcon className="h-5 w-5 text-primary" /> Sources de Revenus
                 </CardTitle>
-                <CardDescription>Répartition des chambres par type dans l'inventaire.</CardDescription>
+                <CardDescription>Répartition entre l'hébergement et les services extras.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px]">
-                {segmentData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={segmentData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                      <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                      <Bar dataKey="val" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]}>
-                        {segmentData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--accent))'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground italic">
-                    <CalendarDays className="h-12 w-12 mb-2 opacity-10" />
-                    Pas de données d'inventaire
-                  </div>
-                )}
+              <CardContent className="h-[300px] flex items-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sourceData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {sourceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-1/3 space-y-4">
+                  {sourceData.map((s, i) => (
+                    <div key={i} className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: s.color }} />
+                        <span className="text-xs font-bold">{s.name}</span>
+                      </div>
+                      <span className="text-sm font-black pl-5">{s.value.toLocaleString()} $</span>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
